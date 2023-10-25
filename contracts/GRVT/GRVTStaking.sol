@@ -12,6 +12,7 @@ import "../Dependencies/SafetyTransfer.sol";
 
 import "../Interfaces/IDeposit.sol";
 import "../Interfaces/IGRVTStaking.sol";
+import "../Interfaces/ICommunityIssuance.sol";
 
 contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, BaseMath, ReentrancyGuardUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -38,12 +39,11 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	mapping(address => bool) isAssetTracked;
 	mapping(address => uint256) public sentToTreasuryTracker;
 
-	IERC20Upgradeable public override grvtToken;
-
 	address public debtTokenAddress;
 	address public feeCollectorAddress;
 	address public treasuryAddress;
 	address public vesselManagerAddress;
+	address public communityIssuance;
 
 	bool public isSetupInitialized;
 
@@ -60,17 +60,17 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	function setAddresses(
 		address _debtTokenAddress,
 		address _feeCollectorAddress,
-		address _grvtTokenAddress,
 		address _treasuryAddress,
-		address _vesselManagerAddress
+		address _vesselManagerAddress,
+		address _communityIssuanceAddress
 	) external onlyOwner {
 		require(!isSetupInitialized, "Setup is already initialized");
 
 		debtTokenAddress = _debtTokenAddress;
 		feeCollectorAddress = _feeCollectorAddress;
-		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		treasuryAddress = _treasuryAddress;
 		vesselManagerAddress = _vesselManagerAddress;
+		communityIssuance = _communityIssuanceAddress;
 
 		isAssetTracked[ETH_REF_ADDRESS] = true;
 		ASSET_TYPE.push(ETH_REF_ADDRESS);
@@ -113,8 +113,8 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 		totalGRVTStaked = totalGRVTStaked + _GRVTamount;
 		emit TotalGRVTStakedUpdated(totalGRVTStaked);
 
-		// Transfer GRVT from caller to this contract
-		grvtToken.transferFrom(msg.sender, address(this), _GRVTamount);
+		//Tranfers the holdings of grvt from the user to this contract
+		ICommunityIssuance(communityIssuance).transferGRVT(msg.sender, address(this), _GRVTamount);
 
 		emit StakeChanged(msg.sender, newStake);
 	}
@@ -155,8 +155,8 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			totalGRVTStaked = totalGRVTStaked - GRVTToWithdraw;
 			emit TotalGRVTStakedUpdated(totalGRVTStaked);
 
-			// Transfer unstaked GRVT to user
-			IERC20Upgradeable(address(grvtToken)).safeTransfer(msg.sender, GRVTToWithdraw);
+			// Transfers the unstaked grvt holdings to user
+			ICommunityIssuance(communityIssuance).transferGRVT(address(this), msg.sender, GRVTToWithdraw);
 			emit StakeChanged(msg.sender, newStake);
 		}
 	}

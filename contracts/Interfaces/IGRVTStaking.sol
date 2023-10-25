@@ -25,8 +25,6 @@ interface IGRVTStaking {
 
 	// Functions --------------------------------------------------------------------------------------------------------
 
-	function grvtToken() external view returns (IERC20Upgradeable);
-
 	function stake(uint256 _GRVTamount) external;
 
 	function unstake(uint256 _GRVTamount) external;
