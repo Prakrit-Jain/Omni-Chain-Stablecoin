@@ -42,7 +42,6 @@ const deploy = async (treasury, mintingAccounts) => {
 	longTimelock = contracts.core.longTimelock
 
 	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 
@@ -102,12 +101,11 @@ contract("VesselManager", async accounts => {
 		before(async () => {
 			await deploy(treasury, accounts.slice(0, 20))
 
-			await grvtToken.unprotectedMint(multisig, dec(1, 24))
+			await communityIssuance.addGRVTHoldings(multisig, dec(1, 24), {from: treasury})
 			// give some gas to the contracts that will be impersonated
 			setBalance(adminContract.address, 1e18)
 			setBalance(shortTimelock.address, 1e18)
 			for (const acc of accounts.slice(0, 20)) {
-				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), { from: acc })
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
 			}
 			await impersonateAccount(shortTimelock.address)
@@ -5651,7 +5649,6 @@ contract("VesselManager", async accounts => {
 			it("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -5798,7 +5795,6 @@ contract("VesselManager", async accounts => {
 			it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to GRVT staking contract", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -5851,7 +5847,6 @@ contract("VesselManager", async accounts => {
 			it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-GRVT-staked in GRVT Staking contract", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -5904,7 +5899,6 @@ contract("VesselManager", async accounts => {
 			it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee to GRVT staking contract", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -5965,7 +5959,6 @@ contract("VesselManager", async accounts => {
 			it("redeemCollateral(): a redemption made at a non-zero base rate increases ETH-per-GRVT-staked in the staking contract", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -6098,7 +6091,6 @@ contract("VesselManager", async accounts => {
 			it("redeemCollateral(): a full redemption (leaving vessel with 0 debt), closes the vessel", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				const { netDebt: W_netDebt_Asset } = await openVessel({
@@ -6156,7 +6148,6 @@ contract("VesselManager", async accounts => {
 			const redeemCollateral3Full1Partial = async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				const { netDebt: W_netDebt_Asset } = await openVessel({

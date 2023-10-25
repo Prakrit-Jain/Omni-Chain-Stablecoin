@@ -10,8 +10,6 @@ const ERC20Test = artifacts.require("ERC20Test")
 const FeeCollectorTester = artifacts.require("FeeCollectorTester")
 const GasPool = artifacts.require("GasPool")
 const GRVTStaking = artifacts.require("GRVTStaking")
-const GRVTTokenTester = artifacts.require("GRVTTokenTester")
-const LockedGRVT = artifacts.require("LockedGRVT")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const SortedVessels = artifacts.require("SortedVessels")
 const StabilityPoolTester = artifacts.require("StabilityPoolTester")
@@ -36,7 +34,7 @@ class DeploymentHelper {
 		const grvt = await this._deployGrvtContracts(treasuryAddress)
 
 		await this._connectCoreContracts(core, grvt, treasuryAddress)
-		await this._connectGrvtContracts(grvt, core)
+		await this._connectGrvtContracts(grvt, core, treasuryAddress)
 
 		for (const acc of collateralMintingAccounts) {
 			const mintingValue = dec(100_000_000, 18)
@@ -99,8 +97,6 @@ class DeploymentHelper {
 		const grvt = {
 			communityIssuance: await CommunityIssuanceTester.new(),
 			grvtStaking: await GRVTStaking.new(),
-			grvtToken: await GRVTTokenTester.new(treasury),
-			lockedGRVT: await LockedGRVT.new(),
 		}
 		await this._invokeInitializers(grvt)
 		return grvt
@@ -182,35 +178,28 @@ class DeploymentHelper {
 	/**
 	 * Connects contracts to their dependencies.
 	 */
-	static async _connectGrvtContracts(grvt, core) {
-		const treasuryAddress = await grvt.grvtToken.treasury()
+	static async _connectGrvtContracts(grvt, core, treasuryAddress) {
 
 		await grvt.grvtStaking.setAddresses(
 			core.debtToken.address,
 			core.feeCollector.address,
-			grvt.grvtToken.address,
 			treasuryAddress,
-			core.vesselManager.address
+			core.vesselManager.address,
+			grvt.communityIssuance.address
 		)
 
 		await grvt.grvtStaking.unpause()
 
 		await grvt.communityIssuance.setAddresses(
-			grvt.grvtToken.address,
+			grvt.grvtStaking.address,
 			core.stabilityPool.address,
 			core.adminContract.address
 		)
 
-		await grvt.lockedGRVT.setAddresses(grvt.grvtToken.address)
-
-		await grvt.grvtToken.approve(grvt.communityIssuance.address, ethers.constants.MaxUint256, {
-			from: treasuryAddress,
-		})
-
 		const supply = dec(32_000_000, 18)
 		const weeklyReward = dec(32_000_000 / 4, 18)
 
-		await grvt.grvtToken.unprotectedMint(treasuryAddress, supply)
+		await grvt.communityIssuance.addGRVTHoldings(treasuryAddress, supply)
 
 		await grvt.communityIssuance.transferOwnership(treasuryAddress)
 		await grvt.communityIssuance.addFundToStabilityPool(weeklyReward, { from: treasuryAddress })

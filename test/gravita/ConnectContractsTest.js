@@ -26,7 +26,6 @@ const deploy = async (treasury, mintingAccounts) => {
 	longTimelock = contracts.core.longTimelock
 
 	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 }
 
@@ -120,14 +119,12 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 
 	describe("GRVT Contracts", async () => {
 		it("CommunityIssuance: check addresses", async () => {
-			assert.equal(grvtToken.address, await communityIssuance.grvtToken())
 			assert.equal(stabilityPool.address, await communityIssuance.stabilityPool())
 			assert.equal(adminContract.address, await communityIssuance.adminContract())
 		})
 		it("GRVTStaking: check addresses", async () => {
 			assert.equal(debtToken.address, await grvtStaking.debtTokenAddress())
 			assert.equal(feeCollector.address, await grvtStaking.feeCollectorAddress())
-			assert.equal(grvtToken.address, await grvtStaking.grvtToken())
 			assert.equal(vesselManager.address, await grvtStaking.vesselManagerAddress())
 		})
 	})

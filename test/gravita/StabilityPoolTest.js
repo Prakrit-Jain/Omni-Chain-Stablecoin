@@ -33,7 +33,6 @@ const deploy = async (treasury, mintingAccounts) => {
 	longTimelock = contracts.core.longTimelock
 
 	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 
@@ -687,8 +686,8 @@ contract("StabilityPool", async accounts => {
 				await _openVessel(erc20, 2_000, bob)
 
 				// Get balances before and confirm they are zero
-				const A_GRVTBalance_Before = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_Before = await grvtToken.balanceOf(bob)
+				const A_GRVTBalance_Before = await communityIssuance.grvtHoldings(alice)
+				const B_GRVTBalance_Before = await communityIssuance.grvtHoldings(bob)
 				assert.equal(A_GRVTBalance_Before, "0")
 				assert.equal(B_GRVTBalance_Before, "0")
 
@@ -699,8 +698,8 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.provideToSP(dec(2_000, 18), validCollateral, { from: bob })
 
 				// Get GRVT balances after, and confirm they're still zero
-				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_After = await grvtToken.balanceOf(bob)
+				const A_GRVTBalance_After = await communityIssuance.grvtHoldings(alice)
+				const B_GRVTBalance_After = await communityIssuance.grvtHoldings(bob)
 
 				assert.equal(A_GRVTBalance_After, "0")
 				assert.equal(B_GRVTBalance_After, "0")
@@ -741,8 +740,8 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.withdrawFromSP(initialDeposit_B, validCollateral, { from: bob })
 
 				// Get A, B, C GRVT balances before and confirm they're non-zero
-				const A_GRVTBalance_Before = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_Before = await grvtToken.balanceOf(bob)
+				const A_GRVTBalance_Before = await communityIssuance.grvtHoldings(alice)
+				const B_GRVTBalance_Before = await communityIssuance.grvtHoldings(bob)
 				assert.isTrue(A_GRVTBalance_Before.gt(toBN("0")))
 				assert.isTrue(B_GRVTBalance_Before.gt(toBN("0")))
 
@@ -753,8 +752,8 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.provideToSP(dec(200, 18), validCollateral, { from: bob })
 
 				// Get A, B, C GRVT balances after, and confirm they have not changed
-				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_After = await grvtToken.balanceOf(bob)
+				const A_GRVTBalance_After = await communityIssuance.grvtHoldings(alice)
+				const B_GRVTBalance_After = await communityIssuance.grvtHoldings(bob)
 
 				assert.isTrue(A_GRVTBalance_After.eq(A_GRVTBalance_Before))
 				assert.isTrue(B_GRVTBalance_After.eq(B_GRVTBalance_Before))
@@ -897,9 +896,9 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// Get A, B, C GRVT balance before
-				const A_GRVTBalance_Before = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_Before = await grvtToken.balanceOf(bob)
-				const C_GRVTBalance_Before = await grvtToken.balanceOf(carol)
+				const A_GRVTBalance_Before = await communityIssuance.grvtHoldings(alice)
+				const B_GRVTBalance_Before = await communityIssuance.grvtHoldings(bob)
+				const C_GRVTBalance_Before = await communityIssuance.grvtHoldings(carol)
 
 				// A, B, C top up
 				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
@@ -907,9 +906,9 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
 
 				// Get GRVT balance after
-				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_After = await grvtToken.balanceOf(bob)
-				const C_GRVTBalance_After = await grvtToken.balanceOf(carol)
+				const A_GRVTBalance_After = await communityIssuance.grvtHoldings(alice)	
+				const B_GRVTBalance_After = await communityIssuance.grvtHoldings(bob)
+				const C_GRVTBalance_After = await communityIssuance.grvtHoldings(carol)
 
 				// Check GRVT Balance of A, B, C has increased
 				assert.isTrue(A_GRVTBalance_After.gt(A_GRVTBalance_Before))
@@ -1687,7 +1686,7 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(await sortedVessels.contains(erc20.address, defaulter_2))
 
 				const A_BalBeforeERC20 = toBN(await erc20.balanceOf(alice))
-				const A_GRVTBalBefore = await grvtToken.balanceOf(alice)
+				const A_GRVTBalBefore = await communityIssuance.grvtHoldings(alice)
 
 				// Check Alice has gains to withdraw
 				const idx = validCollateral.indexOf(erc20.address)
@@ -1702,7 +1701,7 @@ contract("StabilityPool", async accounts => {
 
 				const A_BalAfterERC20 = toBN(await erc20.balanceOf(alice))
 
-				const A_GRVTBalAfter = await grvtToken.balanceOf(alice)
+				const A_GRVTBalAfter = await communityIssuance.grvtHoldings(alice)
 				const A_GRVTBalDiff = A_GRVTBalAfter.sub(A_GRVTBalBefore)
 
 				// Check A's collateral and GRVT balances have increased correctly
@@ -2144,10 +2143,10 @@ contract("StabilityPool", async accounts => {
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 				// Get A, B, C GRVT balance before
-				const A_GRVTBalance_Before = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_Before = await grvtToken.balanceOf(bob)
-				const C_GRVTBalance_Before = await grvtToken.balanceOf(carol)
-				const D_GRVTBalance_Before = await grvtToken.balanceOf(dennis)
+				const A_GRVTBalance_Before = await communityIssuance.grvtHoldings(alice)
+				const B_GRVTBalance_Before = await communityIssuance.grvtHoldings(bob)
+				const C_GRVTBalance_Before = await communityIssuance.grvtHoldings(carol)
+				const D_GRVTBalance_Before = await communityIssuance.grvtHoldings(dennis)
 
 				// A, B, C withdraw
 				await stabilityPool.withdrawFromSP(dec(1, 18), validCollateral, { from: alice })
@@ -2156,10 +2155,10 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.withdrawFromSP(dec(4, 18), validCollateral, { from: dennis })
 
 				// Get GRVT balance after
-				const A_GRVTBalance_After = await grvtToken.balanceOf(alice)
-				const B_GRVTBalance_After = await grvtToken.balanceOf(bob)
-				const C_GRVTBalance_After = await grvtToken.balanceOf(carol)
-				const D_GRVTBalance_After = await grvtToken.balanceOf(dennis)
+				const A_GRVTBalance_After = await communityIssuance.grvtHoldings(alice)
+				const B_GRVTBalance_After = await communityIssuance.grvtHoldings(bob)
+				const C_GRVTBalance_After = await communityIssuance.grvtHoldings(carol)
+				const D_GRVTBalance_After = await communityIssuance.grvtHoldings(dennis)
 
 				// Check GRVT Balance of A, B, C has increased
 				assert.isTrue(A_GRVTBalance_After.gt(A_GRVTBalance_Before))

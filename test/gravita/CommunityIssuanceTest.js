@@ -31,7 +31,6 @@ const deploy = async (treasury, mintingAccounts) => {
 	longTimelock = contracts.core.longTimelock
 
 	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 }
 
@@ -47,14 +46,13 @@ contract("CommunityIssuance", async accounts => {
 			communityIssuance = await CommunityIssuance.new()
 			await communityIssuance.initialize()
 			await communityIssuance.setAddresses(
-				grvtToken.address,
+				grvtStaking.address,
 				stabilityPool.address,
 				adminContract.address
 			)
 			await communityIssuance.transferOwnership(treasury, { from: owner })
 			const supply = dec(32_000_000, 18)
-			await grvtToken.unprotectedMint(treasury, supply)
-			await contracts.grvt.grvtToken.approve(communityIssuance.address, ethers.constants.MaxUint256, { from: treasury })
+			await communityIssuance.addGRVTHoldings(treasury, supply, { from: treasury})
 
 			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})
@@ -158,21 +156,17 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 
-			const beforeBalance = await grvtToken.balanceOf(communityIssuance.address)
-			const beforeBalanceTreasury = await grvtToken.balanceOf(treasury)
+			const beforeBalance = await communityIssuance.grvtHoldings(communityIssuance.address)
 
 			await communityIssuance.removeFundFromStabilityPool(dec(50, 18), {
 				from: treasury,
 			})
 			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), dec(50, 18))
 			assert.equal(
-				(await grvtToken.balanceOf(communityIssuance.address)).toString(),
+				(await communityIssuance.grvtHoldings(communityIssuance.address)).toString(),
 				beforeBalance.sub(toBN(dec(50, 18)))
 			)
-			assert.equal(
-				(await grvtToken.balanceOf(treasury)).toString(),
-				beforeBalanceTreasury.add(toBN(dec(50, 18))).toString()
-			)
+			
 		})
 
 		it("removeFundFromStabilityPool: Called by owner, max supply, then disable pool", async () => {

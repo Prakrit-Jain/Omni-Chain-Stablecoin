@@ -42,7 +42,6 @@ const deploy = async (treasury, mintingAccounts) => {
 	longTimelock = contracts.core.longTimelock
 
 	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
 	communityIssuance = contracts.grvt.communityIssuance
 }
 
@@ -72,10 +71,9 @@ contract("BorrowerOperations", async accounts => {
 			MIN_NET_DEBT_ERC20 = await adminContract.getMinNetDebt(erc20.address)
 			BORROWING_FEE_ERC20 = await adminContract.getBorrowingFee(erc20.address)
 
-			await grvtToken.unprotectedMint(multisig, dec(5, 24))
+			await communityIssuance.addGRVTHoldings(multisig, dec(5, 24), {from: treasury})
 
 			for (const acc of accounts.slice(0, 20)) {
-				await grvtToken.approve(grvtStaking.address, await web3.eth.getBalance(acc), { from: acc })
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
 			}
 
@@ -1408,7 +1406,6 @@ contract("BorrowerOperations", async accounts => {
 		it("withdrawDebtTokens(): borrowing at non-zero base rate sends fee to GRVT staking contract", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT GRAI balance before == 0
@@ -1474,7 +1471,6 @@ contract("BorrowerOperations", async accounts => {
 			it("withdrawDebtTokens(): borrowing at non-zero base records the (drawn debt + fee) on the Vessel struct", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -1541,7 +1537,6 @@ contract("BorrowerOperations", async accounts => {
 		it("withdrawDebtTokens(): borrowing at non-zero base rate increases the GRVT staking contract GRAI fees-per-unit-staked", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT contract GRAI fees-per-unit-staked is zero
@@ -1603,7 +1598,6 @@ contract("BorrowerOperations", async accounts => {
 		it("withdrawDebtTokens(): borrowing at non-zero base rate sends requested amount to the user", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT Staking contract balance before == 0
@@ -1711,7 +1705,7 @@ contract("BorrowerOperations", async accounts => {
 				extraParams: { from: D },
 			})
 			// A artificially receives GRVT, then stakes it
-			await grvtToken.unprotectedMint(A, dec(100, 18))
+			await communityIssuance.addGRVTHoldings(A, dec(100, 18), {from: treasury})
 			await grvtStaking.stake(dec(100, 18), { from: A })
 
 			// 2 hours pass
@@ -2751,7 +2745,6 @@ contract("BorrowerOperations", async accounts => {
 		it("adjustVessel(): borrowing at non-zero base rate sends GRAI fee to GRVT staking contract", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT GRAI balance before == 0
@@ -2813,7 +2806,6 @@ contract("BorrowerOperations", async accounts => {
 			it("adjustVessel(): borrowing at non-zero base records the (drawn debt + fee) on the Vessel struct", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -2889,7 +2881,6 @@ contract("BorrowerOperations", async accounts => {
 		it("adjustVessel(): borrowing at non-zero base rate increases the GRVT staking contract GRAI fees-per-unit-staked", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT contract GRAI fees-per-unit-staked is zero
@@ -2954,7 +2945,6 @@ contract("BorrowerOperations", async accounts => {
 		it("adjustVessel(): borrowing at non-zero base rate sends requested amount to the user", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT Staking contract balance before == 0
@@ -3128,7 +3118,7 @@ contract("BorrowerOperations", async accounts => {
 			th.fastForwardTime(7200, web3.currentProvider)
 
 			// A artificially receives GRVT, then stakes it
-			await grvtToken.unprotectedMint(A, dec(100, 18))
+			await communityIssuance.addGRVTHoldings(A, dec(100, 18), {from: treasury})
 			await grvtStaking.stake(dec(100, 18), { from: A })
 
 			// Check staking GRAI balance before == 0
@@ -3678,7 +3668,7 @@ contract("BorrowerOperations", async accounts => {
 			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 			// B stakes GRVT
-			await grvtToken.unprotectedMint(bob, dec(100, 18))
+			await communityIssuance.addGRVTHoldings(bob, dec(100, 18), {from: treasury})
 			await grvtStaking.stake(dec(100, 18), { from: bob })
 
 			const GRVTStakingGRAIBalanceBefore = await debtToken.balanceOf(grvtStaking.address)
@@ -5904,7 +5894,6 @@ contract("BorrowerOperations", async accounts => {
 		it("openVessel(): borrowing at non-zero base rate sends GRAI fee to GRVT staking contract", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT GRAI balance before == 0
@@ -5968,7 +5957,6 @@ contract("BorrowerOperations", async accounts => {
 			it("openVessel(): borrowing at non-zero base records the (drawn debt + fee  + liq. reserve) on the Vessel struct", async () => {
 				// time fast-forwards 1 year, and multisig stakes 1 GRVT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 				await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
@@ -6040,7 +6028,6 @@ contract("BorrowerOperations", async accounts => {
 		it("openVessel(): borrowing at non-zero base rate increases the GRVT staking contract GRAI fees-per-unit-staked", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT contract GRAI fees-per-unit-staked is zero
@@ -6100,7 +6087,6 @@ contract("BorrowerOperations", async accounts => {
 		it("openVessel(): borrowing at non-zero base rate sends requested amount to the user", async () => {
 			// time fast-forwards 1 year, and multisig stakes 1 GRVT
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await grvtToken.approve(grvtStaking.address, dec(1, 18), { from: multisig })
 			await grvtStaking.stake(dec(1, 18), { from: multisig })
 
 			// Check GRVT Staking contract balance before == 0
@@ -6193,7 +6179,7 @@ contract("BorrowerOperations", async accounts => {
 			assert.equal(F_GRAI_Before, "0")
 
 			// A stakes GRVT
-			await grvtToken.unprotectedMint(A, dec(100, 18))
+			await communityIssuance.addGRVTHoldings(A, dec(100, 18), {from: treasury})
 			await grvtStaking.stake(dec(100, 18), { from: A })
 
 			// D opens vessel
