@@ -26,12 +26,13 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 
 	IStabilityPool public stabilityPool;
 
+	address public staking;
 	address public adminContract;
 	bool public isSetupInitialized;
 
-	// mapping to maintain the accounting of GRVT holdings, similar to `balanceOf` of 
+	// mapping to maintain the accounting of GRVT holdings, similar to `balanceOf` of
 	// GRVT token.
-	mapping(address => uint256) public grvtHoldings; 
+	mapping(address => uint256) public grvtHoldings;
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
@@ -48,6 +49,11 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		_;
 	}
 
+	modifier onlyStaking() {
+		require(staking == msg.sender, "CommunityIssuance: caller is not GrvtStaking");
+		_;
+	}
+
 	// --- Initializer ---
 
 	function initialize() public initializer {
@@ -56,10 +62,12 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 
 	// --- Functions ---
 	function setAddresses(
+		address stakingAddress,
 		address _stabilityPoolAddress,
 		address _adminContract
 	) external onlyOwner {
 		require(!isSetupInitialized, "Setup is already initialized");
+		staking = stakingAddress;
 		adminContract = _adminContract;
 		stabilityPool = IStabilityPool(_stabilityPoolAddress);
 		isSetupInitialized = true;
@@ -141,6 +149,20 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 
 		grvtHoldings[address(this)] -= safeAmount;
 		grvtHoldings[_account] += safeAmount;
+	}
+
+	// called by staking contract to update the transfers of grvt
+	function transferGRVT(address _from, address _to, uint256 _amount) external onlyStaking {
+		require(_from != address(0), "CommunityIssuance: Grvt Transfer from Zero Address.");
+		require(_to != address(0), "CommunityIssuance: Grvt Transfer to Zero Address.");
+
+		uint256 fromHoldings = grvtHoldings[_from];
+		require(fromHoldings >= _amount, "CommunityIssuance: transfer amount exceeds");
+		unchecked {
+			grvtHoldings[_from] = fromHoldings - _amount;
+			grvtHoldings[_to] += _amount;
+		}
+		emit GRVTTransferred(_from, _to, _amount);
 	}
 
 	function setWeeklyGrvtDistribution(uint256 _weeklyReward) external isController {

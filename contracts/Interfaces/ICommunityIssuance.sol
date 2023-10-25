@@ -7,11 +7,15 @@ interface ICommunityIssuance {
 
 	event TotalGRVTIssuedUpdated(uint256 _totalGRVTIssued);
 
+	event GRVTTransferred(address indexed _from, address indexed _to, uint256 _amount);
+
 	// --- Functions ---
 
 	function issueGRVT() external returns (uint256);
 
 	function sendGRVT(address _account, uint256 _GRVTamount) external;
+
+	function transferGRVT(address _from, address _to, uint256 _amount) external;
 
 	function addFundToStabilityPool(uint256 _assignedSupply) external;
 
