@@ -1,3 +1,4 @@
+const { assert } = require("chai")
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
@@ -119,6 +120,7 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 
 	describe("GRVT Contracts", async () => {
 		it("CommunityIssuance: check addresses", async () => {
+			assert.equal(grvtStaking.address, await communityIssuance.staking())
 			assert.equal(stabilityPool.address, await communityIssuance.stabilityPool())
 			assert.equal(adminContract.address, await communityIssuance.adminContract())
 		})
@@ -126,6 +128,7 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 			assert.equal(debtToken.address, await grvtStaking.debtTokenAddress())
 			assert.equal(feeCollector.address, await grvtStaking.feeCollectorAddress())
 			assert.equal(vesselManager.address, await grvtStaking.vesselManagerAddress())
+			assert.equal(communityIssuance.address, await grvtStaking.communityIssuance())
 		})
 	})
 })

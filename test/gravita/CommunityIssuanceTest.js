@@ -157,7 +157,7 @@ contract("CommunityIssuance", async accounts => {
 			})
 
 			const beforeBalance = await communityIssuance.grvtHoldings(communityIssuance.address)
-
+			const beforeBalanceTreasury = await communityIssuance.grvtHoldings(treasury)
 			await communityIssuance.removeFundFromStabilityPool(dec(50, 18), {
 				from: treasury,
 			})
@@ -166,7 +166,10 @@ contract("CommunityIssuance", async accounts => {
 				(await communityIssuance.grvtHoldings(communityIssuance.address)).toString(),
 				beforeBalance.sub(toBN(dec(50, 18)))
 			)
-			
+			assert.equal(
+				(await communityIssuance.grvtHoldings(treasury)).toString(),
+				beforeBalanceTreasury.add(toBN(dec(50, 18))).toString()
+			)
 		})
 
 		it("removeFundFromStabilityPool: Called by owner, max supply, then disable pool", async () => {
