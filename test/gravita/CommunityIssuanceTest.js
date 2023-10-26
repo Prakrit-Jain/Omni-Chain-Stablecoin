@@ -1,7 +1,7 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
-const CommunityIssuance = artifacts.require("CommunityIssuance")
+const CommunityIssuance = artifacts.require("CommunityIssuanceTester")
 
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
@@ -52,7 +52,7 @@ contract("CommunityIssuance", async accounts => {
 			)
 			await communityIssuance.transferOwnership(treasury, { from: owner })
 			const supply = dec(32_000_000, 18)
-			await communityIssuance.addGRVTHoldings(treasury, supply, { from: treasury})
+			await communityIssuance.unprotectedAddGRVTHoldings(treasury, supply)
 
 			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})

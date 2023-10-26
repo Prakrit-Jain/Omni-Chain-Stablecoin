@@ -71,7 +71,7 @@ contract("BorrowerOperations", async accounts => {
 			MIN_NET_DEBT_ERC20 = await adminContract.getMinNetDebt(erc20.address)
 			BORROWING_FEE_ERC20 = await adminContract.getBorrowingFee(erc20.address)
 
-			await communityIssuance.addGRVTHoldings(multisig, dec(5, 24), {from: treasury})
+			await communityIssuance.unprotectedAddGRVTHoldings(multisig, dec(5, 24))
 
 			for (const acc of accounts.slice(0, 20)) {
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
@@ -1705,7 +1705,7 @@ contract("BorrowerOperations", async accounts => {
 				extraParams: { from: D },
 			})
 			// A artificially receives GRVT, then stakes it
-			await communityIssuance.addGRVTHoldings(A, dec(100, 18), {from: treasury})
+			await communityIssuance.unprotectedAddGRVTHoldings(A, dec(100, 18))
 			await grvtStaking.stake(dec(100, 18), { from: A })
 
 			// 2 hours pass
@@ -3118,7 +3118,7 @@ contract("BorrowerOperations", async accounts => {
 			th.fastForwardTime(7200, web3.currentProvider)
 
 			// A artificially receives GRVT, then stakes it
-			await communityIssuance.addGRVTHoldings(A, dec(100, 18), {from: treasury})
+			await communityIssuance.unprotectedAddGRVTHoldings(A, dec(100, 18))
 			await grvtStaking.stake(dec(100, 18), { from: A })
 
 			// Check staking GRAI balance before == 0
@@ -3668,7 +3668,7 @@ contract("BorrowerOperations", async accounts => {
 			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 			// B stakes GRVT
-			await communityIssuance.addGRVTHoldings(bob, dec(100, 18), {from: treasury})
+			await communityIssuance.unprotectedAddGRVTHoldings(bob, dec(100, 18))
 			await grvtStaking.stake(dec(100, 18), { from: bob })
 
 			const GRVTStakingGRAIBalanceBefore = await debtToken.balanceOf(grvtStaking.address)
@@ -6179,7 +6179,7 @@ contract("BorrowerOperations", async accounts => {
 			assert.equal(F_GRAI_Before, "0")
 
 			// A stakes GRVT
-			await communityIssuance.addGRVTHoldings(A, dec(100, 18), {from: treasury})
+			await communityIssuance.unprotectedAddGRVTHoldings(A, dec(100, 18))
 			await grvtStaking.stake(dec(100, 18), { from: A })
 
 			// D opens vessel

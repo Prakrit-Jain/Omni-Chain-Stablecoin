@@ -199,7 +199,7 @@ class DeploymentHelper {
 		const supply = dec(32_000_000, 18)
 		const weeklyReward = dec(32_000_000 / 4, 18)
 
-		await grvt.communityIssuance.addGRVTHoldings(treasuryAddress, supply)
+		await grvt.communityIssuance.unprotectedAddGRVTHoldings(treasuryAddress, supply)
 
 		await grvt.communityIssuance.transferOwnership(treasuryAddress)
 		await grvt.communityIssuance.addFundToStabilityPool(weeklyReward, { from: treasuryAddress })

@@ -78,11 +78,6 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 		adminContract = _admin;
 	}
 
-	// similar to mint functionality of grvt token
-	function addGRVTHoldings(address _account, uint256 _supply) public isController {
-		grvtHoldings[_account] += _supply;
-	}
-
 	function addFundToStabilityPool(uint256 _assignedSupply) external override isController {
 		_addFundToStabilityPoolFrom(_assignedSupply, msg.sender);
 	}

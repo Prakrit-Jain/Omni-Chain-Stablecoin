@@ -101,7 +101,7 @@ contract("VesselManager", async accounts => {
 		before(async () => {
 			await deploy(treasury, accounts.slice(0, 20))
 
-			await communityIssuance.addGRVTHoldings(multisig, dec(1, 24), {from: treasury})
+			await communityIssuance.unprotectedAddGRVTHoldings(multisig, dec(1, 24))
 			// give some gas to the contracts that will be impersonated
 			setBalance(adminContract.address, 1e18)
 			setBalance(shortTimelock.address, 1e18)

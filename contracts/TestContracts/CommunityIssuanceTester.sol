@@ -6,6 +6,10 @@ import "../GRVT/CommunityIssuance.sol";
 
 contract CommunityIssuanceTester is CommunityIssuance {
 
+	function unprotectedAddGRVTHoldings(address _account, uint256 _supply) external {
+		grvtHoldings[_account] += _supply;
+	}
+
 	function getLastUpdateTokenDistribution() external view returns (uint256) {
 		return _getLastUpdateTokenDistribution();
 	}
