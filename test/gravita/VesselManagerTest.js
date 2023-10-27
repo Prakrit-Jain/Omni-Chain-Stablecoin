@@ -41,8 +41,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	communityIssuance = contracts.grvt.communityIssuance
+	sprtStaking = contracts.sprt.sprtStaking
+	communityIssuance = contracts.sprt.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 
 	// getDepositorGains() expects a sorted collateral array
@@ -88,12 +88,12 @@ contract("VesselManager", async accounts => {
 
 	let REDEMPTION_SOFTENING_PARAM
 
-	const getOpenVesselGRAIAmount = async (totalDebt, asset) =>
-		th.getOpenVesselGRAIAmount(contracts.core, totalDebt, asset)
+	const getOpenVesselKAIAmount = async (totalDebt, asset) =>
+		th.getOpenVesselKAIAmount(contracts.core, totalDebt, asset)
 	const getNetBorrowingAmount = async (debtWithFee, asset) =>
 		th.getNetBorrowingAmount(contracts.core, debtWithFee, asset)
 	const openVessel = async params => th.openVessel(contracts.core, params)
-	const withdrawGRAI = async params => th.withdrawGRAI(contracts.core, params)
+	const withdrawKAI = async params => th.withdrawKAI(contracts.core, params)
 	const calcSoftnedAmount = (collAmount, price) =>
 		collAmount.mul(mv._1e18BN).mul(REDEMPTION_SOFTENING_PARAM).div(toBN(10000)).div(price)
 
@@ -101,7 +101,7 @@ contract("VesselManager", async accounts => {
 		before(async () => {
 			await deploy(treasury, accounts.slice(0, 20))
 
-			await communityIssuance.unprotectedAddGRVTHoldings(multisig, dec(1, 24))
+			await communityIssuance.unprotectedAddSPRTHoldings(multisig, dec(1, 24))
 			// give some gas to the contracts that will be impersonated
 			setBalance(adminContract.address, 1e18)
 			setBalance(shortTimelock.address, 1e18)
@@ -147,11 +147,11 @@ contract("VesselManager", async accounts => {
 
 				assert.equal((await adminContract.getMcr(erc20.address)).toString(), "1100000000000000000")
 
-				// Alice increases debt to 180 GRAI, lowering her ICR to 1.11
+				// Alice increases debt to 180 KAI, lowering her ICR to 1.11
 				await getNetBorrowingAmount(dec(130, 18), erc20.address)
 
 				const targetICR = toBN("1111111111111111111")
-				await withdrawGRAI({
+				await withdrawKAI({
 					asset: erc20.address,
 					ICR: targetICR,
 					extraParams: { from: alice },
@@ -160,7 +160,7 @@ contract("VesselManager", async accounts => {
 				const ICR_AfterWithdrawal_Asset = await vesselManager.getCurrentICR(erc20.address, alice, price)
 				assert.isAtMost(th.getDifference(ICR_AfterWithdrawal_Asset, targetICR), 100)
 
-				// price drops to 1ETH:100GRAI, reducing Alice's ICR below MCR
+				// price drops to 1ETH:100KAI, reducing Alice's ICR below MCR
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
@@ -177,7 +177,7 @@ contract("VesselManager", async accounts => {
 				assert.isFalse(await sortedVessels.contains(erc20.address, alice))
 			})
 
-			it("liquidate(): decreases ActivePool ETH and GRAIDebt by correct amounts", async () => {
+			it("liquidate(): decreases ActivePool ETH and KAIDebt by correct amounts", async () => {
 				// --- SETUP ---
 				const { collateral: A_collateral_Asset, totalDebt: A_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
@@ -192,36 +192,36 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// check ActivePool ETH and GRAI debt before
+				// check ActivePool ETH and KAI debt before
 				const activePool_ETH_Before_Asset = (await activePool.getAssetBalance(erc20.address)).toString()
 				const activePool_RawEther_Before_Asset = (await erc20.balanceOf(activePool.address)).toString()
-				const activePooL_GRAIDebt_Before_Asset = (await activePool.getDebtTokenBalance(erc20.address)).toString()
+				const activePooL_KAIDebt_Before_Asset = (await activePool.getDebtTokenBalance(erc20.address)).toString()
 
 				assert.equal(activePool_ETH_Before_Asset, A_collateral_Asset.add(B_collateral_Asset))
 				assert.equal(activePool_RawEther_Before_Asset, A_collateral_Asset.add(B_collateral_Asset))
-				th.assertIsApproximatelyEqual(activePooL_GRAIDebt_Before_Asset, A_totalDebt_Asset.add(B_totalDebt_Asset))
+				th.assertIsApproximatelyEqual(activePooL_KAIDebt_Before_Asset, A_totalDebt_Asset.add(B_totalDebt_Asset))
 
-				// price drops to 1ETH:100GRAI, reducing Bob's ICR below MCR
+				// price drops to 1ETH:100KAI, reducing Bob's ICR below MCR
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-				/* close Bob's Vessel. Should liquidate his ether and GRAI,
-    leaving Alice’s ether and GRAI debt in the ActivePool. */
+				/* close Bob's Vessel. Should liquidate his ether and KAI,
+    leaving Alice’s ether and KAI debt in the ActivePool. */
 				await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
 
-				// check ActivePool ETH and GRAI debt
+				// check ActivePool ETH and KAI debt
 				const activePool_ETH_After_Asset = (await activePool.getAssetBalance(erc20.address)).toString()
 				const activePool_RawEther_After_Asset = (await erc20.balanceOf(activePool.address)).toString()
-				const activePooL_GRAIDebt_After_Asset = (await activePool.getDebtTokenBalance(erc20.address)).toString()
+				const activePooL_KAIDebt_After_Asset = (await activePool.getDebtTokenBalance(erc20.address)).toString()
 
 				assert.equal(activePool_ETH_After_Asset, A_collateral_Asset)
 				assert.equal(activePool_RawEther_After_Asset, A_collateral_Asset)
-				th.assertIsApproximatelyEqual(activePooL_GRAIDebt_After_Asset, A_totalDebt_Asset)
+				th.assertIsApproximatelyEqual(activePooL_KAIDebt_After_Asset, A_totalDebt_Asset)
 			})
 
-			it("liquidate(): increases DefaultPool ETH and GRAI debt by correct amounts", async () => {
+			it("liquidate(): increases DefaultPool ETH and KAI debt by correct amounts", async () => {
 				// --- SETUP ---
 				await openVessel({
 					asset: erc20.address,
@@ -236,16 +236,16 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// check DefaultPool ETH and GRAI debt before
+				// check DefaultPool ETH and KAI debt before
 				const defaultPool_ETH_Before_Asset = await defaultPool.getAssetBalance(erc20.address)
 				const defaultPool_RawEther_Before_Asset = (await web3.eth.getBalance(defaultPool.address)).toString()
-				const defaultPooL_GRAIDebt_Before_Asset = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
+				const defaultPooL_KAIDebt_Before_Asset = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
 
 				assert.equal(defaultPool_ETH_Before_Asset, "0")
 				assert.equal(defaultPool_RawEther_Before_Asset, "0")
-				assert.equal(defaultPooL_GRAIDebt_Before_Asset, "0")
+				assert.equal(defaultPooL_KAIDebt_Before_Asset, "0")
 
-				// price drops to 1ETH:100GRAI, reducing Bob's ICR below MCR
+				// price drops to 1ETH:100KAI, reducing Bob's ICR below MCR
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
@@ -257,11 +257,11 @@ contract("VesselManager", async accounts => {
 				// check after
 				const defaultPool_ETH_After_Asset = (await defaultPool.getAssetBalance(erc20.address)).toString()
 				const defaultPool_RawEther_After_Asset = (await erc20.balanceOf(defaultPool.address)).toString()
-				const defaultPooL_GRAIDebt_After_Asset = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
+				const defaultPooL_KAIDebt_After_Asset = (await defaultPool.getDebtTokenBalance(erc20.address)).toString()
 				const defaultPool_ETH_Asset = th.applyLiquidationFee(B_collateral_Asset)
 				assert.equal(defaultPool_ETH_After_Asset, defaultPool_ETH_Asset)
 				assert.equal(defaultPool_RawEther_After_Asset, defaultPool_ETH_Asset)
-				th.assertIsApproximatelyEqual(defaultPooL_GRAIDebt_After_Asset, B_totalDebt_Asset)
+				th.assertIsApproximatelyEqual(defaultPooL_KAIDebt_After_Asset, B_totalDebt_Asset)
 			})
 
 			it("liquidate(): removes the Vessel's stake from the total stakes", async () => {
@@ -283,7 +283,7 @@ contract("VesselManager", async accounts => {
 				const totalStakes_Before_Asset = (await vesselManager.totalStakes(erc20.address)).toString()
 				assert.equal(totalStakes_Before_Asset, A_collateral_Asset.add(B_collateral_Asset))
 
-				// price drops to 1ETH:100GRAI, reducing Bob's ICR below MCR
+				// price drops to 1ETH:100KAI, reducing Bob's ICR below MCR
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
@@ -411,13 +411,13 @@ contract("VesselManager", async accounts => {
 				assert.equal(totalStakesSnapshot_Before_Asset, "0")
 				assert.equal(totalCollateralSnapshot_Before_Asset, "0")
 
-				// price drops to 1ETH:100GRAI, reducing Bob's ICR below MCR
+				// price drops to 1ETH:100KAI, reducing Bob's ICR below MCR
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-				// close Bob's Vessel.  His ether*0.995 and GRAI should be added to the DefaultPool.
+				// close Bob's Vessel.  His ether*0.995 and KAI should be added to the DefaultPool.
 				await vesselManagerOperations.liquidate(erc20.address, bob, { from: owner })
 
 				/* check snapshots after. Total stakes should be equal to the  remaining stake then the system:
@@ -437,7 +437,7 @@ contract("VesselManager", async accounts => {
 				)
 			})
 
-			it("liquidate(): updates the L_ETH and L_GRAIDebt reward-per-unit-staked totals", async () => {
+			it("liquidate(): updates the L_ETH and L_KAIDebt reward-per-unit-staked totals", async () => {
 				// --- SETUP ---
 				const { collateral: A_collateral_Asset, totalDebt: A_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
@@ -457,7 +457,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// price drops to 1ETH:100GRAI, reducing Carols's ICR below MCR
+				// price drops to 1ETH:100KAI, reducing Carols's ICR below MCR
 				await priceFeed.setPrice(erc20.address, "100000000000000000000")
 
 				// Confirm system is not in Recovery Mode
@@ -468,22 +468,22 @@ contract("VesselManager", async accounts => {
 				await vesselManagerOperations.liquidate(erc20.address, carol, { from: owner })
 				assert.isFalse(await sortedVessels.contains(erc20.address, carol))
 
-				// Carol's ether*0.995 and GRAI should be added to the DefaultPool.
+				// Carol's ether*0.995 and KAI should be added to the DefaultPool.
 				const L_ETH_AfterCarolLiquidated_Asset = await vesselManager.L_Colls(erc20.address)
-				const L_GRAIDebt_AfterCarolLiquidated_Asset = await vesselManager.L_Debts(erc20.address)
+				const L_KAIDebt_AfterCarolLiquidated_Asset = await vesselManager.L_Debts(erc20.address)
 
 				const L_ETH_expected_1_Asset = th
 					.applyLiquidationFee(C_collateral_Asset)
 					.mul(mv._1e18BN)
 					.div(A_collateral_Asset.add(B_collateral_Asset))
-				const L_GRAIDebt_expected_1_Asset = C_totalDebt_Asset.mul(mv._1e18BN).div(
+				const L_KAIDebt_expected_1_Asset = C_totalDebt_Asset.mul(mv._1e18BN).div(
 					A_collateral_Asset.add(B_collateral_Asset)
 				)
 				assert.isAtMost(th.getDifference(L_ETH_AfterCarolLiquidated_Asset, L_ETH_expected_1_Asset), 100)
-				assert.isAtMost(th.getDifference(L_GRAIDebt_AfterCarolLiquidated_Asset, L_GRAIDebt_expected_1_Asset), 100)
+				assert.isAtMost(th.getDifference(L_KAIDebt_AfterCarolLiquidated_Asset, L_KAIDebt_expected_1_Asset), 100)
 
-				// Bob now withdraws GRAI, bringing his ICR to 1.11
-				const { increasedTotalDebt: B_increasedTotalDebt_Asset } = await withdrawGRAI({
+				// Bob now withdraws KAI, bringing his ICR to 1.11
+				const { increasedTotalDebt: B_increasedTotalDebt_Asset } = await withdrawKAI({
 					asset: erc20.address,
 					ICR: toBN(dec(111, 16)),
 					extraParams: { from: bob },
@@ -492,7 +492,7 @@ contract("VesselManager", async accounts => {
 				// Confirm system is not in Recovery Mode
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-				// price drops to 1ETH:50GRAI, reducing Bob's ICR below MCR
+				// price drops to 1ETH:50KAI, reducing Bob's ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(50, 18))
 				await priceFeed.getPrice(erc20.address)
 
@@ -502,7 +502,7 @@ contract("VesselManager", async accounts => {
 				assert.isFalse(await sortedVessels.contains(erc20.address, bob))
 
 				const L_ETH_AfterBobLiquidated_Asset = await vesselManager.L_Colls(erc20.address)
-				const L_GRAIDebt_AfterBobLiquidated_Asset = await vesselManager.L_Debts(erc20.address)
+				const L_KAIDebt_AfterBobLiquidated_Asset = await vesselManager.L_Debts(erc20.address)
 
 				/* Alice now has all the active stake. totalStakes in the system is now 10 ether.
 
@@ -513,7 +513,7 @@ contract("VesselManager", async accounts => {
    The system rewards-per-unit-staked should now be:
 
    L_ETH = (0.995 / 20) + (10.4975*0.995  / 10) = 1.09425125 ETH
-   L_GRAIDebt = (180 / 20) + (890 / 10) = 98 GRAI */
+   L_KAIDebt = (180 / 20) + (890 / 10) = 98 KAI */
 
 				const L_ETH_expected_2_Asset = L_ETH_expected_1_Asset.add(
 					th
@@ -521,14 +521,14 @@ contract("VesselManager", async accounts => {
 						.mul(mv._1e18BN)
 						.div(A_collateral_Asset)
 				)
-				const L_GRAIDebt_expected_2 = L_GRAIDebt_expected_1_Asset.add(
+				const L_KAIDebt_expected_2 = L_KAIDebt_expected_1_Asset.add(
 					B_totalDebt_Asset.add(B_increasedTotalDebt_Asset)
-						.add(B_collateral_Asset.mul(L_GRAIDebt_expected_1_Asset).div(mv._1e18BN))
+						.add(B_collateral_Asset.mul(L_KAIDebt_expected_1_Asset).div(mv._1e18BN))
 						.mul(mv._1e18BN)
 						.div(A_collateral_Asset)
 				)
 				assert.isAtMost(th.getDifference(L_ETH_AfterBobLiquidated_Asset, L_ETH_expected_2_Asset), 100)
-				assert.isAtMost(th.getDifference(L_GRAIDebt_AfterBobLiquidated_Asset, L_GRAIDebt_expected_2), 100)
+				assert.isAtMost(th.getDifference(L_KAIDebt_AfterBobLiquidated_Asset, L_KAIDebt_expected_2), 100)
 			})
 
 			it("liquidate(): liquidates undercollateralized vessel if there are two vessels in the system", async () => {
@@ -539,14 +539,14 @@ contract("VesselManager", async accounts => {
 					extraParams: { from: bob },
 				})
 
-				// Alice creates a single vessel with 0.7 ETH and a debt of 70 GRAI, and provides 10 GRAI to SP
+				// Alice creates a single vessel with 0.7 ETH and a debt of 70 KAI, and provides 10 KAI to SP
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
 					extraParams: { from: alice },
 				})
 
-				// Alice proves 10 GRAI to SP
+				// Alice proves 10 KAI to SP
 				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
 
 				// Set ETH:USD price to 105
@@ -688,12 +688,12 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("liquidate(): given the same price and no other vessel changes, complete Pool offsets restore the TCR to its value prior to the defaulters opening vessels", async () => {
-				// Whale provides GRAI to SP
+				// Whale provides KAI to SP
 				const spDeposit = toBN(dec(100, 24))
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(4, 18)),
-					extraGRAIAmount: spDeposit,
+					extraKAIAmount: spDeposit,
 					extraParams: { from: whale },
 				})
 				await stabilityPool.provideToSP(spDeposit, validCollateral, { from: whale })
@@ -774,13 +774,13 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("liquidate(): pool offsets increase the TCR", async () => {
-				// Whale provides GRAI to SP
+				// Whale provides KAI to SP
 				const spDeposit = toBN(dec(100, 24))
 
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(4, 18)),
-					extraGRAIAmount: spDeposit,
+					extraKAIAmount: spDeposit,
 					extraParams: { from: whale },
 				})
 
@@ -1009,21 +1009,21 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(3, 18)),
-					extraGRAIAmount: spDeposit,
+					extraKAIAmount: spDeposit,
 					extraParams: { from: bob },
 				})
 
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(218, 16)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: carol },
 				})
 
 				// Bob sends tokens to Dennis, who has no vessel
 				await debtToken.transfer(dennis, spDeposit, { from: bob })
 
-				//Dennis provides GRAI to SP
+				//Dennis provides KAI to SP
 				await stabilityPool.provideToSP(spDeposit, validCollateral, { from: dennis })
 
 				// Carol gets liquidated
@@ -1075,17 +1075,17 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(3, 18)),
-					extraGRAIAmount: spDeposit,
+					extraKAIAmount: spDeposit,
 					extraParams: { from: bob },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(218, 16)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: carol },
 				})
 
-				//Bob provides GRAI to SP
+				//Bob provides KAI to SP
 				await stabilityPool.provideToSP(spDeposit, validCollateral, { from: bob })
 
 				// Carol gets liquidated
@@ -1139,24 +1139,24 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(8, 18)),
-					extraGRAIAmount: A_spDeposit,
+					extraKAIAmount: A_spDeposit,
 					extraParams: { from: alice },
 				})
 
 				const { collateral: B_collateral_Asset, totalDebt: B_debt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(218, 16)),
-					extraGRAIAmount: B_spDeposit,
+					extraKAIAmount: B_spDeposit,
 					extraParams: { from: bob },
 				})
 				const { collateral: C_collateral_Asset, totalDebt: C_debt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(210, 16)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: carol },
 				})
 
-				//Bob provides GRAI to SP
+				//Bob provides KAI to SP
 				await stabilityPool.provideToSP(B_spDeposit, validCollateral, { from: bob })
 
 				// Carol gets liquidated
@@ -1172,7 +1172,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(bob_Deposit_Before_Asset, B_spDeposit.sub(C_debt_Asset)), 1000000)
 				assert.isAtMost(th.getDifference(bob_ETHGain_Before_Asset, th.applyLiquidationFee(C_collateral_Asset)), 1000)
 
-				// Alice provides GRAI to SP
+				// Alice provides KAI to SP
 				await stabilityPool.provideToSP(A_spDeposit, validCollateral, { from: alice })
 
 				// Confirm system is not in Recovery Mode
@@ -1188,13 +1188,13 @@ contract("VesselManager", async accounts => {
 				].toString()
 				assert.equal(bob_Vessel_Status_Asset, 3)
 
-				/* Alice's GRAI Loss = (300 / 400) * 200 = 150 GRAI
+				/* Alice's KAI Loss = (300 / 400) * 200 = 150 KAI
        Alice's ETH gain = (300 / 400) * 2*0.995 = 1.4925 ETH
 
-       Bob's GRAILoss = (100 / 400) * 200 = 50 GRAI
+       Bob's KAILoss = (100 / 400) * 200 = 50 KAI
        Bob's ETH gain = (100 / 400) * 2*0.995 = 0.4975 ETH
 
-     Check Bob' SP deposit has been reduced to 50 GRAI, and his ETH gain has increased to 1.5 ETH. */
+     Check Bob' SP deposit has been reduced to 50 KAI, and his ETH gain has increased to 1.5 ETH. */
 				const alice_Deposit_After_Asset = (await stabilityPool.getCompoundedDebtTokenDeposits(alice)).toString()
 				const alice_ETHGain_After_Asset = (
 					await stabilityPool.getDepositorGains(alice, validCollateral)
@@ -1244,22 +1244,22 @@ contract("VesselManager", async accounts => {
 					ICR: toBN(dec(10, 18)),
 					extraParams: { from: whale },
 				})
-				const { GRAIAmount: A_GRAIAmount_Asset } = await openVessel({
+				const { KAIAmount: A_KAIAmount_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: toBN(dec(300, 18)),
+					extraKAIAmount: toBN(dec(300, 18)),
 					extraParams: { from: alice },
 				})
-				const { GRAIAmount: B_GRAIAmount_Asset } = await openVessel({
+				const { KAIAmount: B_KAIAmount_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: toBN(dec(200, 18)),
+					extraKAIAmount: toBN(dec(200, 18)),
 					extraParams: { from: bob },
 				})
-				const { GRAIAmount: C_GRAIAmount_Asset } = await openVessel({
+				const { KAIAmount: C_KAIAmount_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: carol },
 				})
 
@@ -1295,32 +1295,32 @@ contract("VesselManager", async accounts => {
 				assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "1")
 
 				// Confirm token balances have not changed
-				assert.equal((await debtToken.balanceOf(alice)).toString(), A_GRAIAmount_Asset.toString())
-				assert.equal((await debtToken.balanceOf(bob)).toString(), B_GRAIAmount_Asset.toString())
-				assert.equal((await debtToken.balanceOf(carol)).toString(), C_GRAIAmount_Asset.toString())
+				assert.equal((await debtToken.balanceOf(alice)).toString(), A_KAIAmount_Asset.toString())
+				assert.equal((await debtToken.balanceOf(bob)).toString(), B_KAIAmount_Asset.toString())
+				assert.equal((await debtToken.balanceOf(carol)).toString(), C_KAIAmount_Asset.toString())
 			})
 
 			it("liquidate(): liquidates based on entire/collateral debt (including pending rewards), not raw collateral/debt", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(8, 18)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: alice },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(221, 16)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: bob },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: carol },
 				})
 
-				// Defaulter opens with 60 GRAI, 0.6 ETH
+				// Defaulter opens with 60 KAI, 0.6 ETH
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
@@ -1349,11 +1349,11 @@ contract("VesselManager", async accounts => {
 				// Confirm system is not in Recovery Mode
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-				/* Liquidate defaulter. 30 GRAI and 0.3 ETH is distributed between A, B and C.
+				/* Liquidate defaulter. 30 KAI and 0.3 ETH is distributed between A, B and C.
 
-    A receives (30 * 2/4) = 15 GRAI, and (0.3*2/4) = 0.15 ETH
-    B receives (30 * 1/4) = 7.5 GRAI, and (0.3*1/4) = 0.075 ETH
-    C receives (30 * 1/4) = 7.5 GRAI, and (0.3*1/4) = 0.075 ETH
+    A receives (30 * 2/4) = 15 KAI, and (0.3*2/4) = 0.15 ETH
+    B receives (30 * 1/4) = 7.5 KAI, and (0.3*1/4) = 0.075 ETH
+    C receives (30 * 1/4) = 7.5 KAI, and (0.3*1/4) = 0.075 ETH
     */
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
@@ -1411,7 +1411,7 @@ contract("VesselManager", async accounts => {
 				assert.equal((await vesselManager.Vessels(carol, erc20.address))[th.VESSEL_STATUS_INDEX].toString(), "3")
 			})
 
-			it("liquidate(): when SP > 0, triggers GRVT reward event - increases the sum G", async () => {
+			it("liquidate(): when SP > 0, triggers SPRT reward event - increases the sum G", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
@@ -1451,7 +1451,7 @@ contract("VesselManager", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Price drops to 1ETH:100GRAI, reducing defaulters to below MCR
+				// Price drops to 1ETH:100KAI, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1463,7 +1463,7 @@ contract("VesselManager", async accounts => {
 
 				const G_After_Asset = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the GRVT reward event triggered
+				// Expect G has increased from the SPRT reward event triggered
 				assert.isTrue(G_After_Asset.gt(G_Before_Asset))
 			})
 
@@ -1515,7 +1515,7 @@ contract("VesselManager", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Price drops to 1ETH:100GRAI, reducing defaulters to below MCR
+				// Price drops to 1ETH:100KAI, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1573,7 +1573,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(liqTxA_Asset.receipt.status)
 				assert.isFalse(await sortedVessels.contains(erc20.address, A))
 
-				// A adds 10 GRAI to the SP, but less than C's debt
+				// A adds 10 KAI to the SP, but less than C's debt
 				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: A })
 
 				// Price drops
@@ -1610,16 +1610,16 @@ contract("VesselManager", async accounts => {
 				// Check C's pending coll and debt rewards are <= the coll and debt in the DefaultPool
 
 				const pendingETH_C_Asset = await vesselManager.getPendingAssetReward(erc20.address, C)
-				const pendingGRAIDebt_C_Asset = await vesselManager.getPendingDebtTokenReward(erc20.address, C)
+				const pendingKAIDebt_C_Asset = await vesselManager.getPendingDebtTokenReward(erc20.address, C)
 				const defaultPoolETH_Asset = await defaultPool.getAssetBalance(erc20.address)
-				const defaultPoolGRAIDebt_Asset = await defaultPool.getDebtTokenBalance(erc20.address)
+				const defaultPoolKAIDebt_Asset = await defaultPool.getDebtTokenBalance(erc20.address)
 
 				assert.isTrue(pendingETH_C_Asset.lte(defaultPoolETH_Asset))
-				assert.isTrue(pendingGRAIDebt_C_Asset.lte(defaultPoolGRAIDebt_Asset))
+				assert.isTrue(pendingKAIDebt_C_Asset.lte(defaultPoolKAIDebt_Asset))
 				//Check only difference is dust
 
 				assert.isAtMost(th.getDifference(pendingETH_C_Asset, defaultPoolETH_Asset), 1000)
-				assert.isAtMost(th.getDifference(pendingGRAIDebt_C_Asset, defaultPoolGRAIDebt_Asset), 1000)
+				assert.isAtMost(th.getDifference(pendingKAIDebt_C_Asset, defaultPoolKAIDebt_Asset), 1000)
 
 				// Confirm system is still in Recovery Mode
 				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -1699,7 +1699,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Price drops to 1ETH:100GRAI, reducing Bob and Carol's ICR below MCR
+				// Price drops to 1ETH:100KAI, reducing Bob and Carol's ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
@@ -1932,7 +1932,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(bob_ICR_Before_Asset.gte(mv._MCR))
 				assert.isTrue(carol_ICR_Before_Asset.lte(mv._MCR))
 
-				// Liquidate defaulter. 30 GRAI and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 GRAI, 0.1 ETH
+				// Liquidate defaulter. 30 KAI and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 KAI, 0.1 ETH
 				await vesselManagerOperations.liquidate(erc20.address, defaulter_1)
 
 				const alice_ICR_After_Asset = await vesselManager.getCurrentICR(erc20.address, alice, price)
@@ -1962,7 +1962,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(10, 18)),
-					extraGRAIAmount: dec(1, 24),
+					extraKAIAmount: dec(1, 24),
 					extraParams: { from: whale },
 				})
 
@@ -2196,11 +2196,11 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("liquidateVessels(): a liquidation sequence containing Pool offsets increases the TCR", async () => {
-				// Whale provides 500 GRAI to SP
+				// Whale provides 500 KAI to SP
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: toBN(dec(500, 18)),
+					extraKAIAmount: toBN(dec(500, 18)),
 					extraParams: { from: whale },
 				})
 
@@ -2260,7 +2260,7 @@ contract("VesselManager", async accounts => {
 
 				const TCR_Before_Asset = await th.getTCR(contracts.core, erc20.address)
 
-				// Check pool has 500 GRAI
+				// Check pool has 500 KAI
 				assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), dec(500, 18))
 
 				// Confirm system is not in Recovery Mode
@@ -2402,12 +2402,12 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("liquidateVessels(): liquidating vessels with SP deposits correctly impacts their SP deposit and ETH gain", async () => {
-				// Whale provides 400 GRAI to the SP
+				// Whale provides 400 KAI to the SP
 				const whaleDeposit = toBN(dec(40000, 18))
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: whaleDeposit,
+					extraKAIAmount: whaleDeposit,
 					extraParams: { from: whale },
 				})
 				await stabilityPool.provideToSP(whaleDeposit, validCollateral, { from: whale })
@@ -2418,13 +2418,13 @@ contract("VesselManager", async accounts => {
 				const { collateral: A_coll_Asset, totalDebt: A_debt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: A_deposit,
+					extraKAIAmount: A_deposit,
 					extraParams: { from: alice },
 				})
 				const { collateral: B_coll_Asset, totalDebt: B_debt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: B_deposit,
+					extraKAIAmount: B_deposit,
 					extraParams: { from: bob },
 				})
 				const { collateral: C_coll_Asset, totalDebt: C_debt_Asset } = await openVessel({
@@ -2446,7 +2446,7 @@ contract("VesselManager", async accounts => {
 				// Price drops
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 
-				// Check 800 GRAI in Pool
+				// Check 800 KAI in Pool
 				const totalDeposits = whaleDeposit.add(A_deposit).add(B_deposit)
 				const totalDeposits_Asset = whaleDeposit.add(A_deposit).add(B_deposit)
 				assert.equal((await stabilityPool.getTotalDebtTokenDeposits()).toString(), totalDeposits)
@@ -2467,34 +2467,34 @@ contract("VesselManager", async accounts => {
 				assert.equal((await sortedVessels.getSize(erc20.address)).toString(), "1")
 
 				/* Prior to liquidation, SP deposits were:
-    Whale: 400 GRAI
-    Alice: 100 GRAI
-    Bob:   300 GRAI
-    Carol: 0 GRAI
+    Whale: 400 KAI
+    Alice: 100 KAI
+    Bob:   300 KAI
+    Carol: 0 KAI
 
-    Total GRAI in Pool: 800 GRAI
+    Total KAI in Pool: 800 KAI
 
     Then, liquidation hits A,B,C:
 
-    Total liquidated debt = 150 + 350 + 150 = 650 GRAI
+    Total liquidated debt = 150 + 350 + 150 = 650 KAI
     Total liquidated ETH = 1.1 + 3.1 + 1.1 = 5.3 ETH
 
-    whale GRAI loss: 650 * (400/800) = 325 GRAI
-    alice GRAI loss:  650 *(100/800) = 81.25 GRAI
-    bob GRAI loss: 650 * (300/800) = 243.75 GRAI
+    whale KAI loss: 650 * (400/800) = 325 KAI
+    alice KAI loss:  650 *(100/800) = 81.25 KAI
+    bob KAI loss: 650 * (300/800) = 243.75 KAI
 
-    whale remaining deposit: (400 - 325) = 75 GRAI
-    alice remaining deposit: (100 - 81.25) = 18.75 GRAI
-    bob remaining deposit: (300 - 243.75) = 56.25 GRAI
+    whale remaining deposit: (400 - 325) = 75 KAI
+    alice remaining deposit: (100 - 81.25) = 18.75 KAI
+    bob remaining deposit: (300 - 243.75) = 56.25 KAI
 
     whale eth gain: 5*0.995 * (400/800) = 2.4875 eth
     alice eth gain: 5*0.995 *(100/800) = 0.621875 eth
     bob eth gain: 5*0.995 * (300/800) = 1.865625 eth
 
-    Total remaining deposits: 150 GRAI
+    Total remaining deposits: 150 KAI
     Total ETH gain: 4.975 ETH */
 
-				// Check remaining GRAI Deposits and ETH gain, for whale and depositors whose vessels were liquidated
+				// Check remaining KAI Deposits and ETH gain, for whale and depositors whose vessels were liquidated
 
 				const whale_Deposit_After_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(whale)
 				const alice_Deposit_After_Asset = await stabilityPool.getCompoundedDebtTokenDeposits(alice)
@@ -2551,14 +2551,14 @@ contract("VesselManager", async accounts => {
 
 				// Check total remaining deposits and ETH gain in Stability Pool
 
-				const total_GRAIinSP_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
+				const total_KAIinSP_Asset = (await stabilityPool.getTotalDebtTokenDeposits()).toString()
 				const total_ETHinSP_Asset = (await stabilityPool.getCollateral(erc20.address)).toString()
 
-				assert.isAtMost(th.getDifference(total_GRAIinSP_Asset, totalDeposits_Asset.sub(liquidatedDebt_Asset)), 1000)
+				assert.isAtMost(th.getDifference(total_KAIinSP_Asset, totalDeposits_Asset.sub(liquidatedDebt_Asset)), 1000)
 				assert.isAtMost(th.getDifference(total_ETHinSP_Asset, th.applyLiquidationFee(liquidatedColl_Asset)), 1000)
 			})
 
-			it("liquidateVessels(): when SP > 0, triggers GRVT reward event - increases the sum G", async () => {
+			it("liquidateVessels(): when SP > 0, triggers SPRT reward event - increases the sum G", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
@@ -2575,7 +2575,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(3, 18)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: B },
 				})
 				await openVessel({
@@ -2604,7 +2604,7 @@ contract("VesselManager", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Price drops to 1ETH:100GRAI, reducing defaulters to below MCR
+				// Price drops to 1ETH:100KAI, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -2617,7 +2617,7 @@ contract("VesselManager", async accounts => {
 
 				const G_After_Asset = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the GRVT reward event triggered
+				// Expect G has increased from the SPRT reward event triggered
 				assert.isTrue(G_After_Asset.gt(G_Before_Asset))
 			})
 
@@ -2638,7 +2638,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(3, 18)),
-					extraGRAIAmount: toBN(dec(100, 18)),
+					extraKAIAmount: toBN(dec(100, 18)),
 					extraParams: { from: B },
 				})
 				await openVessel({
@@ -2676,7 +2676,7 @@ contract("VesselManager", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Price drops to 1ETH:100GRAI, reducing defaulters to below MCR
+				// Price drops to 1ETH:100KAI, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -2738,7 +2738,7 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(liqTxA_Asset.receipt.status)
 				assert.isFalse(await sortedVessels.contains(erc20.address, A))
 
-				// A adds 10 GRAI to the SP, but less than C's debt
+				// A adds 10 KAI to the SP, but less than C's debt
 				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: A })
 
 				// Price drops
@@ -2778,16 +2778,16 @@ contract("VesselManager", async accounts => {
 				// Check C's pending coll and debt rewards are <= the coll and debt in the DefaultPool
 
 				const pendingETH_C_Asset = await vesselManager.getPendingAssetReward(erc20.address, C)
-				const pendingGRAIDebt_C_Asset = await vesselManager.getPendingDebtTokenReward(erc20.address, C)
+				const pendingKAIDebt_C_Asset = await vesselManager.getPendingDebtTokenReward(erc20.address, C)
 				const defaultPoolETH_Asset = await defaultPool.getAssetBalance(erc20.address)
-				const defaultPoolGRAIDebt_Asset = await defaultPool.getDebtTokenBalance(erc20.address)
+				const defaultPoolKAIDebt_Asset = await defaultPool.getDebtTokenBalance(erc20.address)
 
 				assert.isTrue(pendingETH_C_Asset.lte(defaultPoolETH_Asset))
-				assert.isTrue(pendingGRAIDebt_C_Asset.lte(defaultPoolGRAIDebt_Asset))
+				assert.isTrue(pendingKAIDebt_C_Asset.lte(defaultPoolKAIDebt_Asset))
 				//Check only difference is dust
 
 				assert.isAtMost(th.getDifference(pendingETH_C_Asset, defaultPoolETH_Asset), 1000)
-				assert.isAtMost(th.getDifference(pendingGRAIDebt_C_Asset, defaultPoolGRAIDebt_Asset), 1000)
+				assert.isAtMost(th.getDifference(pendingKAIDebt_C_Asset, defaultPoolKAIDebt_Asset), 1000)
 
 				// Confirm system is still in Recovery Mode
 				assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -2851,7 +2851,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Price drops to 1ETH:100GRAI, reducing A, B, C ICR below MCR
+				// Price drops to 1ETH:100KAI, reducing A, B, C ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
@@ -2918,13 +2918,13 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: toBN(dec(500, 18)),
+					extraKAIAmount: toBN(dec(500, 18)),
 					extraParams: { from: dennis },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: toBN(dec(500, 18)),
+					extraKAIAmount: toBN(dec(500, 18)),
 					extraParams: { from: erin },
 				})
 
@@ -2936,7 +2936,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Price drops to 1ETH:100GRAI, reducing A, B, C ICR below MCR
+				// Price drops to 1ETH:100KAI, reducing A, B, C ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
@@ -3022,7 +3022,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Price drops to 1ETH:100GRAI, reducing A, B, C ICR below MCR
+				// Price drops to 1ETH:100KAI, reducing A, B, C ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
@@ -3104,7 +3104,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Price drops to 1ETH:100GRAI, reducing A, B, C ICR below MCR
+				// Price drops to 1ETH:100KAI, reducing A, B, C ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
 
@@ -3126,7 +3126,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: spDeposit,
+					extraKAIAmount: spDeposit,
 					extraParams: { from: whale },
 				})
 
@@ -3161,7 +3161,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Price drops to 1ETH:100GRAI, reducing A, B, C ICR below MCR
+				// Price drops to 1ETH:100KAI, reducing A, B, C ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
@@ -3219,7 +3219,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: spDeposit,
+					extraKAIAmount: spDeposit,
 					extraParams: { from: whale },
 				})
 
@@ -3263,7 +3263,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Price drops to 1ETH:100GRAI, reducing A, B, C ICR below MCR
+				// Price drops to 1ETH:100KAI, reducing A, B, C ICR below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				const price = await priceFeed.getPrice(erc20.address)
 
@@ -3323,7 +3323,7 @@ contract("VesselManager", async accounts => {
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 
-			it("batchLiquidateVessels: when SP > 0, triggers GRVT reward event - increases the sum G", async () => {
+			it("batchLiquidateVessels: when SP > 0, triggers SPRT reward event - increases the sum G", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
@@ -3366,7 +3366,7 @@ contract("VesselManager", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Price drops to 1ETH:100GRAI, reducing defaulters to below MCR
+				// Price drops to 1ETH:100KAI, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -3379,7 +3379,7 @@ contract("VesselManager", async accounts => {
 
 				const G_After_Asset = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the GRVT reward event triggered
+				// Expect G has increased from the SPRT reward event triggered
 				assert.isTrue(G_After_Asset.gt(G_Before_Asset))
 			})
 
@@ -3435,7 +3435,7 @@ contract("VesselManager", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Price drops to 1ETH:100GRAI, reducing defaulters to below MCR
+				// Price drops to 1ETH:100KAI, reducing defaulters to below MCR
 				await priceFeed.setPrice(erc20.address, dec(100, 18))
 				await priceFeed.getPrice(erc20.address)
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
@@ -3462,7 +3462,7 @@ contract("VesselManager", async accounts => {
 				const { collateral: A_coll, totalDebt: A_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(310, 16)),
-					extraGRAIAmount: partialRedemptionAmount,
+					extraKAIAmount: partialRedemptionAmount,
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_debt } = await openVessel({
@@ -3528,7 +3528,7 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// Get hints for a redemption of 170 + 30 + some extra GRAI. At least 3 iterations are needed
+				// Get hints for a redemption of 170 + 30 + some extra KAI. At least 3 iterations are needed
 				// for total redemption of the given amount.
 
 				const { 1: partialRedemptionHintNICR_Asset } = await vesselManagerOperations.getRedemptionHints(
@@ -3557,13 +3557,13 @@ contract("VesselManager", async accounts => {
 					const { netDebt: aliceDebt } = await openVessel({
 						asset: erc20.address,
 						ICR: toBN(dec(290, 16)),
-						extraGRAIAmount: dec(8, 18),
+						extraKAIAmount: dec(8, 18),
 						extraParams: { from: alice },
 					})
 					const { netDebt: bobDebt } = await openVessel({
 						asset: erc20.address,
 						ICR: toBN(dec(250, 16)),
-						extraGRAIAmount: dec(10, 18),
+						extraKAIAmount: dec(10, 18),
 						extraParams: { from: bob },
 					})
 					const redemptionAmount = aliceDebt.add(bobDebt)
@@ -3571,7 +3571,7 @@ contract("VesselManager", async accounts => {
 					await openVessel({
 						asset: erc20.address,
 						ICR: toBN(dec(100, 18)),
-						extraGRAIAmount: redemptionAmount,
+						extraKAIAmount: redemptionAmount,
 						extraParams: { from: dennis },
 					})
 
@@ -3625,19 +3625,19 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(310, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(290, 16)),
-					extraGRAIAmount: dec(8, 18),
+					extraKAIAmount: dec(8, 18),
 					extraParams: { from: bob },
 				})
 				const { netDebt: C_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(250, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: carol },
 				})
 
@@ -3648,7 +3648,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: redemptionAmount,
+					extraKAIAmount: redemptionAmount,
 					extraParams: { from: dennis },
 				})
 
@@ -3723,19 +3723,19 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(310, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(290, 16)),
-					extraGRAIAmount: dec(8, 18),
+					extraKAIAmount: dec(8, 18),
 					extraParams: { from: bob },
 				})
 				const { netDebt: C_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(250, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: carol },
 				})
 
@@ -3746,7 +3746,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: redemptionAmount,
+					extraKAIAmount: redemptionAmount,
 					extraParams: { from: dennis },
 				})
 
@@ -3824,19 +3824,19 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(310, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(290, 16)),
-					extraGRAIAmount: dec(8, 18),
+					extraKAIAmount: dec(8, 18),
 					extraParams: { from: bob },
 				})
 				const { netDebt: C_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(250, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: carol },
 				})
 
@@ -3847,7 +3847,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: redemptionAmount,
+					extraKAIAmount: redemptionAmount,
 					extraParams: { from: dennis },
 				})
 
@@ -3924,19 +3924,19 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(310, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(290, 16)),
-					extraGRAIAmount: dec(8, 18),
+					extraKAIAmount: dec(8, 18),
 					extraParams: { from: bob },
 				})
 				const { netDebt: C_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(250, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: carol },
 				})
 
@@ -3946,7 +3946,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: redemptionAmount,
+					extraKAIAmount: redemptionAmount,
 					extraParams: { from: dennis },
 				})
 
@@ -4043,41 +4043,41 @@ contract("VesselManager", async accounts => {
 				const { netDebt: A_debt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(290, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_debt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(290, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: bob },
 				})
 				const { netDebt: C_debt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(290, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: carol },
 				})
 				const { totalDebt: D_totalDebt, collateral: D_coll } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: dennis },
 				})
 				const { totalDebt: E_totalDebt, collateral: E_coll } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: erin },
 				})
 
 				const redemptionAmount = A_debt.add(B_debt).add(C_debt)
 
 				// open vessel from redeemer (flyn), who has highest ICR: 100 coll, 100 debtTokens = 20,000%
-				const { GRAIAmount: F_DebtAmount } = await openVessel({
+				const { KAIAmount: F_DebtAmount } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 18)),
-					extraGRAIAmount: redemptionAmount.mul(toBN(2)),
+					extraKAIAmount: redemptionAmount.mul(toBN(2)),
 					extraParams: { from: flyn },
 				})
 
@@ -4146,19 +4146,19 @@ contract("VesselManager", async accounts => {
 				const { netDebt: A_debt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(286, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_debt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(286, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: bob },
 				})
 				const { netDebt: C_debt_Asset, totalDebt: C_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(286, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: carol },
 				})
 
@@ -4167,11 +4167,11 @@ contract("VesselManager", async accounts => {
 
 				// --- TEST ---
 
-				// open vessel from redeemer.  Redeemer has highest ICR (100ETH, 100 GRAI), 20000%
-				const { GRAIAmount: F_GRAIAmount_Asset } = await openVessel({
+				// open vessel from redeemer.  Redeemer has highest ICR (100ETH, 100 KAI), 20000%
+				const { KAIAmount: F_KAIAmount_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 18)),
-					extraGRAIAmount: redemptionAmount_Asset.mul(toBN(2)),
+					extraKAIAmount: redemptionAmount_Asset.mul(toBN(2)),
 					extraParams: { from: flyn },
 				})
 
@@ -4192,9 +4192,9 @@ contract("VesselManager", async accounts => {
 					{ from: flyn }
 				)
 
-				// Check Flyn's redemption has reduced his balance from 100 to (100-40) = 60 GRAI
+				// Check Flyn's redemption has reduced his balance from 100 to (100-40) = 60 KAI
 				const flynBalance = (await debtToken.balanceOf(flyn)).toString()
-				th.assertIsApproximatelyEqual(flynBalance, F_GRAIAmount_Asset.sub(redemptionAmount_Asset))
+				th.assertIsApproximatelyEqual(flynBalance, F_KAIAmount_Asset.sub(redemptionAmount_Asset))
 
 				// Check debt of Alice, Bob, Carol
 
@@ -4221,7 +4221,7 @@ contract("VesselManager", async accounts => {
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(1_000, "ether"),
-					await getOpenVesselGRAIAmount(dec(10_000, 18), erc20.address),
+					await getOpenVesselKAIAmount(dec(10_000, 18), erc20.address),
 					A,
 					A,
 					{ from: A }
@@ -4229,7 +4229,7 @@ contract("VesselManager", async accounts => {
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(1_000, "ether"),
-					await getOpenVesselGRAIAmount(dec(20_000, 18), erc20.address),
+					await getOpenVesselKAIAmount(dec(20_000, 18), erc20.address),
 					B,
 					B,
 					{ from: B }
@@ -4237,7 +4237,7 @@ contract("VesselManager", async accounts => {
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(1_000, "ether"),
-					await getOpenVesselGRAIAmount(dec(30_000, 18), erc20.address),
+					await getOpenVesselKAIAmount(dec(30_000, 18), erc20.address),
 					C,
 					C,
 					{ from: C }
@@ -4271,7 +4271,7 @@ contract("VesselManager", async accounts => {
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(1000, "ether"),
-					await getOpenVesselGRAIAmount(dec(6000, 18), erc20.address),
+					await getOpenVesselKAIAmount(dec(6000, 18), erc20.address),
 					A,
 					A,
 					{ from: A }
@@ -4279,7 +4279,7 @@ contract("VesselManager", async accounts => {
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(1000, "ether"),
-					await getOpenVesselGRAIAmount(dec(20000, 18), erc20.address),
+					await getOpenVesselKAIAmount(dec(20000, 18), erc20.address),
 					B,
 					B,
 					{ from: B }
@@ -4287,7 +4287,7 @@ contract("VesselManager", async accounts => {
 				await borrowerOperations.openVessel(
 					erc20.address,
 					dec(1000, "ether"),
-					await getOpenVesselGRAIAmount(dec(30000, 18), erc20.address),
+					await getOpenVesselKAIAmount(dec(30000, 18), erc20.address),
 					C,
 					C,
 					{ from: C }
@@ -4302,9 +4302,9 @@ contract("VesselManager", async accounts => {
 				// Skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-				// GRAI redemption is 55000 GRAI
-				const GRAIRedemption = dec(55000, 18)
-				await th.redeemCollateralAndGetTxObject(B, contracts.core, GRAIRedemption, erc20.address)
+				// KAI redemption is 55000 KAI
+				const KAIRedemption = dec(55000, 18)
+				await th.redeemCollateralAndGetTxObject(B, contracts.core, KAIRedemption, erc20.address)
 
 				// Check B, C closed and A remains active
 
@@ -4322,19 +4322,19 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(363, 16)),
-					extraGRAIAmount: dec(5, 18),
+					extraKAIAmount: dec(5, 18),
 					extraParams: { from: alice },
 				})
 				const { netDebt: B_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(344, 16)),
-					extraGRAIAmount: dec(8, 18),
+					extraKAIAmount: dec(8, 18),
 					extraParams: { from: bob },
 				})
 				const { netDebt: C_netDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(333, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: carol },
 				})
 				const partialRedemptionAmount = toBN(2)
@@ -4344,7 +4344,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: redemptionAmount,
+					extraKAIAmount: redemptionAmount,
 					extraParams: { from: dennis },
 				})
 
@@ -4431,7 +4431,7 @@ contract("VesselManager", async accounts => {
 			it.skip("redeemCollateral(): can redeem if there is zero active debt but non-zero debt in DefaultPool", async () => {
 				// --- SETUP ---
 
-				const amount = await getOpenVesselGRAIAmount(dec(110, 18))
+				const amount = await getOpenVesselKAIAmount(dec(110, 18))
 
 				await openVessel({
 					asset: erc20.address,
@@ -4441,7 +4441,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(133, 16)),
-					extraGRAIAmount: amount,
+					extraKAIAmount: amount,
 					extraParams: { from: bob },
 				})
 
@@ -4480,14 +4480,14 @@ contract("VesselManager", async accounts => {
 
 				const carol_ETHBalance_After_Asset = toBN(await erc20.address(carol))
 
-				const expectedTotalETHDrawn = toBN(amount).div(toBN(100)) // convert 100 GRAI to ETH at ETH:USD price of 100
+				const expectedTotalETHDrawn = toBN(amount).div(toBN(100)) // convert 100 KAI to ETH at ETH:USD price of 100
 				const expectedReceivedETH_Asset = expectedTotalETHDrawn.sub(ETHFee_Asset)
 
 				const receivedETH_Asset = carol_ETHBalance_After_Asset.sub(carol_ETHBalance_Before_Asset)
 				assert.isTrue(expectedReceivedETH_Asset.eq(receivedETH_Asset))
 
-				const carol_GRAIBalance_After = (await debtToken.balanceOf(carol)).toString()
-				assert.equal(carol_GRAIBalance_After, "0")
+				const carol_KAIBalance_After = (await debtToken.balanceOf(carol)).toString()
+				assert.equal(carol_KAIBalance_After, "0")
 			})
 			it("redeemCollateral(): doesn't touch Vessels with ICR < 110%", async () => {
 				// --- SETUP ---
@@ -4497,14 +4497,14 @@ contract("VesselManager", async accounts => {
 					ICR: toBN(dec(13, 18)),
 					extraParams: { from: alice },
 				})
-				const { GRAIAmount: B_GRAIAmount_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
+				const { KAIAmount: B_KAIAmount_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(133, 16)),
-					extraGRAIAmount: A_debt_Asset,
+					extraKAIAmount: A_debt_Asset,
 					extraParams: { from: bob },
 				})
 
-				await debtToken.transfer(carol, B_GRAIAmount_Asset, { from: bob })
+				await debtToken.transfer(carol, B_KAIAmount_Asset, { from: bob })
 
 				// Put Bob's Vessel below 110% ICR
 				const price = dec(100, 18)
@@ -4544,19 +4544,19 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: amount1,
+					extraKAIAmount: amount1,
 					extraParams: { from: alice },
 				})
 				const { totalDebt: B_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: amount1,
+					extraKAIAmount: amount1,
 					extraParams: { from: bob },
 				})
 				const { totalDebt: C_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: amount1,
+					extraKAIAmount: amount1,
 					extraParams: { from: carol },
 				})
 
@@ -4564,7 +4564,7 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: D_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(195, 16)),
-					extraGRAIAmount: redemptionAmount_Asset,
+					extraKAIAmount: redemptionAmount_Asset,
 					extraParams: { from: dennis },
 				})
 
@@ -4586,7 +4586,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: whale },
 				})
 
@@ -4664,11 +4664,11 @@ contract("VesselManager", async accounts => {
 					extraParams: { from: whale },
 				})
 
-				// Alice opens vessel and transfers 500GRAI to Erin, the would-be redeemer
+				// Alice opens vessel and transfers 500KAI to Erin, the would-be redeemer
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(500, 18),
+					extraKAIAmount: dec(500, 18),
 					extraParams: { from: alice },
 				})
 				await debtToken.transfer(erin, dec(500, 18), { from: alice })
@@ -4713,25 +4713,25 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(30, 18),
+					extraKAIAmount: dec(30, 18),
 					extraParams: { from: C },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(40, 18),
+					extraKAIAmount: dec(40, 18),
 					extraParams: { from: D },
 				})
 
@@ -4752,25 +4752,25 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(10, 18),
+					extraKAIAmount: dec(10, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(30, 18),
+					extraKAIAmount: dec(30, 18),
 					extraParams: { from: C },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(40, 18),
+					extraKAIAmount: dec(40, 18),
 					extraParams: { from: D },
 				})
 
@@ -4795,25 +4795,25 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(80, 18),
+					extraKAIAmount: dec(80, 18),
 					extraParams: { from: A },
 				})
 				const { totalDebt: B_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(90, 18),
+					extraKAIAmount: dec(90, 18),
 					extraParams: { from: B },
 				})
 				const { totalDebt: C_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
 				const expectedTotalSupply_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset)
 
-				// Check total GRAI supply
+				// Check total KAI supply
 				const totalSupply = await debtToken.totalSupply()
 				th.assertIsApproximatelyEqual(totalSupply, expectedTotalSupply_Asset)
 
@@ -4822,8 +4822,8 @@ contract("VesselManager", async accounts => {
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-				// GRAI redemption is 27 USD: a redemption that incurs a fee of 27/(270 * 2) = 5%
-				const attemptedGRAIRedemption_Asset = expectedTotalSupply_Asset.div(toBN(10))
+				// KAI redemption is 27 USD: a redemption that incurs a fee of 27/(270 * 2) = 5%
+				const attemptedKAIRedemption_Asset = expectedTotalSupply_Asset.div(toBN(10))
 
 				// Max fee is <5%
 				const lessThan5pct = "49999999999999999"
@@ -4831,7 +4831,7 @@ contract("VesselManager", async accounts => {
 					th.redeemCollateralAndGetTxObject(
 						A,
 						contracts.core,
-						attemptedGRAIRedemption_Asset,
+						attemptedKAIRedemption_Asset,
 						erc20.address,
 						lessThan5pct
 					),
@@ -4845,7 +4845,7 @@ contract("VesselManager", async accounts => {
 					th.redeemCollateralAndGetTxObject(
 						A,
 						contracts.core,
-						attemptedGRAIRedemption_Asset,
+						attemptedKAIRedemption_Asset,
 						erc20.address,
 						dec(1, 16)
 					),
@@ -4859,7 +4859,7 @@ contract("VesselManager", async accounts => {
 					th.redeemCollateralAndGetTxObject(
 						A,
 						contracts.core,
-						attemptedGRAIRedemption_Asset,
+						attemptedKAIRedemption_Asset,
 						erc20.address,
 						dec(3754, 13)
 					),
@@ -4873,7 +4873,7 @@ contract("VesselManager", async accounts => {
 					th.redeemCollateralAndGetTxObject(
 						A,
 						contracts.core,
-						attemptedGRAIRedemption_Asset,
+						attemptedKAIRedemption_Asset,
 						erc20.address,
 						dec(5, 15)
 					),
@@ -4885,25 +4885,25 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(9500, 18),
+					extraKAIAmount: dec(9500, 18),
 					extraParams: { from: A },
 				})
 				const { totalDebt: B_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(395, 16)),
-					extraGRAIAmount: dec(9000, 18),
+					extraKAIAmount: dec(9000, 18),
 					extraParams: { from: B },
 				})
 				const { totalDebt: C_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(390, 16)),
-					extraGRAIAmount: dec(10000, 18),
+					extraKAIAmount: dec(10000, 18),
 					extraParams: { from: C },
 				})
 
 				const expectedTotalSupply_Asset = A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset)
 
-				// Check total GRAI supply
+				// Check total KAI supply
 				const totalSupply = await debtToken.totalSupply()
 				th.assertIsApproximatelyEqual(totalSupply, expectedTotalSupply_Asset)
 
@@ -4912,19 +4912,19 @@ contract("VesselManager", async accounts => {
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-				// GRAI redemption fee with 10% of the supply will be 0.5% + 1/(10*2)
-				const attemptedGRAIRedemption_Asset = expectedTotalSupply_Asset.div(toBN(10))
+				// KAI redemption fee with 10% of the supply will be 0.5% + 1/(10*2)
+				const attemptedKAIRedemption_Asset = expectedTotalSupply_Asset.div(toBN(10))
 
 				// Attempt with maxFee > 5.5%
 				const price = await priceFeed.getPrice(erc20.address)
-				const ETHDrawn_Asset = attemptedGRAIRedemption_Asset.mul(mv._1e18BN).div(price)
+				const ETHDrawn_Asset = attemptedKAIRedemption_Asset.mul(mv._1e18BN).div(price)
 
 				const slightlyMoreThanFee_Asset = await vesselManager.getRedemptionFeeWithDecay(erc20.address, ETHDrawn_Asset)
 
 				const tx1_Asset = await th.redeemCollateralAndGetTxObject(
 					A,
 					contracts.core,
-					attemptedGRAIRedemption_Asset,
+					attemptedKAIRedemption_Asset,
 					erc20.address,
 					slightlyMoreThanFee_Asset
 				)
@@ -4938,7 +4938,7 @@ contract("VesselManager", async accounts => {
 				const tx2_Asset = await th.redeemCollateralAndGetTxObject(
 					C,
 					contracts.core,
-					attemptedGRAIRedemption_Asset,
+					attemptedKAIRedemption_Asset,
 					erc20.address,
 					exactSameFee_Asset
 				)
@@ -4950,7 +4950,7 @@ contract("VesselManager", async accounts => {
 				const tx3_Asset = await th.redeemCollateralAndGetTxObject(
 					B,
 					contracts.core,
-					attemptedGRAIRedemption_Asset,
+					attemptedKAIRedemption_Asset,
 					erc20.address,
 					dec(1, 17)
 				)
@@ -4963,7 +4963,7 @@ contract("VesselManager", async accounts => {
 				const tx4_Asset = await th.redeemCollateralAndGetTxObject(
 					A,
 					contracts.core,
-					attemptedGRAIRedemption_Asset,
+					attemptedKAIRedemption_Asset,
 					erc20.address,
 					dec(37659, 13)
 				)
@@ -4976,7 +4976,7 @@ contract("VesselManager", async accounts => {
 				const tx5_Asset = await th.redeemCollateralAndGetTxObject(
 					C,
 					contracts.core,
-					attemptedGRAIRedemption_Asset,
+					attemptedKAIRedemption_Asset,
 					erc20.address,
 					dec(1, 18)
 				)
@@ -4995,25 +4995,25 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: B_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: bob },
 				})
 				const { totalDebt: C_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(195, 16)),
-					extraGRAIAmount: dec(200, 18),
+					extraKAIAmount: dec(200, 18),
 					extraParams: { from: carol },
 				})
 				const { totalDebt: D_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(400, 18),
+					extraKAIAmount: dec(400, 18),
 					extraParams: { from: dennis },
 				})
 				const { totalDebt: F_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: flyn },
 				})
 
@@ -5021,11 +5021,11 @@ contract("VesselManager", async accounts => {
 					.add(D_totalDebt_Asset)
 					.add(F_totalDebt_Asset)
 
-				// Alice opens vessel and transfers GRAI to Erin, the would-be redeemer
+				// Alice opens vessel and transfers KAI to Erin, the would-be redeemer
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: redemptionAmount_Asset,
+					extraKAIAmount: redemptionAmount_Asset,
 					extraParams: { from: alice },
 				})
 				await debtToken.transfer(erin, redemptionAmount_Asset, {
@@ -5069,18 +5069,18 @@ contract("VesselManager", async accounts => {
 					await stabilityPool.getDepositorGains(dennis, validCollateral)
 				)[1][idx].toString()
 
-				// Check the remaining GRAI and ETH in Stability Pool after liquidation is non-zero
+				// Check the remaining KAI and ETH in Stability Pool after liquidation is non-zero
 
-				const GRAIinSP_Asset = await stabilityPool.getTotalDebtTokenDeposits()
+				const KAIinSP_Asset = await stabilityPool.getTotalDebtTokenDeposits()
 				const ETHinSP_Asset = await stabilityPool.getCollateral(erc20.address)
 
-				assert.isTrue(GRAIinSP_Asset.gte(mv._zeroBN))
+				assert.isTrue(KAIinSP_Asset.gte(mv._zeroBN))
 				assert.isTrue(ETHinSP_Asset.gte(mv._zeroBN))
 
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-				// Erin redeems GRAI
+				// Erin redeems KAI
 				await th.redeemCollateral(erin, contracts.core, redemptionAmount_Asset, erc20.address, th._100pct)
 
 				price = await priceFeed.getPrice(erc20.address)
@@ -5127,7 +5127,7 @@ contract("VesselManager", async accounts => {
 				const { collateral: A_coll, totalDebt: A_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(400, 18),
+					extraKAIAmount: dec(400, 18),
 					extraParams: { from: alice },
 				})
 				await debtToken.transfer(erin, toBN(dec(400, 18)), { from: alice })
@@ -5136,19 +5136,19 @@ contract("VesselManager", async accounts => {
 				const { collateral: B_coll, totalDebt: B_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(590, 18),
+					extraKAIAmount: dec(590, 18),
 					extraParams: { from: bob },
 				})
 				const { collateral: C_coll, totalDebt: C_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(1990, 18),
+					extraKAIAmount: dec(1990, 18),
 					extraParams: { from: carol },
 				})
 				const { collateral: D_coll, totalDebt: D_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(500, 16)),
-					extraGRAIAmount: dec(1990, 18),
+					extraKAIAmount: dec(1990, 18),
 					extraParams: { from: dennis },
 				})
 
@@ -5212,11 +5212,11 @@ contract("VesselManager", async accounts => {
 					extraParams: { from: whale },
 				})
 
-				// Alice opens vessel and transfers 400 GRAI to Erin, the would-be redeemer
+				// Alice opens vessel and transfers 400 KAI to Erin, the would-be redeemer
 				const { collateral: A_coll_Asset, totalDebt: A_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(400, 18),
+					extraKAIAmount: dec(400, 18),
 					extraParams: { from: alice },
 				})
 				await debtToken.transfer(erin, toBN(dec(400, 18)).mul(toBN(2)), { from: alice })
@@ -5230,19 +5230,19 @@ contract("VesselManager", async accounts => {
 				const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(590, 18),
+					extraKAIAmount: dec(590, 18),
 					extraParams: { from: bob },
 				})
 				const { collateral: C_coll_Asset, totalDebt: C_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(1990, 18),
+					extraKAIAmount: dec(1990, 18),
 					extraParams: { from: carol },
 				})
 				const { collateral: D_coll_Asset, totalDebt: D_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(500, 16)),
-					extraGRAIAmount: dec(1990, 18),
+					extraKAIAmount: dec(1990, 18),
 					extraParams: { from: dennis },
 				})
 
@@ -5268,7 +5268,7 @@ contract("VesselManager", async accounts => {
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-				// Erin tries to redeem 1000 GRAI
+				// Erin tries to redeem 1000 KAI
 				try {
 					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
 						await vesselManagerOperations.getRedemptionHints(erc20.address, dec(1000, 18), price, 0))
@@ -5294,7 +5294,7 @@ contract("VesselManager", async accounts => {
 					assert.include(error.message, "VesselManagerOperations__InsufficientDebtTokenBalance")
 				}
 
-				// Erin tries to redeem 801 GRAI
+				// Erin tries to redeem 801 KAI
 				try {
 					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
 						await vesselManagerOperations.getRedemptionHints(erc20.address, "801000000000000000000", price, 0))
@@ -5320,7 +5320,7 @@ contract("VesselManager", async accounts => {
 					assert.include(error.message, "VesselManagerOperations__InsufficientDebtTokenBalance")
 				}
 
-				// Erin tries to redeem 239482309 GRAI
+				// Erin tries to redeem 239482309 KAI
 
 				try {
 					;({ 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
@@ -5347,7 +5347,7 @@ contract("VesselManager", async accounts => {
 					assert.include(error.message, "VesselManagerOperations__InsufficientDebtTokenBalance")
 				}
 
-				// Erin tries to redeem 2^256 - 1 GRAI
+				// Erin tries to redeem 2^256 - 1 KAI
 				const maxBytes32 = toBN("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 
 				try {
@@ -5386,7 +5386,7 @@ contract("VesselManager", async accounts => {
 				const { collateral: A_coll } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(400, 16)),
-					extraGRAIAmount: dec(4990, 18),
+					extraKAIAmount: dec(4990, 18),
 					extraParams: { from: alice },
 				})
 				await debtToken.transfer(erin, toBN(dec(1_000, 18)).mul(toBN(2)), { from: alice })
@@ -5397,19 +5397,19 @@ contract("VesselManager", async accounts => {
 				const { collateral: B_coll } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(300, 16)),
-					extraGRAIAmount: dec(1_590, 18),
+					extraKAIAmount: dec(1_590, 18),
 					extraParams: { from: bob },
 				})
 				const { collateral: C_coll } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(600, 16)),
-					extraGRAIAmount: dec(1_090, 18),
+					extraKAIAmount: dec(1_090, 18),
 					extraParams: { from: carol },
 				})
 				const { collateral: D_coll } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(800, 16)),
-					extraGRAIAmount: dec(1_090, 18),
+					extraKAIAmount: dec(1_090, 18),
 					extraParams: { from: dennis },
 				})
 
@@ -5519,13 +5519,13 @@ contract("VesselManager", async accounts => {
 			// it doesn’t make much sense as there’s now min debt enforced and at least one vessel must remain active
 			// the only way to test it is before any vessel is opened
 			it("redeemCollateral(): reverts if there is zero outstanding system debt", async () => {
-				// --- SETUP --- illegally mint GRAI to Bob
+				// --- SETUP --- illegally mint KAI to Bob
 				await debtToken.unprotectedMint(bob, dec(100, 18))
 
 				assert.equal(await debtToken.balanceOf(bob), dec(100, 18))
 
 				const price = await priceFeed.getPrice(erc20.address)
-				// Bob tries to redeem his illegally obtained GRAI
+				// Bob tries to redeem his illegally obtained KAI
 
 				const { 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
 					await vesselManagerOperations.getRedemptionHints(erc20.address, dec(100, 18), price, 0)
@@ -5551,7 +5551,7 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("redeemCollateral(): reverts if caller's tries to redeem more than the outstanding system debt", async () => {
-				// --- SETUP --- illegally mint GRAI to Bob
+				// --- SETUP --- illegally mint KAI to Bob
 				await debtToken.unprotectedMint(bob, "202000000000000000000")
 
 				assert.equal(await debtToken.balanceOf(bob), "202000000000000000000")
@@ -5559,13 +5559,13 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: C_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(1000, 16)),
-					extraGRAIAmount: dec(40, 18),
+					extraKAIAmount: dec(40, 18),
 					extraParams: { from: carol },
 				})
 				const { totalDebt: D_totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(1000, 16)),
-					extraGRAIAmount: dec(40, 18),
+					extraKAIAmount: dec(40, 18),
 					extraParams: { from: dennis },
 				})
 
@@ -5584,7 +5584,7 @@ contract("VesselManager", async accounts => {
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-				// Bob attempts to redeem his ill-gotten 101 GRAI, from a system that has 100 GRAI outstanding debt
+				// Bob attempts to redeem his ill-gotten 101 KAI, from a system that has 100 KAI outstanding debt
 
 				try {
 					const redemptionTx_Asset = await vesselManagerOperations.redeemCollateral(
@@ -5613,19 +5613,19 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -5639,7 +5639,7 @@ contract("VesselManager", async accounts => {
 
 				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
-				// Check A's balance has decreased by 10 GRAI
+				// Check A's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				// Check baseRate is now non-zero
@@ -5647,9 +5647,9 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 GRVT
+				// time fast-forwards 1 year, and multisig stakes 1 SPRT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtStaking.stake(dec(1, 18), { from: multisig })
+				await sprtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5659,19 +5659,19 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -5681,7 +5681,7 @@ contract("VesselManager", async accounts => {
 				const A_balanceBefore = await debtToken.balanceOf(A)
 				const B_balanceBefore = await debtToken.balanceOf(B)
 
-				// A redeems 10 GRAI
+				// A redeems 10 KAI
 				const redemptionTx_A_Asset = await th.redeemCollateralAndGetTxObject(
 					A,
 					contracts.core,
@@ -5690,7 +5690,7 @@ contract("VesselManager", async accounts => {
 				)
 				const timeStamp_A_Asset = await th.getTimestampFromTx(redemptionTx_A_Asset, web3)
 
-				// Check A's balance has decreased by 10 GRAI
+				// Check A's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				// Check baseRate is now non-zero
@@ -5698,7 +5698,7 @@ contract("VesselManager", async accounts => {
 				const baseRate_1_Asset = await vesselManager.baseRate(erc20.address)
 				assert.isTrue(baseRate_1_Asset.gt(toBN("0")))
 
-				// B redeems 10 GRAI
+				// B redeems 10 KAI
 
 				const redemptionTx_B_Asset = await th.redeemCollateralAndGetTxObject(
 					B,
@@ -5708,7 +5708,7 @@ contract("VesselManager", async accounts => {
 				)
 				const timeStamp_B_Asset = await th.getTimestampFromTx(redemptionTx_B_Asset, web3)
 
-				// Check B's balance has decreased by 10 GRAI
+				// Check B's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(B), B_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				// Check negligible time difference (< 1 minute) between txs
@@ -5729,19 +5729,19 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -5750,10 +5750,10 @@ contract("VesselManager", async accounts => {
 
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
-				// A redeems 10 GRAI
+				// A redeems 10 KAI
 				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
-				// Check A's balance has decreased by 10 GRAI
+				// Check A's balance has decreased by 10 KAI
 				assert.equal(A_balanceBefore.sub(await debtToken.balanceOf(A)).toString(), toBN(dec(10, 18)).toString())
 
 				// Check baseRate is now non-zero
@@ -5792,10 +5792,10 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(lastFeeOpTime_3_Asset.gt(lastFeeOpTime_1_Asset))
 			})
 
-			it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to GRVT staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 GRVT
+			it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to SPRT staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPRT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtStaking.stake(dec(1, 18), { from: multisig })
+				await sprtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5805,19 +5805,19 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -5827,10 +5827,10 @@ contract("VesselManager", async accounts => {
 				const treasuryBalanceBefore = await erc20.balanceOf(treasury)
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
-				// A redeems 10 GRAI
+				// A redeems 10 KAI
 				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
-				// Check A's balance has decreased by 10 GRAI
+				// Check A's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				// Check baseRate is now non-zero
@@ -5838,16 +5838,16 @@ contract("VesselManager", async accounts => {
 				const baseRate_1_Asset = await vesselManager.baseRate(erc20.address)
 				assert.isTrue(baseRate_1_Asset.gt(toBN("0")))
 
-				// Check GRVT Staking contract balance after is non-zero
+				// Check SPRT Staking contract balance after is non-zero
 
 				const treasuryBalanceAfter = await erc20.balanceOf(treasury)
 				assert.isTrue(treasuryBalanceAfter.gt(treasuryBalanceBefore))
 			})
 
-			it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-GRVT-staked in GRVT Staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 GRVT
+			it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-SPRT-staked in SPRT Staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPRT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtStaking.stake(dec(1, 18), { from: multisig })
+				await sprtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5857,34 +5857,34 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
 				// Check baseRate == 0
 				assert.equal(await vesselManager.baseRate(erc20.address), "0")
 
-				// Check GRVT Staking ETH-fees-per-GRVT-staked before is zero
-				assert.equal(await grvtStaking.F_ASSETS(erc20.address), "0")
+				// Check SPRT Staking ETH-fees-per-SPRT-staked before is zero
+				assert.equal(await sprtStaking.F_ASSETS(erc20.address), "0")
 
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
-				// A redeems 10 GRAI
+				// A redeems 10 KAI
 				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
-				// Check A's balance has decreased by 10 GRAI
+				// Check A's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				// Check baseRate is now non-zero
@@ -5892,14 +5892,14 @@ contract("VesselManager", async accounts => {
 				const baseRate_1_Asset = await vesselManager.baseRate(erc20.address)
 				assert.isTrue(baseRate_1_Asset.gt(toBN("0")))
 
-				// Check GRVT Staking ETH-fees-per-GRVT-staked after is non-zero
-				assert.isTrue((await grvtStaking.F_ASSETS(erc20.address)).gt("0"))
+				// Check SPRT Staking ETH-fees-per-SPRT-staked after is non-zero
+				assert.isTrue((await sprtStaking.F_ASSETS(erc20.address)).gt("0"))
 			})
 
-			it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee to GRVT staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 GRVT
+			it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee to SPRT staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPRT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtStaking.stake(dec(1, 18), { from: multisig })
+				await sprtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5909,19 +5909,19 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -5931,10 +5931,10 @@ contract("VesselManager", async accounts => {
 				const A_balanceBefore = await debtToken.balanceOf(A)
 				const B_balanceBefore = await debtToken.balanceOf(B)
 
-				// A redeems 10 GRAI
+				// A redeems 10 KAI
 				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
-				// Check A's balance has decreased by 10 GRAI
+				// Check A's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				// Check baseRate is now non-zero
@@ -5944,22 +5944,22 @@ contract("VesselManager", async accounts => {
 
 				const treasuryBalanceBefore = await erc20.balanceOf(treasury)
 
-				// B redeems 10 GRAI
+				// B redeems 10 KAI
 				await th.redeemCollateral(B, contracts.core, dec(10, 18), erc20.address)
 
-				// Check B's balance has decreased by 10 GRAI
+				// Check B's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(B), B_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				const treasuryBalanceAfter = await erc20.balanceOf(treasury)
 
-				// check GRVT Staking balance has increased
+				// check SPRT Staking balance has increased
 				assert.isTrue(treasuryBalanceAfter.gt(treasuryBalanceBefore))
 			})
 
-			it("redeemCollateral(): a redemption made at a non-zero base rate increases ETH-per-GRVT-staked in the staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 GRVT
+			it("redeemCollateral(): a redemption made at a non-zero base rate increases ETH-per-SPRT-staked in the staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPRT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtStaking.stake(dec(1, 18), { from: multisig })
+				await sprtStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5969,19 +5969,19 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -5991,10 +5991,10 @@ contract("VesselManager", async accounts => {
 				const A_balanceBefore = await debtToken.balanceOf(A)
 				const B_balanceBefore = await debtToken.balanceOf(B)
 
-				// A redeems 10 GRAI
+				// A redeems 10 KAI
 				await th.redeemCollateral(A, contracts.core, dec(10, 18), erc20.address)
 
-				// Check A's balance has decreased by 10 GRAI
+				// Check A's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(A), A_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				// Check baseRate is now non-zero
@@ -6004,15 +6004,15 @@ contract("VesselManager", async accounts => {
 
 				const treasuryBalanceBefore = await erc20.balanceOf(treasury)
 
-				// B redeems 10 GRAI
+				// B redeems 10 KAI
 				await th.redeemCollateral(B, contracts.core, dec(10, 18), erc20.address)
 
-				// Check B's balance has decreased by 10 GRAI
+				// Check B's balance has decreased by 10 KAI
 				assert.equal(await debtToken.balanceOf(B), B_balanceBefore.sub(toBN(dec(10, 18))).toString())
 
 				const treasuryBalanceAfter = await erc20.balanceOf(treasury)
 
-				// check GRVT Staking balance has increased
+				// check SPRT Staking balance has increased
 				assert.isTrue(treasuryBalanceAfter.gt(treasuryBalanceBefore))
 			})
 
@@ -6026,19 +6026,19 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: A_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				const { totalDebt: B_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				const { totalDebt: C_totalDebt } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -6089,38 +6089,38 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("redeemCollateral(): a full redemption (leaving vessel with 0 debt), closes the vessel", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 GRVT
+				// time fast-forwards 1 year, and multisig stakes 1 SPRT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtStaking.stake(dec(1, 18), { from: multisig })
+				await sprtStaking.stake(dec(1, 18), { from: multisig })
 
 				const { netDebt: W_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(20, 18)),
-					extraGRAIAmount: dec(10000, 18),
+					extraKAIAmount: dec(10000, 18),
 					extraParams: { from: whale },
 				})
 				const { netDebt: A_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				const { netDebt: B_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				const { netDebt: C_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 				const { netDebt: D_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(280, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: D },
 				})
 
@@ -6132,7 +6132,7 @@ contract("VesselManager", async accounts => {
 				const B_balanceBefore_Asset = toBN(await erc20.balanceOf(B))
 				const C_balanceBefore_Asset = toBN(await erc20.balanceOf(C))
 
-				// whale redeems 360 GRAI.  Expect this to fully redeem A, B, C, and partially redeem D.
+				// whale redeems 360 KAI.  Expect this to fully redeem A, B, C, and partially redeem D.
 				await th.redeemCollateral(whale, contracts.core, redemptionAmount_Asset, erc20.address)
 
 				// Check A, B, C have been closed
@@ -6146,38 +6146,38 @@ contract("VesselManager", async accounts => {
 			})
 
 			const redeemCollateral3Full1Partial = async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 GRVT
+				// time fast-forwards 1 year, and multisig stakes 1 SPRT
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await grvtStaking.stake(dec(1, 18), { from: multisig })
+				await sprtStaking.stake(dec(1, 18), { from: multisig })
 
 				const { netDebt: W_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(20, 18)),
-					extraGRAIAmount: dec(10000, 18),
+					extraKAIAmount: dec(10000, 18),
 					extraParams: { from: whale },
 				})
 				const { netDebt: A_netDebt_Asset, collateral: A_coll_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				const { netDebt: B_netDebt_Asset, collateral: B_coll_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				const { netDebt: C_netDebt_Asset, collateral: C_coll_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 				const { netDebt: D_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(280, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: D },
 				})
 
@@ -6200,7 +6200,7 @@ contract("VesselManager", async accounts => {
 				const baseRate_Asset = await vesselManager.baseRate(erc20.address)
 				assert.equal(baseRate_Asset, "0")
 
-				// whale redeems GRAI.  Expect this to fully redeem A, B, C, and partially redeem D.
+				// whale redeems KAI.  Expect this to fully redeem A, B, C, and partially redeem D.
 				await th.redeemCollateral(whale, contracts.core, redemptionAmount_Asset, erc20.address)
 
 				// Check A, B, C have been closed
@@ -6270,31 +6270,31 @@ contract("VesselManager", async accounts => {
 				const { netDebt: W_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(20, 18)),
-					extraGRAIAmount: dec(10000, 18),
+					extraKAIAmount: dec(10000, 18),
 					extraParams: { from: whale },
 				})
 				const { netDebt: A_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				const { netDebt: B_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				const { netDebt: C_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 				const { totalDebt: D_totalDebt_Asset, collateral: D_coll_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(280, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: D },
 				})
 
@@ -6304,7 +6304,7 @@ contract("VesselManager", async accounts => {
 				// skip bootstrapping phase
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-				// whale redeems GRAI.  Expect this to fully redeem A, B, C, and partially redeem 15 GRAI from D.
+				// whale redeems KAI.  Expect this to fully redeem A, B, C, and partially redeem 15 KAI from D.
 
 				const redemptionTx_Asset = await th.redeemCollateralAndGetTxObject(
 					whale,
@@ -6422,19 +6422,19 @@ contract("VesselManager", async accounts => {
 				const { collateral: A_coll_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: A },
 				})
 				const { collateral: B_coll_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(190, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: B },
 				})
 				const { collateral: C_coll_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(180, 16)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: C },
 				})
 
@@ -6466,10 +6466,10 @@ contract("VesselManager", async accounts => {
 			it("redeemCollateral(): reverts if fee eats up all returned collateral", async () => {
 				// --- SETUP ---
 
-				const { GRAIAmount: GRAIAmount_Asset } = await openVessel({
+				const { KAIAmount: KAIAmount_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(200, 16)),
-					extraGRAIAmount: dec(1, 24),
+					extraKAIAmount: dec(1, 24),
 					extraParams: { from: alice },
 				})
 				await openVessel({
@@ -6490,12 +6490,12 @@ contract("VesselManager", async accounts => {
 				for (let i = 0; i < 2; i++) {
 					// Find hints for redeeming
 					const { 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-						await vesselManagerOperations.getRedemptionHints(erc20.address, GRAIAmount_Asset, price, 0)
+						await vesselManagerOperations.getRedemptionHints(erc20.address, KAIAmount_Asset, price, 0)
 
 					// Don't pay for gas, as it makes it easier to calculate the received Ether
 					const redemptionTx_Asset = await vesselManagerOperations.redeemCollateral(
 						erc20.address,
-						GRAIAmount_Asset,
+						KAIAmount_Asset,
 						firstRedemptionHint_Asset,
 						alice,
 						alice,
@@ -6515,9 +6515,9 @@ contract("VesselManager", async accounts => {
 					})
 					await borrowerOperations.adjustVessel(
 						erc20.address,
-						GRAIAmount_Asset.mul(mv._1e18BN).div(price),
+						KAIAmount_Asset.mul(mv._1e18BN).div(price),
 						0,
-						GRAIAmount_Asset,
+						KAIAmount_Asset,
 						true,
 						alice,
 						alice,
@@ -6526,12 +6526,12 @@ contract("VesselManager", async accounts => {
 				}
 
 				const { 0: firstRedemptionHint_Asset, 1: partialRedemptionHintNICR_Asset } =
-					await vesselManagerOperations.getRedemptionHints(erc20.address, GRAIAmount_Asset, price, 0)
+					await vesselManagerOperations.getRedemptionHints(erc20.address, KAIAmount_Asset, price, 0)
 
 				await assertRevert(
 					vesselManagerOperations.redeemCollateral(
 						erc20.address,
-						GRAIAmount_Asset,
+						KAIAmount_Asset,
 						firstRedemptionHint_Asset,
 						alice,
 						alice,
@@ -6549,25 +6549,25 @@ contract("VesselManager", async accounts => {
 		})
 
 		describe("Extras", async () => {
-			it("getPendingDebtTokenReward(): returns 0 if there is no pending GRAIDebt reward", async () => {
+			it("getPendingDebtTokenReward(): returns 0 if there is no pending KAIDebt reward", async () => {
 				// Make some vessels
 
 				const { totalDebt: totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: defaulter_1 },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(3, 18)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: carol },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(20, 18)),
-					extraGRAIAmount: totalDebt_Asset,
+					extraKAIAmount: totalDebt_Asset,
 					extraParams: { from: whale },
 				})
 
@@ -6583,14 +6583,14 @@ contract("VesselManager", async accounts => {
 
 				// Confirm there are no pending rewards from liquidation
 
-				const current_L_GRAIDebt_Asset = await vesselManager.L_Debts(erc20.address)
-				assert.equal(current_L_GRAIDebt_Asset, 0)
+				const current_L_KAIDebt_Asset = await vesselManager.L_Debts(erc20.address)
+				assert.equal(current_L_KAIDebt_Asset, 0)
 
-				const carolSnapshot_L_GRAIDebt_Asset = (await vesselManager.rewardSnapshots(carol, erc20.address))[1]
-				assert.equal(carolSnapshot_L_GRAIDebt_Asset, 0)
+				const carolSnapshot_L_KAIDebt_Asset = (await vesselManager.rewardSnapshots(carol, erc20.address))[1]
+				assert.equal(carolSnapshot_L_KAIDebt_Asset, 0)
 
-				const carol_PendingGRAIDebtReward_Asset = await vesselManager.getPendingDebtTokenReward(erc20.address, carol)
-				assert.equal(carol_PendingGRAIDebtReward_Asset, 0)
+				const carol_PendingKAIDebtReward_Asset = await vesselManager.getPendingDebtTokenReward(erc20.address, carol)
+				assert.equal(carol_PendingKAIDebtReward_Asset, 0)
 			})
 
 			it("getPendingETHReward(): returns 0 if there is no pending ETH reward", async () => {
@@ -6599,19 +6599,19 @@ contract("VesselManager", async accounts => {
 				const { totalDebt: totalDebt_Asset } = await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(2, 18)),
-					extraGRAIAmount: dec(100, 18),
+					extraKAIAmount: dec(100, 18),
 					extraParams: { from: defaulter_1 },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(3, 18)),
-					extraGRAIAmount: dec(20, 18),
+					extraKAIAmount: dec(20, 18),
 					extraParams: { from: carol },
 				})
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(20, 18)),
-					extraGRAIAmount: totalDebt_Asset,
+					extraKAIAmount: totalDebt_Asset,
 					extraParams: { from: whale },
 				})
 
@@ -6648,7 +6648,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(ICR, 0)
 			})
 
-			it("computeICR(): returns 2^256-1 for ETH:USD = 100, coll = 1 ETH, debt = 100 GRAI", async () => {
+			it("computeICR(): returns 2^256-1 for ETH:USD = 100, coll = 1 ETH, debt = 100 KAI", async () => {
 				const price = dec(100, 18)
 				const coll = dec(1, "ether")
 				const debt = dec(100, 18)
@@ -6657,7 +6657,7 @@ contract("VesselManager", async accounts => {
 				assert.equal(ICR, dec(1, 18))
 			})
 
-			it("computeICR(): returns correct ICR for ETH:USD = 100, coll = 200 ETH, debt = 30 GRAI", async () => {
+			it("computeICR(): returns correct ICR for ETH:USD = 100, coll = 200 ETH, debt = 30 KAI", async () => {
 				const price = dec(100, 18)
 				const coll = dec(200, "ether")
 				const debt = dec(30, 18)
@@ -6666,7 +6666,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(ICR, "666666666666666666666"), 1000)
 			})
 
-			it("computeICR(): returns correct ICR for ETH:USD = 250, coll = 1350 ETH, debt = 127 GRAI", async () => {
+			it("computeICR(): returns correct ICR for ETH:USD = 250, coll = 1350 ETH, debt = 127 KAI", async () => {
 				const price = "250000000000000000000"
 				const coll = "1350000000000000000000"
 				const debt = "127000000000000000000"
@@ -6675,7 +6675,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(ICR, "2657480314960630000000"), 1000000)
 			})
 
-			it("computeICR(): returns correct ICR for ETH:USD = 100, coll = 1 ETH, debt = 54321 GRAI", async () => {
+			it("computeICR(): returns correct ICR for ETH:USD = 100, coll = 1 ETH, debt = 54321 KAI", async () => {
 				const price = dec(100, 18)
 				const coll = dec(1, "ether")
 				const debt = "54321000000000000000000"
@@ -6859,7 +6859,7 @@ contract("VesselManager", async accounts => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(150, 16)),
-					extraGRAIAmount: B_totalDebt_Asset,
+					extraKAIAmount: B_totalDebt_Asset,
 					extraParams: { from: A },
 				})
 

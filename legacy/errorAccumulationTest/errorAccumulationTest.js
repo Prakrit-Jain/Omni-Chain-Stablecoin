@@ -24,7 +24,7 @@ contract("VesselManager", async accounts => {
 
 	beforeEach(async () => {
 		contracts = await deploymentHelper.deployLiquityCore()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		const SPRTContracts = await deploymentHelper.deploySPRTContractsHardhat(accounts[0])
 
 		VUSDToken = contracts.vusdToken
 		priceFeed = contracts.priceFeedTestnet
@@ -34,12 +34,12 @@ contract("VesselManager", async accounts => {
 		defaultPool = contracts.defaultPool
 		borrowerOperations = contracts.borrowerOperations
 
-		GRVTStaking = GRVTContracts.GRVTStaking
-		GRVTToken = GRVTContracts.GRVTToken
-		communityIssuance = GRVTContracts.communityIssuance
+		SPRTStaking = SPRTContracts.SPRTStaking
+		SPRTToken = SPRTContracts.SPRTToken
+		communityIssuance = SPRTContracts.communityIssuance
 
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		await deploymentHelper.connectCoreContracts(contracts, SPRTContracts)
+		await deploymentHelper.connectSPRTContractsToCore(SPRTContracts, contracts)
 
 		stabilityPool = await StabilityPool.at(
 			await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS)

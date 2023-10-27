@@ -157,7 +157,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	 * that tracks P, S, G, scale, and epoch.
 	 * depositor's snapshot is updated only when they
 	 * deposit or withdraw from stability pool
-	 * depositSnapshots are used to allocate GRVT rewards, calculate compoundedDepositAmount
+	 * depositSnapshots are used to allocate SPRT rewards, calculate compoundedDepositAmount
 	 * and to calculate how much Collateral amount the depositor is entitled to
 	 */
 	mapping(address => Snapshots) public depositSnapshots; // depositor address -> snapshots struct
@@ -190,16 +190,16 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	mapping(address => mapping(uint128 => mapping(uint128 => uint256))) public epochToScaleToSum;
 
 	/*
-	 * Similarly, the sum 'G' is used to calculate GRVT gains. During it's lifetime, each deposit d_t earns a GRVT gain of
+	 * Similarly, the sum 'G' is used to calculate SPRT gains. During it's lifetime, each deposit d_t earns a SPRT gain of
 	 *  ( d_t * [G - G_t] )/P_t, where G_t is the depositor's snapshot of G taken at time t when  the deposit was made.
 	 *
-	 *  GRVT reward events occur are triggered by depositor operations (new deposit, topup, withdrawal), and liquidations.
-	 *  In each case, the GRVT reward is issued (i.e. G is updated), before other state changes are made.
+	 *  SPRT reward events occur are triggered by depositor operations (new deposit, topup, withdrawal), and liquidations.
+	 *  In each case, the SPRT reward is issued (i.e. G is updated), before other state changes are made.
 	 */
 	mapping(uint128 => mapping(uint128 => uint256)) public epochToScaleToG;
 
-	// Error tracker for the error correction in the GRVT issuance calculation
-	uint256 public lastGRVTError;
+	// Error tracker for the error correction in the SPRT issuance calculation
+	uint256 public lastSPRTError;
 	// Error trackers for the error correction in the offset calculation
 	uint256[] public lastAssetError_Offset;
 	uint256 public lastDebtTokenLossError_Offset;
@@ -261,9 +261,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 	/**
 	 * @notice Used to provide debt tokens to the stability Pool
-	 * @dev Triggers a GRVT issuance, based on time passed since the last issuance.
-	 * The GRVT issuance is shared between *all* depositors
-	 * - Sends depositor's accumulated gains (GRVT, collateral assets) to depositor
+	 * @dev Triggers a SPRT issuance, based on time passed since the last issuance.
+	 * The SPRT issuance is shared between *all* depositors
+	 * - Sends depositor's accumulated gains (SPRT, collateral assets) to depositor
 	 * - Increases deposit stake, and takes new snapshots for each.
 	 * @param _amount amount of debtToken provided
 	 * @param _assets an array of collaterals to be claimed. 
@@ -274,14 +274,14 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 
 		uint256 initialDeposit = deposits[msg.sender];
 
-		_triggerGRVTIssuance();
+		_triggerSPRTIssuance();
 
 		(address[] memory gainAssets, uint256[] memory gainAmounts) = getDepositorGains(msg.sender, _assets);
 		uint256 compoundedDeposit = getCompoundedDebtTokenDeposits(msg.sender);
 		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
-		// First pay out any GRVT gains
-		_payOutGRVTGains(msg.sender);
+		// First pay out any SPRT gains
+		_payOutSPRTGains(msg.sender);
 
 		// just pulls debtTokens into the pool, updates totalDeposits variable for the stability pool and throws an event
 		_sendToStabilityPool(msg.sender, _amount);
@@ -318,7 +318,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 initialDeposit = deposits[msg.sender];
 		_requireUserHasDeposit(initialDeposit);
 
-		_triggerGRVTIssuance();
+		_triggerSPRTIssuance();
 
 		(assets, amounts) = getDepositorGains(msg.sender, _assets);
 
@@ -327,8 +327,8 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 debtTokensToWithdraw = GravitaMath._min(_amount, compoundedDeposit);
 		uint256 loss = initialDeposit - compoundedDeposit; // Needed only for event log
 
-		// First pay out any GRVT gains
-		_payOutGRVTGains(msg.sender);
+		// First pay out any SPRT gains
+		_payOutSPRTGains(msg.sender);
 		_sendToDepositor(msg.sender, debtTokensToWithdraw);
 
 		// Update deposit
@@ -339,36 +339,36 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		emit GainsWithdrawn(msg.sender, assets, amounts, loss); // loss required for event log
 	}
 
-	// --- GRVT issuance functions ---
+	// --- SPRT issuance functions ---
 
-	function _triggerGRVTIssuance() internal {
+	function _triggerSPRTIssuance() internal {
 		if (communityIssuance != address(0)) {
-			uint256 GRVTIssuance = ICommunityIssuance(communityIssuance).issueGRVT();
-			_updateG(GRVTIssuance);
+			uint256 SPRTIssuance = ICommunityIssuance(communityIssuance).issueSPRT();
+			_updateG(SPRTIssuance);
 		}
 	}
 
-	function _updateG(uint256 _GRVTIssuance) internal {
+	function _updateG(uint256 _SPRTIssuance) internal {
 		uint256 cachedTotalDebtTokenDeposits = totalDebtTokenDeposits; // cached to save an SLOAD
 		/*
-		 * When total deposits is 0, G is not updated. In this case, the GRVT issued can not be obtained by later
+		 * When total deposits is 0, G is not updated. In this case, the SPRT issued can not be obtained by later
 		 * depositors - it is missed out on, and remains in the balanceof the CommunityIssuance contract.
 		 *
 		 */
-		if (cachedTotalDebtTokenDeposits == 0 || _GRVTIssuance == 0) {
+		if (cachedTotalDebtTokenDeposits == 0 || _SPRTIssuance == 0) {
 			return;
 		}
-		uint256 GRVTPerUnitStaked = _computeGRVTPerUnitStaked(_GRVTIssuance, cachedTotalDebtTokenDeposits);
-		uint256 marginalGRVTGain = GRVTPerUnitStaked * P;
+		uint256 SPRTPerUnitStaked = _computeSPRTPerUnitStaked(_SPRTIssuance, cachedTotalDebtTokenDeposits);
+		uint256 marginalSPRTGain = SPRTPerUnitStaked * P;
 		uint256 newEpochToScaleToG = epochToScaleToG[currentEpoch][currentScale];
-		newEpochToScaleToG += marginalGRVTGain;
+		newEpochToScaleToG += marginalSPRTGain;
 		epochToScaleToG[currentEpoch][currentScale] = newEpochToScaleToG;
 		emit G_Updated(newEpochToScaleToG, currentEpoch, currentScale);
 	}
 
-	function _computeGRVTPerUnitStaked(uint256 _GRVTIssuance, uint256 _totalDeposits) internal returns (uint256) {
+	function _computeSPRTPerUnitStaked(uint256 _SPRTIssuance, uint256 _totalDeposits) internal returns (uint256) {
 		/*
-		 * Calculate the GRVT-per-unit staked.  Division uses a "feedback" error correction, to keep the
+		 * Calculate the SPRT-per-unit staked.  Division uses a "feedback" error correction, to keep the
 		 * cumulative error low in the running total G:
 		 *
 		 * 1) Form a numerator which compensates for the floor division error that occurred the last time this
@@ -378,10 +378,10 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		 * 4) Store this error for use in the next correction when this function is called.
 		 * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
 		 */
-		uint256 GRVTNumerator = (_GRVTIssuance * DECIMAL_PRECISION) + lastGRVTError;
-		uint256 GRVTPerUnitStaked = GRVTNumerator / _totalDeposits;
-		lastGRVTError = GRVTNumerator - (GRVTPerUnitStaked * _totalDeposits);
-		return GRVTPerUnitStaked;
+		uint256 SPRTNumerator = (_SPRTIssuance * DECIMAL_PRECISION) + lastSPRTError;
+		uint256 SPRTPerUnitStaked = SPRTNumerator / _totalDeposits;
+		lastSPRTError = SPRTNumerator - (SPRTPerUnitStaked * _totalDeposits);
+		return SPRTPerUnitStaked;
 	}
 
 	// --- Liquidation functions ---
@@ -400,7 +400,7 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		if (cachedTotalDebtTokenDeposits == 0 || _debtToOffset == 0) {
 			return;
 		}
-		_triggerGRVTIssuance();
+		_triggerSPRTIssuance();
 		(uint256 collGainPerUnitStaked, uint256 debtLossPerUnitStaked) = _computeRewardsPerUnitStaked(
 			_asset,
 			_amountAdded,
@@ -625,28 +625,28 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 	}
 
 	/*
-	 * Calculate the GRVT gain earned by a deposit since its last snapshots were taken.
-	 * Given by the formula:  GRVT = d0 * (G - G(0))/P(0)
+	 * Calculate the SPRT gain earned by a deposit since its last snapshots were taken.
+	 * Given by the formula:  SPRT = d0 * (G - G(0))/P(0)
 	 * where G(0) and P(0) are the depositor's snapshots of the sum G and product P, respectively.
 	 * d0 is the last recorded deposit value.
 	 */
-	function getDepositorGRVTGain(address _depositor) public view override returns (uint256) {
+	function getDepositorSPRTGain(address _depositor) public view override returns (uint256) {
 		uint256 initialDeposit = deposits[_depositor];
 		if (initialDeposit == 0) {
 			return 0;
 		}
 
 		Snapshots storage snapshots = depositSnapshots[_depositor];
-		return _getGRVTGainFromSnapshots(initialDeposit, snapshots);
+		return _getSPRTGainFromSnapshots(initialDeposit, snapshots);
 	}
 
-	function _getGRVTGainFromSnapshots(
+	function _getSPRTGainFromSnapshots(
 		uint256 initialStake,
 		Snapshots storage snapshots
 	) internal view returns (uint256) {
 		/*
-		 * Grab the sum 'G' from the epoch at which the stake was made. The GRVT gain may span up to one scale change.
-		 * If it does, the second portion of the GRVT gain is scaled by 1e9.
+		 * Grab the sum 'G' from the epoch at which the stake was made. The SPRT gain may span up to one scale change.
+		 * If it does, the second portion of the SPRT gain is scaled by 1e9.
 		 * If the gain spans no scale change, the second portion will be 0.
 		 */
 		uint128 epochSnapshot = snapshots.epoch;
@@ -657,9 +657,9 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		uint256 firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot] - G_Snapshot;
 		uint256 secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot + 1] / SCALE_FACTOR;
 
-		uint256 GRVTGain = (initialStake * (firstPortion + secondPortion)) / P_Snapshot / DECIMAL_PRECISION;
+		uint256 SPRTGain = (initialStake * (firstPortion + secondPortion)) / P_Snapshot / DECIMAL_PRECISION;
 
-		return GRVTGain;
+		return SPRTGain;
 	}
 
 	// --- Compounded deposit and compounded System stake ---
@@ -826,11 +826,11 @@ contract StabilityPool is ReentrancyGuardUpgradeable, UUPSUpgradeable, GravitaBa
 		return depositSnapshots[_depositor].S[_asset];
 	}
 
-	function _payOutGRVTGains(address _depositor) internal {
+	function _payOutSPRTGains(address _depositor) internal {
 		if (address(communityIssuance) != address(0)) {
-			uint256 depositorGRVTGain = getDepositorGRVTGain(_depositor);
-			ICommunityIssuance(communityIssuance).sendGRVT(_depositor, depositorGRVTGain);
-			emit GRVTPaidToDepositor(_depositor, depositorGRVTGain);
+			uint256 depositorSPRTGain = getDepositorSPRTGain(_depositor);
+			ICommunityIssuance(communityIssuance).sendSPRT(_depositor, depositorSPRTGain);
+			emit SPRTPaidToDepositor(_depositor, depositorSPRTGain);
 		}
 	}
 

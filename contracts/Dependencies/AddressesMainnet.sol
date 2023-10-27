@@ -12,7 +12,7 @@ abstract contract AddressesMainnet {
 	address public constant defaultPool = 0x84446698694B348EaeCE187b55df06AB4Ce72b35;
 	address public constant feeCollector = 0x4928c8F8c20A1E3C295DddBe05095A9aBBdB3d14;
 	address public constant gasPoolAddress = 0x40E0e274A42D9b1a9D4B64dC6c46D21228d45C20;
-	address public constant grvtStaking = address(0);
+	address public constant sprtStaking = address(0);
 	address public constant priceFeed = 0x89F1ecCF2644902344db02788A790551Bb070351;
 	address public constant sortedVessels = 0xF31D88232F36098096d1eB69f0de48B53a1d18Ce;
 	address public constant stabilityPool = 0x4F39F12064D83F6Dd7A2BDb0D53aF8be560356A6;

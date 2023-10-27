@@ -29,8 +29,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	communityIssuance = contracts.grvt.communityIssuance
+	sprtStaking = contracts.sprt.sprtStaking
+	communityIssuance = contracts.sprt.communityIssuance
 }
 
 contract("VesselManager - Redistribution reward calculations", async accounts => {
@@ -155,7 +155,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			A_coll_Asset.add(C_coll_Asset).add(th.applyLiquidationFee(B_coll_Asset.add(D_coll_Asset)))
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -286,7 +286,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 				.add(th.applyLiquidationFee(C_coll_Asset.add(F_coll_Asset)))
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 	////
@@ -439,7 +439,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 
 		assert.isAtMost(th.getDifference(entireSystemColl_Asset, F_coll_Asset.add(gainedETH_Asset)), 1000)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(1000, 18)).toString())
 	})
 
@@ -452,31 +452,31 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: A },
 		})
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: B },
 		})
 		const { collateral: C_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: C },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(20000, 16)),
-			extraGRAIAmount: dec(10, 18),
+			extraKAIAmount: dec(10, 18),
 			extraParams: { from: D },
 		})
 		const { collateral: E_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: E },
 		})
 
@@ -583,31 +583,31 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: A },
 		})
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: B },
 		})
 		const { collateral: C_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: C },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(20000, 16)),
-			extraGRAIAmount: dec(10, 18),
+			extraKAIAmount: dec(10, 18),
 			extraParams: { from: D },
 		})
 		const { collateral: E_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100000, 18),
+			extraKAIAmount: dec(100000, 18),
 			extraParams: { from: E },
 		})
 
@@ -753,13 +753,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset, totalDebt: C_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 
@@ -797,13 +797,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.isTrue(txA_Asset.receipt.status)
 		assert.isFalse(await sortedVessels.contains(erc20.address, alice))
 
-		// Expect Bob now holds all Ether and GRAIDebt in the system: 2 + 0.4975+0.4975*0.995+0.995 Ether and 110*3 GRAI (10 each for gas compensation)
+		// Expect Bob now holds all Ether and KAIDebt in the system: 2 + 0.4975+0.4975*0.995+0.995 Ether and 110*3 KAI (10 each for gas compensation)
 
 		const bob_Coll_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 			.add(await vesselManager.getPendingAssetReward(erc20.address, bob))
 			.toString()
 
-		const bob_GRAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
+		const bob_KAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
 			.add(await vesselManager.getPendingDebtTokenReward(erc20.address, bob))
 			.toString()
 
@@ -819,7 +819,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.isAtMost(th.getDifference(bob_Coll_Asset, expected_B_coll_Asset), 1000)
 		assert.isAtMost(
 			th.getDifference(
-				bob_GRAIDebt_Asset,
+				bob_KAIDebt_Asset,
 				A_totalDebt_Asset.mul(toBN(2)).add(B_totalDebt_Asset).add(C_totalDebt_Asset)
 			),
 			1000
@@ -837,13 +837,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset, totalDebt: C_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 
@@ -868,7 +868,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: D_coll_Asset, totalDebt: D_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -882,24 +882,24 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.isFalse(await sortedVessels.contains(erc20.address, dennis))
 
 		/* Bob rewards:
-     L1: 1/2*0.995 ETH, 55 GRAI
-     L2: (2.4975/3.995)*0.995 = 0.622 ETH , 110*(2.4975/3.995)= 68.77 GRAIDebt
+     L1: 1/2*0.995 ETH, 55 KAI
+     L2: (2.4975/3.995)*0.995 = 0.622 ETH , 110*(2.4975/3.995)= 68.77 KAIDebt
     coll: 3.1195 ETH
-    debt: 233.77 GRAIDebt
+    debt: 233.77 KAIDebt
      Alice rewards:
-    L1 1/2*0.995 ETH, 55 GRAI
-    L2 (1.4975/3.995)*0.995 = 0.3730 ETH, 110*(1.4975/3.995) = 41.23 GRAIDebt
+    L1 1/2*0.995 ETH, 55 KAI
+    L2 (1.4975/3.995)*0.995 = 0.3730 ETH, 110*(1.4975/3.995) = 41.23 KAIDebt
     coll: 1.8705 ETH
-    debt: 146.23 GRAIDebt
+    debt: 146.23 KAIDebt
     totalColl: 4.99 ETH
-    totalDebt 380 GRAI (includes 50 each for gas compensation)
+    totalDebt 380 KAI (includes 50 each for gas compensation)
     */
 
 		const bob_Coll_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 			.add(await vesselManager.getPendingAssetReward(erc20.address, bob))
 			.toString()
 
-		const bob_GRAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
+		const bob_KAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
 			.add(await vesselManager.getPendingDebtTokenReward(erc20.address, bob))
 			.toString()
 
@@ -907,7 +907,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			.add(await vesselManager.getPendingAssetReward(erc20.address, alice))
 			.toString()
 
-		const alice_GRAIDebt_Asset = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_DEBT_INDEX]
+		const alice_KAIDebt_Asset = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_DEBT_INDEX]
 			.add(await vesselManager.getPendingDebtTokenReward(erc20.address, alice))
 			.toString()
 
@@ -925,7 +925,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		).add(B_collAfterL1_Asset.mul(D_totalDebt_Asset).div(totalCollAfterL1_Asset))
 
 		assert.isAtMost(th.getDifference(bob_Coll_Asset, expected_B_coll_Asset), 1000)
-		assert.isAtMost(th.getDifference(bob_GRAIDebt_Asset, expected_B_debt_Asset), 10000)
+		assert.isAtMost(th.getDifference(bob_KAIDebt_Asset, expected_B_debt_Asset), 10000)
 
 		const A_collAfterL1_Asset = A_coll_Asset.add(
 			A_coll_Asset.mul(th.applyLiquidationFee(C_coll_Asset)).div(A_coll_Asset.add(B_coll_Asset))
@@ -938,9 +938,9 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		).add(A_collAfterL1_Asset.mul(D_totalDebt_Asset).div(totalCollAfterL1_Asset))
 
 		assert.isAtMost(th.getDifference(alice_Coll_Asset, expected_A_coll_Asset), 1000)
-		assert.isAtMost(th.getDifference(alice_GRAIDebt_Asset, expected_A_debt_Asset), 10000)
+		assert.isAtMost(th.getDifference(alice_KAIDebt_Asset, expected_A_debt_Asset), 10000)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -956,20 +956,20 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(400, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: _998_Ether,
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: dec(1000, "ether"),
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -1104,7 +1104,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			totalCollAfterL1_Asset.add(th.applyLiquidationFee(E_coll_Asset))
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		th.assertIsApproximatelyEqual((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -1120,20 +1120,20 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(400, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: _998_Ether,
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: dec(1000, "ether"),
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -1271,7 +1271,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			totalCollAfterL1_Asset.add(th.applyLiquidationFee(E_coll_Asset))
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		th.assertIsApproximatelyEqual((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -1288,13 +1288,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset, totalDebt: C_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 
@@ -1334,14 +1334,14 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.isTrue(txA_Asset.receipt.status)
 		assert.isFalse(await sortedVessels.contains(erc20.address, alice))
 
-		// Expect Bob now holds all Ether and GRAIDebt in the system: 2.5 Ether and 300 GRAI
+		// Expect Bob now holds all Ether and KAIDebt in the system: 2.5 Ether and 300 KAI
 		// 1 + 0.995/2 - 0.5 + 1.4975*0.995
 
 		const bob_Coll_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 			.add(await vesselManager.getPendingAssetReward(erc20.address, bob))
 			.toString()
 
-		const bob_GRAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
+		const bob_KAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
 			.add(await vesselManager.getPendingDebtTokenReward(erc20.address, bob))
 			.toString()
 
@@ -1357,13 +1357,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.isAtMost(th.getDifference(bob_Coll_Asset, expected_B_coll_Asset), 1000)
 		assert.isAtMost(
 			th.getDifference(
-				bob_GRAIDebt_Asset,
+				bob_KAIDebt_Asset,
 				A_totalDebt_Asset.mul(toBN(2)).add(B_totalDebt_Asset).add(C_totalDebt_Asset)
 			),
 			1000
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -1378,13 +1378,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset, totalDebt: B_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset, totalDebt: C_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 
@@ -1411,7 +1411,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: D_coll_Asset, totalDebt: D_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -1425,24 +1425,24 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		assert.isFalse(await sortedVessels.contains(erc20.address, dennis))
 
 		/* Bob rewards:
-     L1: 0.4975 ETH, 55 GRAI
-     L2: (0.9975/2.495)*0.995 = 0.3978 ETH , 110*(0.9975/2.495)= 43.98 GRAIDebt
+     L1: 0.4975 ETH, 55 KAI
+     L2: (0.9975/2.495)*0.995 = 0.3978 ETH , 110*(0.9975/2.495)= 43.98 KAIDebt
     coll: (1 + 0.4975 - 0.5 + 0.3968) = 1.3953 ETH
-    debt: (110 + 55 + 43.98 = 208.98 GRAIDebt 
+    debt: (110 + 55 + 43.98 = 208.98 KAIDebt 
      Alice rewards:
-    L1 0.4975, 55 GRAI
-    L2 (1.4975/2.495)*0.995 = 0.5972 ETH, 110*(1.4975/2.495) = 66.022 GRAIDebt
+    L1 0.4975, 55 KAI
+    L2 (1.4975/2.495)*0.995 = 0.5972 ETH, 110*(1.4975/2.495) = 66.022 KAIDebt
     coll: (1 + 0.4975 + 0.5972) = 2.0947 ETH
-    debt: (50 + 55 + 66.022) = 171.022 GRAI Debt
+    debt: (50 + 55 + 66.022) = 171.022 KAI Debt
     totalColl: 3.49 ETH
-    totalDebt 380 GRAI (Includes 50 in each vessel for gas compensation)
+    totalDebt 380 KAI (Includes 50 in each vessel for gas compensation)
     */
 
 		const bob_Coll_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_COLL_INDEX]
 			.add(await vesselManager.getPendingAssetReward(erc20.address, bob))
 			.toString()
 
-		const bob_GRAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
+		const bob_KAIDebt_Asset = (await vesselManager.Vessels(bob, erc20.address))[th.VESSEL_DEBT_INDEX]
 			.add(await vesselManager.getPendingDebtTokenReward(erc20.address, bob))
 			.toString()
 
@@ -1450,7 +1450,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			.add(await vesselManager.getPendingAssetReward(erc20.address, alice))
 			.toString()
 
-		const alice_GRAIDebt_Asset = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_DEBT_INDEX]
+		const alice_KAIDebt_Asset = (await vesselManager.Vessels(alice, erc20.address))[th.VESSEL_DEBT_INDEX]
 			.add(await vesselManager.getPendingDebtTokenReward(erc20.address, alice))
 			.toString()
 
@@ -1468,7 +1468,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		).add(B_collAfterL1_Asset.mul(D_totalDebt_Asset).div(totalCollAfterL1_Asset))
 
 		assert.isAtMost(th.getDifference(bob_Coll_Asset, expected_B_coll_Asset), 1000)
-		assert.isAtMost(th.getDifference(bob_GRAIDebt_Asset, expected_B_debt_Asset), 10000)
+		assert.isAtMost(th.getDifference(bob_KAIDebt_Asset, expected_B_debt_Asset), 10000)
 
 		const A_collAfterL1_Asset = A_coll_Asset.add(
 			A_coll_Asset.mul(th.applyLiquidationFee(C_coll_Asset)).div(A_coll_Asset.add(B_coll_Asset))
@@ -1481,7 +1481,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		).add(A_collAfterL1_Asset.mul(D_totalDebt_Asset).div(totalCollAfterL1_Asset))
 
 		assert.isAtMost(th.getDifference(alice_Coll_Asset, expected_A_coll_Asset), 1000)
-		assert.isAtMost(th.getDifference(alice_GRAIDebt_Asset, expected_A_debt_Asset), 10000)
+		assert.isAtMost(th.getDifference(alice_KAIDebt_Asset, expected_A_debt_Asset), 10000)
 
 		const entireSystemColl_Asset = (await activePool.getAssetBalance(erc20.address)).add(
 			await defaultPool.getAssetBalance(erc20.address)
@@ -1503,7 +1503,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			A_totalDebt_Asset.add(B_totalDebt_Asset).add(C_totalDebt_Asset).add(D_totalDebt_Asset)
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		th.assertIsApproximatelyEqual((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -1519,20 +1519,20 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(400, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: _998_Ether,
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: dec(1000, "ether"),
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -1667,7 +1667,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			totalCollAfterL1_Asset.add(th.applyLiquidationFee(E_coll_Asset))
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -1683,20 +1683,20 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(400, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: _998_Ether,
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: carol },
 		})
 		const { collateral: D_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: dec(1000, "ether"),
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -1849,7 +1849,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 			totalCollAfterL1_Asset.add(th.applyLiquidationFee(E_coll_Asset))
 		)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(400, 18)).toString())
 	})
 
@@ -1861,19 +1861,19 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: A_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100, 18),
+			extraKAIAmount: dec(100, 18),
 			extraParams: { from: alice },
 		})
 		const { collateral: B_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100, 18),
+			extraKAIAmount: dec(100, 18),
 			extraParams: { from: bob },
 		})
 		const { collateral: C_coll_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(100, 18),
+			extraKAIAmount: dec(100, 18),
 			extraParams: { from: carol },
 		})
 
@@ -1927,7 +1927,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: D_coll_Asset, totalDebt: D_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -1999,13 +1999,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: E_coll_Asset, totalDebt: E_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: erin },
 		})
 		const { collateral: F_coll_Asset, totalDebt: F_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			ICR: toBN(dec(200, 16)),
-			extraGRAIAmount: dec(110, 18),
+			extraKAIAmount: dec(110, 18),
 			extraParams: { from: freddy },
 		})
 
@@ -2102,7 +2102,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		th.assertIsApproximatelyEqual(totalStakesSnapshot_Asset, totalStakesSnapshotAfterL3_Asset)
 		th.assertIsApproximatelyEqual(totalCollateralSnapshot_Asset, totalCollateralSnapshotAfterL3_Asset)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(600, 18)).toString())
 	})
 
@@ -2185,7 +2185,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: D_coll_Asset, totalDebt: D_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: toBN(dec(35, 15)),
-			extraGRAIAmount: dec(100, 18),
+			extraKAIAmount: dec(100, 18),
 			extraParams: { from: dennis },
 		})
 
@@ -2260,13 +2260,13 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		const { collateral: E_coll_Asset, totalDebt: E_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: toBN(dec(1, 22)),
-			extraGRAIAmount: dec(100, 18),
+			extraKAIAmount: dec(100, 18),
 			extraParams: { from: erin },
 		})
 		const { collateral: F_coll_Asset, totalDebt: F_totalDebt_Asset } = await openVessel({
 			asset: erc20.address,
 			assetSent: toBN("700000000000000"),
-			extraGRAIAmount: dec(100, 18),
+			extraKAIAmount: dec(100, 18),
 			extraParams: { from: freddy },
 		})
 
@@ -2366,7 +2366,7 @@ contract("VesselManager - Redistribution reward calculations", async accounts =>
 		th.assertIsApproximatelyEqual(totalStakesSnapshot_Asset, totalStakesSnapshotAfterL3_Asset)
 		th.assertIsApproximatelyEqual(totalCollateralSnapshot_Asset, totalCollateralSnapshotAfterL3_Asset)
 
-		// check GRAI gas compensation
+		// check KAI gas compensation
 		assert.equal((await debtToken.balanceOf(owner)).toString(), toBN(dec(600, 18)).toString())
 	})
 })

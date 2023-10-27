@@ -30,8 +30,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	communityIssuance = contracts.grvt.communityIssuance
+	sprtStaking = contracts.sprt.sprtStaking
+	communityIssuance = contracts.sprt.communityIssuance
 }
 
 contract("CommunityIssuance", async accounts => {
@@ -46,13 +46,13 @@ contract("CommunityIssuance", async accounts => {
 			communityIssuance = await CommunityIssuance.new()
 			await communityIssuance.initialize()
 			await communityIssuance.setAddresses(
-				grvtStaking.address,
+				sprtStaking.address,
 				stabilityPool.address,
 				adminContract.address
 			)
 			await communityIssuance.transferOwnership(treasury, { from: owner })
 			const supply = dec(32_000_000, 18)
-			await communityIssuance.unprotectedAddGRVTHoldings(treasury, supply)
+			await communityIssuance.unprotectedAddSPRTHoldings(treasury, supply)
 
 			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})
@@ -89,7 +89,7 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 			await communityIssuance.addFundToStabilityPool(dec(100, 18), { from: treasury })
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), dec(200, 18))
+			assert.equal((await communityIssuance.SPRTSupplyCap()).toString(), dec(200, 18))
 		})
 
 		it("addFundToStabilityPool: Called by owner twice, double total supply, don't change deploy time", async () => {
@@ -107,7 +107,7 @@ contract("CommunityIssuance", async accounts => {
 
 			const deployTimePoolAfter = await communityIssuance.lastUpdateTime()
 
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), dec(200, 18))
+			assert.equal((await communityIssuance.SPRTSupplyCap()).toString(), dec(200, 18))
 			assert.equal(deployTimePool.toString(), deployTimePoolAfter.toString())
 		})
 
@@ -121,7 +121,7 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), supply.mul(toBN(2)))
+			assert.equal((await communityIssuance.SPRTSupplyCap()).toString(), supply.mul(toBN(2)))
 		})
 
 		it("removeFundFromStabilityPool: Called by user, valid inputs, then reverts", async () => {
@@ -156,18 +156,18 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 
-			const beforeBalance = await communityIssuance.grvtHoldings(communityIssuance.address)
-			const beforeBalanceTreasury = await communityIssuance.grvtHoldings(treasury)
+			const beforeBalance = await communityIssuance.sprtHoldings(communityIssuance.address)
+			const beforeBalanceTreasury = await communityIssuance.sprtHoldings(treasury)
 			await communityIssuance.removeFundFromStabilityPool(dec(50, 18), {
 				from: treasury,
 			})
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), dec(50, 18))
+			assert.equal((await communityIssuance.SPRTSupplyCap()).toString(), dec(50, 18))
 			assert.equal(
-				(await communityIssuance.grvtHoldings(communityIssuance.address)).toString(),
+				(await communityIssuance.sprtHoldings(communityIssuance.address)).toString(),
 				beforeBalance.sub(toBN(dec(50, 18)))
 			)
 			assert.equal(
-				(await communityIssuance.grvtHoldings(treasury)).toString(),
+				(await communityIssuance.sprtHoldings(treasury)).toString(),
 				beforeBalanceTreasury.add(toBN(dec(50, 18))).toString()
 			)
 		})
@@ -181,8 +181,8 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), 0)
-			assert.equal((await communityIssuance.totalGRVTIssued()).toString(), 0)
+			assert.equal((await communityIssuance.SPRTSupplyCap()).toString(), 0)
+			assert.equal((await communityIssuance.totalSPRTIssued()).toString(), 0)
 		})
 	})
 })

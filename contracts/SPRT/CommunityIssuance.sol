@@ -19,10 +19,10 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	uint256 public constant DISTRIBUTION_DURATION = 7 days / 60;
 	uint256 public constant SECONDS_IN_ONE_MINUTE = 60;
 
-	uint256 public totalGRVTIssued;
+	uint256 public totalSPRTIssued;
 	uint256 public lastUpdateTime;
-	uint256 public GRVTSupplyCap;
-	uint256 public grvtDistribution;
+	uint256 public SPRTSupplyCap;
+	uint256 public sprtDistribution;
 
 	IStabilityPool public stabilityPool;
 
@@ -30,9 +30,9 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	address public adminContract;
 	bool public isSetupInitialized;
 
-	// mapping to maintain the accounting of GRVT holdings, similar to `balanceOf` of
-	// GRVT token.
-	mapping(address => uint256) public grvtHoldings;
+	// mapping to maintain the accounting of SPRT holdings, similar to `balanceOf` of
+	// SPRT token.
+	mapping(address => uint256) public sprtHoldings;
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
@@ -50,7 +50,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	}
 
 	modifier onlyStaking() {
-		require(staking == msg.sender, "CommunityIssuance: caller is not GrvtStaking");
+		require(staking == msg.sender, "CommunityIssuance: caller is not SPRTStaking");
 		_;
 	}
 
@@ -83,13 +83,13 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	}
 
 	function removeFundFromStabilityPool(uint256 _fundToRemove) external onlyOwner {
-		uint256 newCap = GRVTSupplyCap - _fundToRemove;
-		require(totalGRVTIssued <= newCap, "CommunityIssuance: Stability Pool doesn't have enough supply.");
+		uint256 newCap = SPRTSupplyCap - _fundToRemove;
+		require(totalSPRTIssued <= newCap, "CommunityIssuance: Stability Pool doesn't have enough supply.");
 
-		GRVTSupplyCap -= _fundToRemove;
+		SPRTSupplyCap -= _fundToRemove;
 
-		grvtHoldings[address(this)] -= _fundToRemove;
-		grvtHoldings[msg.sender] += _fundToRemove;
+		sprtHoldings[address(this)] -= _fundToRemove;
+		sprtHoldings[msg.sender] += _fundToRemove;
 	}
 
 	function addFundToStabilityPoolFrom(uint256 _assignedSupply, address _spender) external override isController {
@@ -101,27 +101,27 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 			lastUpdateTime = block.timestamp;
 		}
 
-		GRVTSupplyCap += _assignedSupply;
-		grvtHoldings[_spender] -= _assignedSupply;
-		grvtHoldings[address(this)] += _assignedSupply;
+		SPRTSupplyCap += _assignedSupply;
+		sprtHoldings[_spender] -= _assignedSupply;
+		sprtHoldings[address(this)] += _assignedSupply;
 	}
 
-	function issueGRVT() public override onlyStabilityPool returns (uint256) {
-		uint256 maxPoolSupply = GRVTSupplyCap;
+	function issueSPRT() public override onlyStabilityPool returns (uint256) {
+		uint256 maxPoolSupply = SPRTSupplyCap;
 
-		if (totalGRVTIssued >= maxPoolSupply) return 0;
+		if (totalSPRTIssued >= maxPoolSupply) return 0;
 
 		uint256 issuance = _getLastUpdateTokenDistribution();
-		uint256 totalIssuance = issuance + totalGRVTIssued;
+		uint256 totalIssuance = issuance + totalSPRTIssued;
 
 		if (totalIssuance > maxPoolSupply) {
-			issuance = maxPoolSupply - totalGRVTIssued;
+			issuance = maxPoolSupply - totalSPRTIssued;
 			totalIssuance = maxPoolSupply;
 		}
 
 		lastUpdateTime = block.timestamp;
-		totalGRVTIssued = totalIssuance;
-		emit TotalGRVTIssuedUpdated(totalIssuance);
+		totalSPRTIssued = totalIssuance;
+		emit TotalSPRTIssuedUpdated(totalIssuance);
 
 		return issuance;
 	}
@@ -129,38 +129,38 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	function _getLastUpdateTokenDistribution() internal view returns (uint256) {
 		require(lastUpdateTime != 0, "Stability pool hasn't been assigned");
 		uint256 timePassed = (block.timestamp - lastUpdateTime) / SECONDS_IN_ONE_MINUTE;
-		uint256 totalDistribuedSinceBeginning = grvtDistribution * timePassed;
+		uint256 totalDistribuedSinceBeginning = sprtDistribution * timePassed;
 
 		return totalDistribuedSinceBeginning;
 	}
 
-	function sendGRVT(address _account, uint256 _GRVTamount) external override onlyStabilityPool {
-		uint256 balanceGRVT = grvtHoldings[address(this)];
-		uint256 safeAmount = balanceGRVT >= _GRVTamount ? _GRVTamount : balanceGRVT;
+	function sendSPRT(address _account, uint256 _SPRTamount) external override onlyStabilityPool {
+		uint256 balanceSPRT = sprtHoldings[address(this)];
+		uint256 safeAmount = balanceSPRT >= _SPRTamount ? _SPRTamount : balanceSPRT;
 
 		if (safeAmount == 0) {
 			return;
 		}
 
-		grvtHoldings[address(this)] -= safeAmount;
-		grvtHoldings[_account] += safeAmount;
+		sprtHoldings[address(this)] -= safeAmount;
+		sprtHoldings[_account] += safeAmount;
 	}
 
-	// called by staking contract to update the transfers of grvt
-	function transferGRVT(address _from, address _to, uint256 _amount) external onlyStaking {
-		require(_from != address(0), "CommunityIssuance: Grvt Transfer from Zero Address.");
-		require(_to != address(0), "CommunityIssuance: Grvt Transfer to Zero Address.");
+	// called by staking contract to update the transfers of sprt
+	function transferSPRT(address _from, address _to, uint256 _amount) external onlyStaking {
+		require(_from != address(0), "CommunityIssuance: SPRT Transfer from Zero Address.");
+		require(_to != address(0), "CommunityIssuance: SPRT Transfer to Zero Address.");
 
-		uint256 fromHoldings = grvtHoldings[_from];
+		uint256 fromHoldings = sprtHoldings[_from];
 		require(fromHoldings >= _amount, "CommunityIssuance: transfer amount exceeds");
 		unchecked {
-			grvtHoldings[_from] = fromHoldings - _amount;
-			grvtHoldings[_to] += _amount;
+			sprtHoldings[_from] = fromHoldings - _amount;
+			sprtHoldings[_to] += _amount;
 		}
-		emit GRVTTransferred(_from, _to, _amount);
+		emit SPRTTransferred(_from, _to, _amount);
 	}
 
-	function setWeeklyGrvtDistribution(uint256 _weeklyReward) external isController {
-		grvtDistribution = _weeklyReward / DISTRIBUTION_DURATION;
+	function setWeeklySprtDistribution(uint256 _weeklyReward) external isController {
+		sprtDistribution = _weeklyReward / DISTRIBUTION_DURATION;
 	}
 }

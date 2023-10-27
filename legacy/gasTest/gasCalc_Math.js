@@ -27,7 +27,7 @@ contract("Gas costs for math functions", async accounts => {
 
 	beforeEach(async () => {
 		contracts = await deploymentHelper.deployLiquityCore()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		const SPRTContracts = await deploymentHelper.deploySPRTContractsHardhat(accounts[0])
 
 		priceFeed = contracts.priceFeedTestnet
 		VUSDToken = contracts.vusdToken
@@ -39,12 +39,12 @@ contract("Gas costs for math functions", async accounts => {
 		borrowerOperations = contracts.borrowerOperations
 		hintHelpers = contracts.hintHelpers
 
-		gtStaking = GRVTContracts.gtStaking
-		GRVTToken = GRVTContracts.GRVTToken
-		communityIssuance = GRVTContracts.communityIssuance
+		gtStaking = SPRTContracts.gtStaking
+		SPRTToken = SPRTContracts.SPRTToken
+		communityIssuance = SPRTContracts.communityIssuance
 
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		await deploymentHelper.connectCoreContracts(contracts, SPRTContracts)
+		await deploymentHelper.connectSPRTContractsToCore(SPRTContracts, contracts)
 	})
 
 	// performs n runs of exponentiation on a random base

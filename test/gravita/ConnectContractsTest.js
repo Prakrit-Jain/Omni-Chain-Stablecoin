@@ -26,8 +26,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	communityIssuance = contracts.grvt.communityIssuance
+	sprtStaking = contracts.sprt.sprtStaking
+	communityIssuance = contracts.sprt.communityIssuance
 }
 
 contract("Deployment script - Sets correct contract addresses dependencies after deployment", async accounts => {
@@ -82,7 +82,7 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		it("FeeCollector: check addresses", async () => {
 			assert.equal(borrowerOperations.address, await feeCollector.borrowerOperationsAddress())
 			assert.equal(vesselManager.address, await feeCollector.vesselManagerAddress())
-			assert.equal(grvtStaking.address, await feeCollector.grvtStaking())
+			assert.equal(sprtStaking.address, await feeCollector.sprtStaking())
 			assert.equal(debtToken.address, await feeCollector.debtTokenAddress())
 		})
 		it("SortedVessels: check addresses", async () => {
@@ -118,17 +118,17 @@ contract("Deployment script - Sets correct contract addresses dependencies after
 		})
 	})
 
-	describe("GRVT Contracts", async () => {
+	describe("SPRT Contracts", async () => {
 		it("CommunityIssuance: check addresses", async () => {
-			assert.equal(grvtStaking.address, await communityIssuance.staking())
+			assert.equal(sprtStaking.address, await communityIssuance.staking())
 			assert.equal(stabilityPool.address, await communityIssuance.stabilityPool())
 			assert.equal(adminContract.address, await communityIssuance.adminContract())
 		})
-		it("GRVTStaking: check addresses", async () => {
-			assert.equal(debtToken.address, await grvtStaking.debtTokenAddress())
-			assert.equal(feeCollector.address, await grvtStaking.feeCollectorAddress())
-			assert.equal(vesselManager.address, await grvtStaking.vesselManagerAddress())
-			assert.equal(communityIssuance.address, await grvtStaking.communityIssuance())
+		it("SPRTStaking: check addresses", async () => {
+			assert.equal(debtToken.address, await sprtStaking.debtTokenAddress())
+			assert.equal(feeCollector.address, await sprtStaking.feeCollectorAddress())
+			assert.equal(vesselManager.address, await sprtStaking.vesselManagerAddress())
+			assert.equal(communityIssuance.address, await sprtStaking.communityIssuance())
 		})
 	})
 })

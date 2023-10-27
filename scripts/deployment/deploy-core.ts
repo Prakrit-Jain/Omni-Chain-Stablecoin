@@ -115,9 +115,9 @@ export class CoreDeployer {
 		}
 
 		let debtToken: Contract
-		if (this.config.GRAI_TOKEN_ADDRESS) {
-			console.log(`Using existing DebtToken from ${this.config.GRAI_TOKEN_ADDRESS}`)
-			debtToken = await this.hre.ethers.getContractAt("DebtToken", this.config.GRAI_TOKEN_ADDRESS)
+		if (this.config.KAI_TOKEN_ADDRESS) {
+			console.log(`Using existing DebtToken from ${this.config.KAI_TOKEN_ADDRESS}`)
+			debtToken = await this.hre.ethers.getContractAt("DebtToken", this.config.KAI_TOKEN_ADDRESS)
 		} else {
 			debtToken = await this.deployNonUpgradeable("DebtToken")
 			await debtToken.setAddresses(borrowerOperations.address, stabilityPool.address, vesselManager.address)

@@ -73,11 +73,11 @@
       "locked": false,
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "Stability Pool\n(GRAI)",
+      "text": "Stability Pool\n(KAI)",
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "KACcHoodzhpNJPgHXuhH5",
-      "originalText": "Stability Pool\n(GRAI)"
+      "originalText": "Stability Pool\n(KAI)"
     },
     {
       "type": "rectangle",
@@ -1518,11 +1518,11 @@
       "locked": false,
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "Deposits GRAI in the pool",
+      "text": "Deposits KAI in the pool",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Deposits GRAI in the pool"
+      "originalText": "Deposits KAI in the pool"
     },
     {
       "type": "text",

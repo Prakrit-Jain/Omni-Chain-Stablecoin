@@ -62,7 +62,7 @@ contract("StabilityPool - Withdrawal of stability deposit - Reward calculations"
 	describe("Stability Pool Withdrawal", async () => {
 		async function deployContractsFixture() {
 			contracts = await deploymentHelper.deployGravitaCore()
-			const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+			const SPRTContracts = await deploymentHelper.deploySPRTContractsHardhat(accounts[0])
 			contracts.vesselManager = await VesselManagerTester.new()
 			contracts = await deploymentHelper.deployDebtTokenTester(contracts)
 			VesselManagerTester.setAsDeployed(contracts.vesselManager)
@@ -87,8 +87,8 @@ contract("StabilityPool - Withdrawal of stability deposit - Reward calculations"
 				if (index >= 50) break
 			}
 
-			await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-			await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+			await deploymentHelper.connectCoreContracts(contracts, SPRTContracts)
+			await deploymentHelper.connectSPRTContractsToCore(SPRTContracts, contracts)
 		}
 
 		before(async () => {

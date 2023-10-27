@@ -40,12 +40,12 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	communityIssuance = contracts.grvt.communityIssuance
+	sprtStaking = contracts.sprt.sprtStaking
+	communityIssuance = contracts.sprt.communityIssuance
 }
 
 contract("FeeCollector", async accounts => {
-	const withdrawGRAI = async params => th.withdrawGRAI(contracts.core, params)
+	const withdrawKAI = async params => th.withdrawKAI(contracts.core, params)
 
 	const [treasury, alice, bob, whale] = accounts
 
@@ -433,7 +433,7 @@ contract("FeeCollector", async accounts => {
 					ICR: toBN(dec(20, 18)),
 					extraParams: { from: whale },
 				})
-				const netDebtWhale = await th.getOpenVesselGRAIAmount(contracts.core, totalDebtWhale, erc20.address)
+				const netDebtWhale = await th.getOpenVesselKAIAmount(contracts.core, totalDebtWhale, erc20.address)
 				const { minFee: minFeeWhale } = calcFees(netDebtWhale)
 				const treasuryBalance1 = await debtToken.balanceOf(treasury)
 				assert.equal(minFeeWhale.toString(), treasuryBalance1.toString())
@@ -444,11 +444,11 @@ contract("FeeCollector", async accounts => {
 					ICR: toBN(dec(4, 18)),
 					extraParams: { from: alice },
 				})
-				const netDebtAlice = await th.getOpenVesselGRAIAmount(contracts.core, totalDebtAlice, erc20.address)
+				const netDebtAlice = await th.getOpenVesselKAIAmount(contracts.core, totalDebtAlice, erc20.address)
 
 				// alice increases debt, lowering her ICR to 1.11
 				const targetICR = toBN("1111111111111111111")
-				const { GRAIAmount: extraDebtAlice } = await withdrawGRAI({
+				const { KAIAmount: extraDebtAlice } = await withdrawKAI({
 					asset: erc20.address,
 					ICR: targetICR,
 					extraParams: { from: alice },

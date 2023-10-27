@@ -38,7 +38,7 @@ contract("Gas cost tests", async accounts => {
 
 	beforeEach(async () => {
 		contracts = await deploymentHelper.deployTesterContractsHardhat()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		const SPRTContracts = await deploymentHelper.deploySPRTContractsHardhat(accounts[0])
 
 		priceFeed = contracts.priceFeedTestnet
 		VUSDToken = contracts.vusdToken
@@ -51,12 +51,12 @@ contract("Gas cost tests", async accounts => {
 
 		functionCaller = contracts.functionCaller
 
-		GRVTStaking = GRVTContracts.GRVTStaking
-		GRVTToken = GRVTContracts.GRVTToken
-		communityIssuance = GRVTContracts.communityIssuance
+		SPRTStaking = SPRTContracts.SPRTStaking
+		SPRTToken = SPRTContracts.SPRTToken
+		communityIssuance = SPRTContracts.communityIssuance
 
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		await deploymentHelper.connectCoreContracts(contracts, SPRTContracts)
+		await deploymentHelper.connectSPRTContractsToCore(SPRTContracts, contracts)
 		stabilityPool = await StabilityPool.at(
 			await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS)
 		)

@@ -9,7 +9,7 @@ const DefaultPool = artifacts.require("DefaultPool")
 const ERC20Test = artifacts.require("ERC20Test")
 const FeeCollectorTester = artifacts.require("FeeCollectorTester")
 const GasPool = artifacts.require("GasPool")
-const GRVTStaking = artifacts.require("GRVTStaking")
+const SPRTStaking = artifacts.require("SPRTStaking")
 const PriceFeedTestnet = artifacts.require("PriceFeedTestnet")
 const SortedVessels = artifacts.require("SortedVessels")
 const StabilityPoolTester = artifacts.require("StabilityPoolTester")
@@ -31,10 +31,10 @@ const TIMELOCK_LONG_DELAY = 86400 * 7
 class DeploymentHelper {
 	static async deployTestContracts(treasuryAddress, collateralMintingAccounts = []) {
 		const core = await this._deployCoreContracts(treasuryAddress)
-		const grvt = await this._deployGrvtContracts(treasuryAddress)
+		const sprt = await this._deploySprtContracts(treasuryAddress)
 
-		await this._connectCoreContracts(core, grvt, treasuryAddress)
-		await this._connectGrvtContracts(grvt, core, treasuryAddress)
+		await this._connectCoreContracts(core, sprt, treasuryAddress)
+		await this._connectSprtContracts(sprt, core, treasuryAddress)
 
 		for (const acc of collateralMintingAccounts) {
 			const mintingValue = dec(100_000_000, 18)
@@ -42,7 +42,7 @@ class DeploymentHelper {
 			await core.erc20B.mint(acc, mintingValue)
 		}
 
-		return { core, grvt }
+		return { core, sprt }
 	}
 
 	static async _deployCoreContracts(treasuryAddress) {
@@ -93,13 +93,13 @@ class DeploymentHelper {
 		return core
 	}
 
-	static async _deployGrvtContracts(treasury) {
-		const grvt = {
+	static async _deploySprtContracts(treasury) {
+		const sprt = {
 			communityIssuance: await CommunityIssuanceTester.new(),
-			grvtStaking: await GRVTStaking.new(),
+			sprtStaking: await SPRTStaking.new(),
 		}
-		await this._invokeInitializers(grvt)
-		return grvt
+		await this._invokeInitializers(sprt)
+		return sprt
 	}
 
 	/**
@@ -117,7 +117,7 @@ class DeploymentHelper {
 	/**
 	 * Connects contracts to their dependencies.
 	 */
-	static async _connectCoreContracts(core, grvt, treasuryAddress) {
+	static async _connectCoreContracts(core, sprt, treasuryAddress) {
 		const setAddresses = async contract => {
 			const addresses = [
 				core.activePool.address,
@@ -147,8 +147,8 @@ class DeploymentHelper {
 			const contract = core[key]
 			if (contract.setAddresses && contract.isAddressSetupInitialized) {
 				await setAddresses(contract)
-				await contract.setCommunityIssuance(grvt.communityIssuance.address)
-				await contract.setGRVTStaking(grvt.grvtStaking.address)
+				await contract.setCommunityIssuance(sprt.communityIssuance.address)
+				await contract.setSPRTStaking(sprt.sprtStaking.address)
 			}
 		}
 		await core.debtToken.setAddresses(
@@ -178,20 +178,20 @@ class DeploymentHelper {
 	/**
 	 * Connects contracts to their dependencies.
 	 */
-	static async _connectGrvtContracts(grvt, core, treasuryAddress) {
+	static async _connectSprtContracts(sprt, core, treasuryAddress) {
 
-		await grvt.grvtStaking.setAddresses(
+		await sprt.sprtStaking.setAddresses(
 			core.debtToken.address,
 			core.feeCollector.address,
 			treasuryAddress,
 			core.vesselManager.address,
-			grvt.communityIssuance.address
+			sprt.communityIssuance.address
 		)
 
-		await grvt.grvtStaking.unpause()
+		await sprt.sprtStaking.unpause()
 
-		await grvt.communityIssuance.setAddresses(
-			grvt.grvtStaking.address,
+		await sprt.communityIssuance.setAddresses(
+			sprt.sprtStaking.address,
 			core.stabilityPool.address,
 			core.adminContract.address
 		)
@@ -199,11 +199,11 @@ class DeploymentHelper {
 		const supply = dec(32_000_000, 18)
 		const weeklyReward = dec(32_000_000 / 4, 18)
 
-		await grvt.communityIssuance.unprotectedAddGRVTHoldings(treasuryAddress, supply)
+		await sprt.communityIssuance.unprotectedAddSPRTHoldings(treasuryAddress, supply)
 
-		await grvt.communityIssuance.transferOwnership(treasuryAddress)
-		await grvt.communityIssuance.addFundToStabilityPool(weeklyReward, { from: treasuryAddress })
-		await grvt.communityIssuance.setWeeklyGrvtDistribution(weeklyReward, { from: treasuryAddress })
+		await sprt.communityIssuance.transferOwnership(treasuryAddress)
+		await sprt.communityIssuance.addFundToStabilityPool(weeklyReward, { from: treasuryAddress })
+		await sprt.communityIssuance.setWeeklySprtDistribution(weeklyReward, { from: treasuryAddress })
 
 		// Set configs (since the tests have been designed with it)
 		const defaultFee = (0.005e18).toString() // 0.5%

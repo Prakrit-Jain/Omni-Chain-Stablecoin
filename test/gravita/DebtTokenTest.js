@@ -63,7 +63,7 @@ contract("DebtToken", async accounts => {
 
 	it("symbol(): returns the token's symbol", async () => {
 		const symbol = await debtToken.symbol()
-		assert.equal(symbol, "GRAI")
+		assert.equal(symbol, "KAI")
 	})
 
 	it("decimal(): returns the number of decimal digits used", async () => {

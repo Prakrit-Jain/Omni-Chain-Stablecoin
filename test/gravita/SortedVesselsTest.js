@@ -32,8 +32,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	communityIssuance = contracts.grvt.communityIssuance
+	sprtStaking = contracts.sprt.sprtStaking
+	communityIssuance = contracts.sprt.communityIssuance
 }
 
 contract("SortedVessels", async accounts => {
@@ -138,7 +138,7 @@ contract("SortedVessels", async accounts => {
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(1000, 18)),
-				extraGRAIAmount: toBN(dec(3000, 18)),
+				extraKAIAmount: toBN(dec(3000, 18)),
 				extraParams: { from: whale },
 			})
 
@@ -184,7 +184,7 @@ contract("SortedVessels", async accounts => {
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(1000, 18)),
-				extraGRAIAmount: toBN(dec(3000, 18)),
+				extraKAIAmount: toBN(dec(3000, 18)),
 				extraParams: { from: whale },
 			})
 

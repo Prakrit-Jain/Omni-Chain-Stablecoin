@@ -28,8 +28,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	communityIssuance = contracts.grvt.communityIssuance
+	sprtStaking = contracts.sprt.sprtStaking
+	communityIssuance = contracts.sprt.communityIssuance
 }
 
 contract("AdminContract", async accounts => {
@@ -285,13 +285,13 @@ contract("AdminContract", async accounts => {
 
 		await openVessel({
 			asset: erc20.address,
-			extraGRAIAmount: toBN(dec(5000, 18)),
+			extraKAIAmount: toBN(dec(5000, 18)),
 			ICR: toBN(dec(2, 18)),
 			extraParams: { from: A },
 		})
 		await openVessel({
 			asset: erc20.address,
-			extraGRAIAmount: toBN(dec(5000, 18)),
+			extraKAIAmount: toBN(dec(5000, 18)),
 			ICR: toBN(dec(2, 18)),
 			extraParams: { from: B },
 		})

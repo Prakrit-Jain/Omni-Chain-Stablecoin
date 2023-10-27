@@ -34,15 +34,15 @@ price_ether = [price_ether_initial]
 sd_ether = 0.02
 drift_ether = 0
 
-# GRVT price & airdrop
-price_GRVT_initial = 1
-price_GRVT = [price_GRVT_initial]
-sd_GRVT = 0.005
-drift_GRVT = 0.0035
+# SPRT price & airdrop
+price_SPRT_initial = 1
+price_SPRT = [price_SPRT_initial]
+sd_SPRT = 0.005
+drift_SPRT = 0.0035
 # reduced for now. otherwise the initial return too high
-quantity_GRVT_airdrop = 500
-supply_GRVT = [0]
-GRVT_total_supply = 100000000
+quantity_SPRT_airdrop = 500
+supply_SPRT = [0]
+SPRT_total_supply = 100000000
 
 # PE ratio
 PE_ratio = 50
@@ -109,13 +109,13 @@ for i in range(1, period):
     shock_natural = random.normalvariate(0, sd_natural_rate)
     natural_rate.append(natural_rate[i - 1] * (1 + shock_natural))
 
-"""GRVT Price - First Month"""
+"""SPRT Price - First Month"""
 
-# GRVT price
+# SPRT price
 for i in range(1, month):
     random.seed(2 + 13 * i)
-    shock_GRVT = random.normalvariate(0, sd_GRVT)
-    price_GRVT.append(price_GRVT[i - 1] * (1 + shock_GRVT) * (1 + drift_GRVT))
+    shock_SPRT = random.normalvariate(0, sd_SPRT)
+    price_SPRT.append(price_SPRT[i - 1] * (1 + shock_SPRT) * (1 + drift_SPRT))
 
 """# Troves
 
@@ -128,7 +128,7 @@ def liquidate_vessels(vessels, index, data):
         vessels["Ether_Price"] * vessels["Ether_Quantity"] / vessels["Supply"]
     )
     price_USDV_previous = data.loc[index - 1, "Price_USDV"]
-    price_GRVT_previous = data.loc[index - 1, "price_GRVT"]
+    price_SPRT_previous = data.loc[index - 1, "price_SPRT"]
     stability_pool_previous = data.loc[index - 1, "stability"]
 
     vessels_liquidated = vessels[vessels.CR_current < 1.1]
@@ -141,7 +141,7 @@ def liquidate_vessels(vessels, index, data):
     liquidation_gain = (
         ether_liquidated * price_ether_current - debt_liquidated * price_USDV_previous
     )
-    airdrop_gain = price_GRVT_previous * quantity_GRVT_airdrop
+    airdrop_gain = price_SPRT_previous * quantity_SPRT_airdrop
 
     np.random.seed(2 + index)
     shock_return = np.random.normal(0, sd_return)
@@ -456,14 +456,14 @@ def price_stabilizer(vessels, index, data, stability_pool, n_open):
     ]
 
 
-"""# GRVT Market"""
+"""# SPRT Market"""
 
 
-def GRVT_market(index, data):
-    quantity_GRVT = (100000000 / 3) * (1 - 0.5 ** (index / period))
+def SPRT_market(index, data):
+    quantity_SPRT = (100000000 / 3) * (1 - 0.5 ** (index / period))
     np.random.seed(2 + 3 * index)
     if index <= month:
-        price_GRVT_current = price_GRVT[index - 1]
+        price_SPRT_current = price_SPRT[index - 1]
         annualized_earning = (index / month) ** 0.5 * np.random.normal(
             200000000, 500000
         )
@@ -473,12 +473,12 @@ def GRVT_market(index, data):
         annualized_earning = 365 * (revenue_issuance + revenue_redemption) / 30
         # discountin factor to factor in the risk in early days
         discount = index / period
-        price_GRVT_current = (
-            discount * PE_ratio * annualized_earning / GRVT_total_supply
+        price_SPRT_current = (
+            discount * PE_ratio * annualized_earning / SPRT_total_supply
         )
 
-    MC_GRVT_current = price_GRVT_current * quantity_GRVT
-    return [price_GRVT_current, annualized_earning, MC_GRVT_current]
+    MC_SPRT_current = price_SPRT_current * quantity_SPRT
+    return [price_SPRT_current, annualized_earning, MC_SPRT_current]
 
 
 """# Simulation Program"""
@@ -501,8 +501,8 @@ initials = {
     "liquidation_gain": [0],
     "issuance_fee": [0],
     "redemption_fee": [0],
-    "price_GRVT": [price_GRVT_initial],
-    "MC_GRVT": [0],
+    "price_SPRT": [price_SPRT_initial],
+    "MC_SPRT": [0],
     "annualized_earning": [0],
 }
 data = pd.DataFrame(initials)
@@ -530,7 +530,7 @@ for index in range(1, n_sim):
     price_ether_current = price_ether[index]
     vessels["Ether_Price"] = price_ether_current
     price_USDV_previous = data.loc[index - 1, "Price_USDV"]
-    price_GRVT_previous = data.loc[index - 1, "price_GRVT"]
+    price_SPRT_previous = data.loc[index - 1, "price_SPRT"]
 
     # vessel liquidation & return of stability pool
     result_liquidation = liquidate_vessels(vessels, index, data)
@@ -578,11 +578,11 @@ for index in range(1, n_sim):
     if liquidity_pool < 0:
         break
 
-    # GRVT Market
-    result_GRVT = GRVT_market(index, data)
-    price_GRVT_current = result_GRVT[0]
-    annualized_earning = result_GRVT[1]
-    MC_GRVT_current = result_GRVT[2]
+    # SPRT Market
+    result_SPRT = SPRT_market(index, data)
+    price_SPRT_current = result_SPRT[0]
+    annualized_earning = result_SPRT[1]
+    MC_SPRT_current = result_SPRT[2]
 
     # Summary
     issuance_fee = price_USDV_current * (
@@ -591,7 +591,7 @@ for index in range(1, n_sim):
     n_vessels = vessels.shape[0]
     supply_USDV = vessels["Supply"].sum()
     if index >= month:
-        price_GRVT.append(price_GRVT_current)
+        price_SPRT.append(price_SPRT_current)
 
     new_row = {
         "Price_USDV": float(price_USDV_current),
@@ -611,8 +611,8 @@ for index in range(1, n_sim):
         "liquidation_gain": float(liquidation_gain),
         "return_stability": float(return_stability),
         "annualized_earning": float(annualized_earning),
-        "MC_GRVT": float(MC_GRVT_current),
-        "price_GRVT": float(price_GRVT_current),
+        "MC_SPRT": float(MC_SPRT_current),
+        "price_SPRT": float(price_SPRT_current),
     }
     data = data.append(new_row, ignore_index=True)
     if price_USDV_current < 0:
@@ -775,17 +775,17 @@ fig.show()
 
 fig = make_subplots(specs=[[{"secondary_y": True}]])
 fig.add_trace(
-    go.Scatter(x=data.index / 720, y=data["price_GRVT"], name="GRVT Price"),
+    go.Scatter(x=data.index / 720, y=data["price_SPRT"], name="SPRT Price"),
     secondary_y=False,
 )
 fig.add_trace(
-    go.Scatter(x=data.index / 720, y=data["MC_GRVT"], name="GRVT Market Cap"),
+    go.Scatter(x=data.index / 720, y=data["MC_SPRT"], name="SPRT Market Cap"),
     secondary_y=True,
 )
-fig.update_layout(title_text="Dynamics of the Price and Market Cap of GRVT")
+fig.update_layout(title_text="Dynamics of the Price and Market Cap of SPRT")
 fig.update_xaxes(tick0=0, dtick=1, title_text="Month")
-fig.update_yaxes(title_text="GRVT Price", secondary_y=False)
-fig.update_yaxes(title_text="GRVT Market Cap", secondary_y=True)
+fig.update_yaxes(title_text="SPRT Price", secondary_y=False)
+fig.update_yaxes(title_text="SPRT Market Cap", secondary_y=True)
 fig.show()
 
 
@@ -843,8 +843,8 @@ initials = {
     "liquidation_gain": [0],
     "issuance_fee": [0],
     "redemption_fee": [0],
-    "price_GRVT": [price_GRVT_initial],
-    "MC_GRVT": [0],
+    "price_SPRT": [price_SPRT_initial],
+    "MC_SPRT": [0],
     "annualized_earning": [0],
     "base_rate": [base_rate_initial],
 }
@@ -873,7 +873,7 @@ for index in range(1, n_sim):
     price_ether_current = price_ether[index]
     vessels2["Ether_Price"] = price_ether_current
     price_USDV_previous = data2.loc[index - 1, "Price_USDV"]
-    price_GRVT_previous = data2.loc[index - 1, "price_GRVT"]
+    price_SPRT_previous = data2.loc[index - 1, "price_SPRT"]
 
     # policy function determines base rate
     base_rate_current = 0.98 * data2.loc[index - 1, "base_rate"] + 0.5 * (
@@ -928,11 +928,11 @@ for index in range(1, n_sim):
     if liquidity_pool < 0:
         break
 
-    # GRVT Market
-    result_GRVT = GRVT_market(index, data2)
-    price_GRVT_current = result_GRVT[0]
-    annualized_earning = result_GRVT[1]
-    MC_GRVT_current = result_GRVT[2]
+    # SPRT Market
+    result_SPRT = SPRT_market(index, data2)
+    price_SPRT_current = result_SPRT[0]
+    annualized_earning = result_SPRT[1]
+    MC_SPRT_current = result_SPRT[2]
 
     # Summary
     issuance_fee = price_USDV_current * (
@@ -941,7 +941,7 @@ for index in range(1, n_sim):
     n_vessels = vessels2.shape[0]
     supply_USDV = vessels2["Supply"].sum()
     if index >= month:
-        price_GRVT.append(price_GRVT_current)
+        price_SPRT.append(price_SPRT_current)
 
     new_row = {
         "Price_USDV": float(price_USDV_current),
@@ -961,8 +961,8 @@ for index in range(1, n_sim):
         "liquidation_gain": float(liquidation_gain),
         "return_stability": float(return_stability),
         "annualized_earning": float(annualized_earning),
-        "MC_GRVT": float(MC_GRVT_current),
-        "price_GRVT": float(price_GRVT_current),
+        "MC_SPRT": float(MC_SPRT_current),
+        "price_SPRT": float(price_SPRT_current),
         "base_rate": float(base_rate_current),
     }
     data2 = data2.append(new_row, ignore_index=True)
@@ -1291,18 +1291,18 @@ fig.show()
 
 fig = make_subplots(specs=[[{"secondary_y": True}]])
 fig.add_trace(
-    go.Scatter(x=data.index / 720, y=data["price_GRVT"], name="GRVT Price"),
+    go.Scatter(x=data.index / 720, y=data["price_SPRT"], name="SPRT Price"),
     secondary_y=False,
 )
 fig.add_trace(
-    go.Scatter(x=data.index / 720, y=data["MC_GRVT"], name="GRVT Market Cap"),
+    go.Scatter(x=data.index / 720, y=data["MC_SPRT"], name="SPRT Market Cap"),
     secondary_y=True,
 )
 fig.add_trace(
     go.Scatter(
         x=data2.index / 720,
-        y=data2["price_GRVT"],
-        name="GRVT Price New",
+        y=data2["price_SPRT"],
+        name="SPRT Price New",
         line=dict(dash="dot"),
     ),
     secondary_y=False,
@@ -1310,16 +1310,16 @@ fig.add_trace(
 fig.add_trace(
     go.Scatter(
         x=data2.index / 720,
-        y=data2["MC_GRVT"],
-        name="GRVT Market Cap New",
+        y=data2["MC_SPRT"],
+        name="SPRT Market Cap New",
         line=dict(dash="dot"),
     ),
     secondary_y=True,
 )
-fig.update_layout(title_text="Dynamics of the Price and Market Cap of GRVT")
+fig.update_layout(title_text="Dynamics of the Price and Market Cap of SPRT")
 fig.update_xaxes(tick0=0, dtick=1, title_text="Month")
-fig.update_yaxes(title_text="GRVT Price", secondary_y=False)
-fig.update_yaxes(title_text="GRVT Market Cap", secondary_y=True)
+fig.update_yaxes(title_text="SPRT Price", secondary_y=False)
+fig.update_yaxes(title_text="SPRT Market Cap", secondary_y=True)
 fig.show()
 
 fig = make_subplots(specs=[[{"secondary_y": True}]])
