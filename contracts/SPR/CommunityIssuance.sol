@@ -19,10 +19,10 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	uint256 public constant DISTRIBUTION_DURATION = 7 days / 60;
 	uint256 public constant SECONDS_IN_ONE_MINUTE = 60;
 
-	uint256 public totalSPRTIssued;
+	uint256 public totalSPRIssued;
 	uint256 public lastUpdateTime;
-	uint256 public SPRTSupplyCap;
-	uint256 public sprtDistribution;
+	uint256 public SPRSupplyCap;
+	uint256 public sprDistribution;
 
 	IStabilityPool public stabilityPool;
 
@@ -30,9 +30,9 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	address public adminContract;
 	bool public isSetupInitialized;
 
-	// mapping to maintain the accounting of SPRT holdings, similar to `balanceOf` of
-	// SPRT token.
-	mapping(address => uint256) public sprtHoldings;
+	// mapping to maintain the accounting of SPR holdings, similar to `balanceOf` of
+	// SPR token.
+	mapping(address => uint256) public sprHoldings;
 
 	modifier isController() {
 		require(msg.sender == owner() || msg.sender == adminContract, "Invalid Permission");
@@ -50,7 +50,7 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	}
 
 	modifier onlyStaking() {
-		require(staking == msg.sender, "CommunityIssuance: caller is not SPRTStaking");
+		require(staking == msg.sender, "CommunityIssuance: caller is not SPRStaking");
 		_;
 	}
 
@@ -83,13 +83,13 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	}
 
 	function removeFundFromStabilityPool(uint256 _fundToRemove) external onlyOwner {
-		uint256 newCap = SPRTSupplyCap - _fundToRemove;
-		require(totalSPRTIssued <= newCap, "CommunityIssuance: Stability Pool doesn't have enough supply.");
+		uint256 newCap = SPRSupplyCap - _fundToRemove;
+		require(totalSPRIssued <= newCap, "CommunityIssuance: Stability Pool doesn't have enough supply.");
 
-		SPRTSupplyCap -= _fundToRemove;
+		SPRSupplyCap -= _fundToRemove;
 
-		sprtHoldings[address(this)] -= _fundToRemove;
-		sprtHoldings[msg.sender] += _fundToRemove;
+		sprHoldings[address(this)] -= _fundToRemove;
+		sprHoldings[msg.sender] += _fundToRemove;
 	}
 
 	function addFundToStabilityPoolFrom(uint256 _assignedSupply, address _spender) external override isController {
@@ -101,27 +101,27 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 			lastUpdateTime = block.timestamp;
 		}
 
-		SPRTSupplyCap += _assignedSupply;
-		sprtHoldings[_spender] -= _assignedSupply;
-		sprtHoldings[address(this)] += _assignedSupply;
+		SPRSupplyCap += _assignedSupply;
+		sprHoldings[_spender] -= _assignedSupply;
+		sprHoldings[address(this)] += _assignedSupply;
 	}
 
-	function issueSPRT() public override onlyStabilityPool returns (uint256) {
-		uint256 maxPoolSupply = SPRTSupplyCap;
+	function issueSPR() public override onlyStabilityPool returns (uint256) {
+		uint256 maxPoolSupply = SPRSupplyCap;
 
-		if (totalSPRTIssued >= maxPoolSupply) return 0;
+		if (totalSPRIssued >= maxPoolSupply) return 0;
 
 		uint256 issuance = _getLastUpdateTokenDistribution();
-		uint256 totalIssuance = issuance + totalSPRTIssued;
+		uint256 totalIssuance = issuance + totalSPRIssued;
 
 		if (totalIssuance > maxPoolSupply) {
-			issuance = maxPoolSupply - totalSPRTIssued;
+			issuance = maxPoolSupply - totalSPRIssued;
 			totalIssuance = maxPoolSupply;
 		}
 
 		lastUpdateTime = block.timestamp;
-		totalSPRTIssued = totalIssuance;
-		emit TotalSPRTIssuedUpdated(totalIssuance);
+		totalSPRIssued = totalIssuance;
+		emit TotalSPRIssuedUpdated(totalIssuance);
 
 		return issuance;
 	}
@@ -129,38 +129,38 @@ contract CommunityIssuance is ICommunityIssuance, OwnableUpgradeable, BaseMath {
 	function _getLastUpdateTokenDistribution() internal view returns (uint256) {
 		require(lastUpdateTime != 0, "Stability pool hasn't been assigned");
 		uint256 timePassed = (block.timestamp - lastUpdateTime) / SECONDS_IN_ONE_MINUTE;
-		uint256 totalDistribuedSinceBeginning = sprtDistribution * timePassed;
+		uint256 totalDistribuedSinceBeginning = sprDistribution * timePassed;
 
 		return totalDistribuedSinceBeginning;
 	}
 
-	function sendSPRT(address _account, uint256 _SPRTamount) external override onlyStabilityPool {
-		uint256 balanceSPRT = sprtHoldings[address(this)];
-		uint256 safeAmount = balanceSPRT >= _SPRTamount ? _SPRTamount : balanceSPRT;
+	function sendSPR(address _account, uint256 _SPRamount) external override onlyStabilityPool {
+		uint256 balanceSPR = sprHoldings[address(this)];
+		uint256 safeAmount = balanceSPR >= _SPRamount ? _SPRamount : balanceSPR;
 
 		if (safeAmount == 0) {
 			return;
 		}
 
-		sprtHoldings[address(this)] -= safeAmount;
-		sprtHoldings[_account] += safeAmount;
+		sprHoldings[address(this)] -= safeAmount;
+		sprHoldings[_account] += safeAmount;
 	}
 
-	// called by staking contract to update the transfers of sprt
-	function transferSPRT(address _from, address _to, uint256 _amount) external onlyStaking {
-		require(_from != address(0), "CommunityIssuance: SPRT Transfer from Zero Address.");
-		require(_to != address(0), "CommunityIssuance: SPRT Transfer to Zero Address.");
+	// called by staking contract to update the transfers of spr
+	function transferSPR(address _from, address _to, uint256 _amount) external onlyStaking {
+		require(_from != address(0), "CommunityIssuance: SPR Transfer from Zero Address.");
+		require(_to != address(0), "CommunityIssuance: SPR Transfer to Zero Address.");
 
-		uint256 fromHoldings = sprtHoldings[_from];
+		uint256 fromHoldings = sprHoldings[_from];
 		require(fromHoldings >= _amount, "CommunityIssuance: transfer amount exceeds");
 		unchecked {
-			sprtHoldings[_from] = fromHoldings - _amount;
-			sprtHoldings[_to] += _amount;
+			sprHoldings[_from] = fromHoldings - _amount;
+			sprHoldings[_to] += _amount;
 		}
-		emit SPRTTransferred(_from, _to, _amount);
+		emit SPRTransferred(_from, _to, _amount);
 	}
 
-	function setWeeklySprtDistribution(uint256 _weeklyReward) external isController {
-		sprtDistribution = _weeklyReward / DISTRIBUTION_DURATION;
+	function setWeeklySprDistribution(uint256 _weeklyReward) external isController {
+		sprDistribution = _weeklyReward / DISTRIBUTION_DURATION;
 	}
 }

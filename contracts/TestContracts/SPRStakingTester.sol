@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.19;
-import "../SPRT/SPRTStaking.sol";
+import "../SPR/SPRStaking.sol";
 
-contract SPRTStakingTester is SPRTStaking {
+contract SPRStakingTester is SPRStaking {
 	function requireCallerIsVesselManager() external view callerIsVesselManager {}
 }

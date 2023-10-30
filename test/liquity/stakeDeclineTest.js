@@ -38,15 +38,15 @@ contract("VesselManager", async accounts => {
 		contracts = await deploymentHelper.deployGravitaCore()
 		contracts.vesselManager = await VesselManagerTester.new()
 		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
-		const SPRTContracts = await deploymentHelper.deploySPRTContractsHardhat(accounts[0])
+		const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(accounts[0])
 
 		borrowerOperations = contracts.borrowerOperations
 		erc20 = contracts.erc20
 		priceFeed = contracts.priceFeedTestnet
 		vesselManager = contracts.vesselManager
 
-		await deploymentHelper.connectCoreContracts(contracts, SPRTContracts)
-		await deploymentHelper.connectSPRTContractsToCore(SPRTContracts, contracts)
+		await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+		await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
 	})
 
 	it("A given vessel's stake decline is negligible with adjustments and tiny liquidations", async () => {

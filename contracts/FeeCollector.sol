@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 
 import "./Interfaces/IDebtToken.sol";
 import "./Interfaces/IFeeCollector.sol";
-import "./Interfaces/ISPRTStaking.sol";
+import "./Interfaces/ISPRStaking.sol";
 
 import "./Addresses.sol";
 
@@ -27,7 +27,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 
 	mapping(address => mapping(address => FeeRecord)) public feeRecords; // borrower -> asset -> fees
 
-	bool public constant routeToSPRTStaking = false; // if true, collected fees go to stakers; if false, to the treasury
+	bool public constant routeToSPRStaking = false; // if true, collected fees go to stakers; if false, to the treasury
 
 	// Initializer ------------------------------------------------------------------------------------------------------
 
@@ -141,14 +141,14 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	 * getProtocolRevenueDestination().
 	 */
 	function handleRedemptionFee(address _asset, uint256 _amount) external onlyVesselManager {
-		if (_routeToSPRTStaking()) {
-			ISPRTStaking(sprtStaking).increaseFee_Asset(_asset, _amount);
+		if (_routeToSPRStaking()) {
+			ISPRStaking(sprStaking).increaseFee_Asset(_asset, _amount);
 		}
 		emit RedemptionFeeCollected(_asset, _amount);
 	}
 
 	function getProtocolRevenueDestination() public view override returns (address) {
-		return _routeToSPRTStaking() ? sprtStaking : treasuryAddress;
+		return _routeToSPRStaking() ? sprStaking : treasuryAddress;
 	}
 
 	// Helper & internal methods ----------------------------------------------------------------------------------------
@@ -274,14 +274,14 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	}
 
 	/**
-	 * Transfers collected (debt token) fees to either the treasury or the SPRTStaking contract, depending on a flag.
+	 * Transfers collected (debt token) fees to either the treasury or the SPRStaking contract, depending on a flag.
 	 */
 	function _collectFee(address _borrower, address _asset, uint256 _feeAmount) internal {
 		if (_feeAmount != 0) {
 			address collector = getProtocolRevenueDestination();
 			IERC20Upgradeable(debtToken).safeTransfer(collector, _feeAmount);
-			if (_routeToSPRTStaking()) {
-				ISPRTStaking(sprtStaking).increaseFee_DebtToken(_feeAmount);
+			if (_routeToSPRStaking()) {
+				ISPRStaking(sprStaking).increaseFee_DebtToken(_feeAmount);
 			}
 			emit FeeCollected(_borrower, _asset, collector, _feeAmount);
 		}
@@ -297,8 +297,8 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 	/**
 	 * Use a function for reading the constant, as it will be overwritten by the Tester contract.
 	 */
-	function _routeToSPRTStaking() internal view virtual returns (bool) {
-		return routeToSPRTStaking;
+	function _routeToSPRStaking() internal view virtual returns (bool) {
+		return routeToSPRStaking;
 	}
 
 	// Modifiers --------------------------------------------------------------------------------------------------------

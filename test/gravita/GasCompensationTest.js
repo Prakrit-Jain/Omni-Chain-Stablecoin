@@ -31,8 +31,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	sprtStaking = contracts.sprt.sprtStaking
-	communityIssuance = contracts.sprt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 }
 
@@ -427,7 +427,7 @@ contract("Gas compensation tests", async accounts => {
 			extraParams: { from: erin },
 		})
 
-		// console.log(((await community.SPRTSupplyCap()).toString()))
+		// console.log(((await community.SPRSupplyCap()).toString()))
 
 		// D, E each provide KAI to SP
 

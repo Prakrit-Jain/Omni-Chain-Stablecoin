@@ -11,7 +11,7 @@ const VesselManagerTester = artifacts.require("VesselManagerTester")
 const VUSDTokenTester = artifacts.require("VUSDTokenTester")
 const StabilityPool = artifacts.require("StabilityPool.sol")
 
-contract("StabilityPool - SPRT Rewards", async accounts => {
+contract("StabilityPool - SPR Rewards", async accounts => {
 	const [
 		owner,
 		whale,
@@ -43,7 +43,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 	let sortedVessels
 	let vesselManager
 	let borrowerOperations
-	let sprtToken
+	let sprToken
 	let communityIssuanceTester
 
 	let issuance_M1 = toBN(dec(Math.round(204_425 * 4.28575), 18))
@@ -55,7 +55,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		th.getOpenVesselVUSDAmount(contracts, totalDebt, asset)
 
 	const openVessel = async params => th.openVessel(contracts, params)
-	describe("SPRT Rewards", async () => {
+	describe("SPR Rewards", async () => {
 		beforeEach(async () => {
 			contracts = await deploymentHelper.deployLiquityCore()
 			contracts.vesselManager = await VesselManagerTester.new()
@@ -64,7 +64,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 				contracts.stabilityPoolManager.address,
 				contracts.borrowerOperations.address
 			)
-			const SPRTContracts = await deploymentHelper.deploySPRTContractsHardhat(treasury)
+			const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(treasury)
 
 			priceFeed = contracts.priceFeedTestnet
 			vusdToken = contracts.vusdToken
@@ -73,8 +73,8 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 			borrowerOperations = contracts.borrowerOperations
 			erc20 = contracts.erc20
 
-			sprtToken = SPRTContracts.sprtToken
-			communityIssuanceTester = SPRTContracts.communityIssuance
+			sprToken = SPRContracts.sprToken
+			communityIssuanceTester = SPRContracts.communityIssuance
 
 			let index = 0
 			for (const acc of accounts) {
@@ -84,8 +84,8 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 				if (index >= 100) break
 			}
 
-			await deploymentHelper.connectCoreContracts(contracts, SPRTContracts)
-			await deploymentHelper.connectSPRTContractsToCore(SPRTContracts, contracts)
+			await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+			await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
 
 			stabilityPool = await StabilityPool.at(
 				await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS)
@@ -94,20 +94,20 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 				await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address)
 			)
 
-			// Check community issuance starts with 32 million SPRT
+			// Check community issuance starts with 32 million SPR
 			assert.isAtMost(
 				getDifference(
-					toBN(await sprtToken.balanceOf(communityIssuanceTester.address)),
+					toBN(await sprToken.balanceOf(communityIssuanceTester.address)),
 					"64000000000000000000000000"
 				),
 				1000
 			)
 
-			await communityIssuanceTester.setWeeklySprtDistribution(
+			await communityIssuanceTester.setWeeklySprDistribution(
 				stabilityPool.address,
 				dec(204_425, 18)
 			)
-			await communityIssuanceTester.setWeeklySprtDistribution(
+			await communityIssuanceTester.setWeeklySprDistribution(
 				stabilityPoolERC20.address,
 				dec(204_425, 18)
 			)
@@ -129,7 +129,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 			return duration
 		}
 
-		it("liquidation < 1 minute after a deposit does not change totalSPRTIssued", async () => {
+		it("liquidation < 1 minute after a deposit does not change totalSPRIssued", async () => {
 			await openVessel({
 				extraVUSDAmount: toBN(dec(10000, 18)),
 				ICR: toBN(dec(2, 18)),
@@ -165,21 +165,21 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 
 			await priceFeed.setPrice(dec(105, 18))
 
-			// B adjusts, triggering SPRT issuance for all
+			// B adjusts, triggering SPR issuance for all
 			await stabilityPool.provideToSP(dec(1, 18), { from: B })
 			await stabilityPoolERC20.provideToSP(dec(1, 18), { from: B })
 			const blockTimestamp_1 = th.toBN(await th.getLatestBlockTimestamp(web3))
 
-			// Check SPRT has been issued
-			const totalSPRTIssued_1 = await communityIssuanceTester.totalSPRTIssued(
+			// Check SPR has been issued
+			const totalSPRIssued_1 = await communityIssuanceTester.totalSPRIssued(
 				stabilityPool.address
 			)
-			assert.isTrue(totalSPRTIssued_1.gt(toBN("0")))
+			assert.isTrue(totalSPRIssued_1.gt(toBN("0")))
 
-			const totalSPRTIssued_1ERC20 = await communityIssuanceTester.totalSPRTIssued(
+			const totalSPRIssued_1ERC20 = await communityIssuanceTester.totalSPRIssued(
 				stabilityPoolERC20.address
 			)
-			assert.isTrue(totalSPRTIssued_1ERC20.gt(toBN("0")))
+			assert.isTrue(totalSPRIssued_1ERC20.gt(toBN("0")))
 
 			await vesselManager.liquidate(ZERO_ADDRESS, B)
 			await vesselManager.liquidate(erc20.address, B)
@@ -188,10 +188,10 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 			assert.isFalse(await sortedVessels.contains(ZERO_ADDRESS, B))
 			assert.isFalse(await sortedVessels.contains(erc20.address, B))
 
-			const totalSPRTIssued_2 = await communityIssuanceTester.totalSPRTIssued(
+			const totalSPRIssued_2 = await communityIssuanceTester.totalSPRIssued(
 				stabilityPool.address
 			)
-			const totalSPRTIssued_2ERC20 = await communityIssuanceTester.totalSPRTIssued(
+			const totalSPRIssued_2ERC20 = await communityIssuanceTester.totalSPRIssued(
 				stabilityPoolERC20.address
 			)
 
@@ -199,20 +199,20 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 			const timestampDiff = blockTimestamp_2.sub(blockTimestamp_1)
 			assert.isTrue(timestampDiff.lt(toBN(60)))
 
-			// Check that the liquidation did not alter total SPRT issued
-			assert.isTrue(totalSPRTIssued_2.eq(totalSPRTIssued_1))
-			assert.isTrue(totalSPRTIssued_2ERC20.eq(totalSPRTIssued_1ERC20))
+			// Check that the liquidation did not alter total SPR issued
+			assert.isTrue(totalSPRIssued_2.eq(totalSPRIssued_1))
+			assert.isTrue(totalSPRIssued_2ERC20.eq(totalSPRIssued_1ERC20))
 
-			// Check that depositor B has no SPRT gain
-			assert.equal(await stabilityPool.getDepositorSPRTGain(B), "0")
-			assert.equal(await stabilityPoolERC20.getDepositorSPRTGain(B), "0")
+			// Check that depositor B has no SPR gain
+			assert.equal(await stabilityPool.getDepositorSPRGain(B), "0")
+			assert.equal(await stabilityPoolERC20.getDepositorSPRGain(B), "0")
 
 			// Check depositor B has a pending ETH gain
 			assert.isTrue((await stabilityPool.getDepositorAssetGain(B)).gt(toBN("0")))
 			assert.isTrue((await stabilityPoolERC20.getDepositorAssetGain(B)).gt(toBN("0")))
 		})
 
-		it("withdrawFromSP(): reward term G does not update when no SPRT is issued", async () => {
+		it("withdrawFromSP(): reward term G does not update when no SPR is issued", async () => {
 			await borrowerOperations.openVessel(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), A, A, {
 				from: A,
 				value: dec(1000, "ether"),
@@ -265,12 +265,12 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 
 			// Get G and communityIssuance before
 			const G_Before = await stabilityPool.epochToScaleToG(0, 0)
-			const SPRTIssuedBefore = await communityIssuanceTester.totalSPRTIssued(
+			const SPRIssuedBefore = await communityIssuanceTester.totalSPRIssued(
 				stabilityPool.address
 			)
 
 			const G_BeforeERC20 = await stabilityPoolERC20.epochToScaleToG(0, 0)
-			const SPRTIssuedBeforeERC20 = await communityIssuanceTester.totalSPRTIssued(
+			const SPRIssuedBeforeERC20 = await communityIssuanceTester.totalSPRIssued(
 				stabilityPoolERC20.address
 			)
 
@@ -281,30 +281,30 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 			const txERC20 = await stabilityPoolERC20.withdrawFromSP(1000, { from: A, gasPrice: 0 })
 			assert.isTrue(txERC20.receipt.status)
 
-			// Check G and SPRTIssued do not increase, since <1 minute has passed between issuance triggers
+			// Check G and SPRIssued do not increase, since <1 minute has passed between issuance triggers
 			const G_After = await stabilityPool.epochToScaleToG(0, 0)
-			const SPRTIssuedAfter = await communityIssuanceTester.totalSPRTIssued(
+			const SPRIssuedAfter = await communityIssuanceTester.totalSPRIssued(
 				stabilityPool.address
 			)
 
 			const G_AfterERC20 = await stabilityPoolERC20.epochToScaleToG(0, 0)
-			const SPRTIssuedAfterERC20 = await communityIssuanceTester.totalSPRTIssued(
+			const SPRIssuedAfterERC20 = await communityIssuanceTester.totalSPRIssued(
 				stabilityPoolERC20.address
 			)
 
 			assert.isTrue(G_After.eq(G_Before))
-			assert.isTrue(SPRTIssuedAfter.eq(SPRTIssuedBefore))
+			assert.isTrue(SPRIssuedAfter.eq(SPRIssuedBefore))
 
 			assert.isTrue(G_AfterERC20.eq(G_BeforeERC20))
-			assert.isTrue(SPRTIssuedAfterERC20.eq(SPRTIssuedBeforeERC20))
+			assert.isTrue(SPRIssuedAfterERC20.eq(SPRIssuedBeforeERC20))
 		})
 
 		// // Simple case: 3 depositors, equal stake. No liquidations. No front-end.
-		// it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct SPRT gain. No liquidations. No front end.", async () => {
-		//   const initialIssuance = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
+		// it("withdrawFromSP(): Depositors with equal initial deposit withdraw correct SPR gain. No liquidations. No front end.", async () => {
+		//   const initialIssuance = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
 		//   assert.equal(initialIssuance, 0)
 
-		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
+		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
 		//   assert.equal(initialIssuanceERC20, 0)
 
 		//   // Whale opens Vessel with 10k ETH
@@ -320,10 +320,10 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await borrowerOperations.openVessel(erc20.address, dec(100, 'ether'), th._100pct, dec(1, 22), C, C, { from: C })
 		//   await borrowerOperations.openVessel(erc20.address, dec(100, 'ether'), th._100pct, dec(1, 22), D, D, { from: D })
 
-		//   // Check all SPRT balances are initially 0
-		//   assert.equal(await sprtToken.balanceOf(A), 0)
-		//   assert.equal(await sprtToken.balanceOf(B), 0)
-		//   assert.equal(await sprtToken.balanceOf(C), 0)
+		//   // Check all SPR balances are initially 0
+		//   assert.equal(await sprToken.balanceOf(A), 0)
+		//   assert.equal(await sprToken.balanceOf(B), 0)
+		//   assert.equal(await sprToken.balanceOf(C), 0)
 
 		//   // A, B, C deposit
 		//   await stabilityPool.provideToSP(dec(1, 22), { from: A })
@@ -337,7 +337,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   // One year passes
 		//   await th.fastForwardTime(await getDuration(timeValues.SECONDS_IN_ONE_YEAR), web3.currentProvider)
 
-		//   // D deposits, triggering SPRT gains for A,B,C. Withdraws immediately after
+		//   // D deposits, triggering SPR gains for A,B,C. Withdraws immediately after
 		//   await stabilityPool.provideToSP(dec(1, 18), { from: D })
 		//   await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
@@ -345,32 +345,32 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(1, 18), { from: D })
 
 		//   // Expected gains for each depositor after 1 year (50% total issued).  Each deposit gets 1/3 of issuance.
-		//   const expectedSPRTGain_1yr = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address)).div(toBN('2')).div(toBN('3'))
-		//   const expectedSPRTGain_1yrERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address)).div(toBN('2')).div(toBN('3'))
+		//   const expectedSPRGain_1yr = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address)).div(toBN('2')).div(toBN('3'))
+		//   const expectedSPRGain_1yrERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address)).div(toBN('2')).div(toBN('3'))
 
-		//   // Check SPRT gain
-		//   const A_SPRTGain_1yr = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_1yr = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_1yr = await stabilityPool.getDepositorSPRTGain(C)
+		//   // Check SPR gain
+		//   const A_SPRGain_1yr = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_1yr = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_1yr = await stabilityPool.getDepositorSPRGain(C)
 
-		//   const A_SPRTGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(C)
+		//   const A_SPRGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(A)
+		//   const B_SPRGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(B)
+		//   const C_SPRGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(C)
 
 		//   // Check gains are correct, error tolerance = 1e-6 of a token
 
-		//   assert.isAtMost(getDifference(A_SPRTGain_1yr, expectedSPRTGain_1yr), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_1yr, expectedSPRTGain_1yr), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_1yr, expectedSPRTGain_1yr), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_1yr, expectedSPRGain_1yr), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_1yr, expectedSPRGain_1yr), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_1yr, expectedSPRGain_1yr), 1e12)
 
-		//   assert.isAtMost(getDifference(A_SPRTGain_1yrERC20, expectedSPRTGain_1yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_1yrERC20, expectedSPRTGain_1yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_1yrERC20, expectedSPRTGain_1yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_1yrERC20, expectedSPRGain_1yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_1yrERC20, expectedSPRGain_1yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_1yrERC20, expectedSPRGain_1yrERC20), 1e12)
 
 		//   // Another year passes
 		//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-		//   // D deposits, triggering SPRT gains for A,B,C. Withdraws immediately after
+		//   // D deposits, triggering SPR gains for A,B,C. Withdraws immediately after
 		//   await stabilityPool.provideToSP(dec(1, 18), { from: D })
 		//   await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
@@ -378,28 +378,28 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(1, 18), { from: D })
 
 		//   // Expected gains for each depositor after 2 years (75% total issued).  Each deposit gets 1/3 of issuance.
-		//   const expectedSPRTGain_2yr =
-		//     (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address)).mul(toBN('3')).div(toBN('4')).div(toBN('3'))
-		//   const expectedSPRTGain_2yrERC20 =
-		//     (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address)).mul(toBN('3')).div(toBN('4')).div(toBN('3'))
+		//   const expectedSPRGain_2yr =
+		//     (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address)).mul(toBN('3')).div(toBN('4')).div(toBN('3'))
+		//   const expectedSPRGain_2yrERC20 =
+		//     (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address)).mul(toBN('3')).div(toBN('4')).div(toBN('3'))
 
-		//   // Check SPRT gain
-		//   const A_SPRTGain_2yr = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_2yr = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_2yr = await stabilityPool.getDepositorSPRTGain(C)
+		//   // Check SPR gain
+		//   const A_SPRGain_2yr = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_2yr = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_2yr = await stabilityPool.getDepositorSPRGain(C)
 
-		//   const A_SPRTGain_2yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_2yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_2yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(C)
+		//   const A_SPRGain_2yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(A)
+		//   const B_SPRGain_2yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(B)
+		//   const C_SPRGain_2yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(C)
 
 		//   // Check gains are correct, error tolerance = 1e-6 of a token
-		//   assert.isAtMost(getDifference(A_SPRTGain_2yr, expectedSPRTGain_2yr), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_2yr, expectedSPRTGain_2yr), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_2yr, expectedSPRTGain_2yr), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_2yr, expectedSPRGain_2yr), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_2yr, expectedSPRGain_2yr), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_2yr, expectedSPRGain_2yr), 1e12)
 
-		//   assert.isAtMost(getDifference(A_SPRTGain_2yrERC20, expectedSPRTGain_2yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_2yrERC20, expectedSPRTGain_2yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_2yrERC20, expectedSPRTGain_2yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_2yrERC20, expectedSPRGain_2yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_2yrERC20, expectedSPRGain_2yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_2yrERC20, expectedSPRGain_2yrERC20), 1e12)
 
 		//   // Each depositor fully withdraws
 		//   await stabilityPool.withdrawFromSP(dec(100, 18), { from: A })
@@ -410,18 +410,18 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(100, 18), { from: B })
 		//   await stabilityPoolERC20.withdrawFromSP(dec(100, 18), { from: C })
 
-		//   // Check SPRT balances increase by correct amount
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(A)), expectedSPRTGain_2yr.add(expectedSPRTGain_2yrERC20)), 1e12)
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(B)), expectedSPRTGain_2yr.add(expectedSPRTGain_2yrERC20)), 1e12)
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(C)), expectedSPRTGain_2yr.add(expectedSPRTGain_2yrERC20)), 1e12)
+		//   // Check SPR balances increase by correct amount
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(A)), expectedSPRGain_2yr.add(expectedSPRGain_2yrERC20)), 1e12)
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(B)), expectedSPRGain_2yr.add(expectedSPRGain_2yrERC20)), 1e12)
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(C)), expectedSPRGain_2yr.add(expectedSPRGain_2yrERC20)), 1e12)
 		// })
 
 		// // 3 depositors, varied stake. No liquidations. No front-end.
-		// it("withdrawFromSP(): Depositors with varying initial deposit withdraw correct SPRT gain. No liquidations. No front end.", async () => {
-		//   const initialIssuance = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
+		// it("withdrawFromSP(): Depositors with varying initial deposit withdraw correct SPR gain. No liquidations. No front end.", async () => {
+		//   const initialIssuance = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
 		//   assert.equal(initialIssuance, 0)
 
-		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
+		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
 		//   assert.equal(initialIssuanceERC20, 0)
 
 		//   // Whale opens Vessel with 10k ETH
@@ -439,10 +439,10 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await borrowerOperations.openVessel(erc20.address, dec(400, 'ether'), th._100pct, dec(30000, 18), C, C, { from: C })
 		//   await borrowerOperations.openVessel(erc20.address, dec(100, 'ether'), th._100pct, dec(10000, 18), D, D, { from: D })
 
-		//   // Check all SPRT balances are initially 0
-		//   assert.equal(await sprtToken.balanceOf(A), 0)
-		//   assert.equal(await sprtToken.balanceOf(B), 0)
-		//   assert.equal(await sprtToken.balanceOf(C), 0)
+		//   // Check all SPR balances are initially 0
+		//   assert.equal(await sprToken.balanceOf(A), 0)
+		//   assert.equal(await sprToken.balanceOf(B), 0)
+		//   assert.equal(await sprToken.balanceOf(C), 0)
 
 		//   // A, B, C deposit
 		//   await stabilityPool.provideToSP(dec(10000, 18), { from: A })
@@ -456,7 +456,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   // One year passes
 		//   await th.fastForwardTime(await getDuration(timeValues.SECONDS_IN_ONE_YEAR), web3.currentProvider)
 
-		//   // D deposits, triggering SPRT gains for A,B,C. Withdraws immediately after
+		//   // D deposits, triggering SPR gains for A,B,C. Withdraws immediately after
 		//   await stabilityPool.provideToSP(dec(1, 18), { from: D })
 		//   await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
@@ -464,52 +464,52 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(1, 18), { from: D })
 
 		//   // Expected gains for each depositor after 1 year (50% total issued)
-		//   const A_expectedSPRTGain_1yr = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const A_expectedSPRGain_1yr = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('2')) // 50% of total issued after 1 year
 		//     .div(toBN('6'))  // A gets 1/6 of the issuance
 
-		//   const B_expectedSPRTGain_1yr = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const B_expectedSPRGain_1yr = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('2')) // 50% of total issued after 1 year
 		//     .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
 
-		//   const C_expectedSPRTGain_1yr = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const C_expectedSPRGain_1yr = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('2')) // 50% of total issued after 1 year
 		//     .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
 
-		//   const A_expectedSPRTGain_1yrERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const A_expectedSPRGain_1yrERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('2')) // 50% of total issued after 1 year
 		//     .div(toBN('6'))  // A gets 1/6 of the issuance
 
-		//   const B_expectedSPRTGain_1yrERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const B_expectedSPRGain_1yrERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('2')) // 50% of total issued after 1 year
 		//     .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
 
-		//   const C_expectedSPRTGain_1yrERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const C_expectedSPRGain_1yrERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('2')) // 50% of total issued after 1 year
 		//     .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
 
-		//   // Check SPRT gain
-		//   const A_SPRTGain_1yr = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_1yr = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_1yr = await stabilityPool.getDepositorSPRTGain(C)
+		//   // Check SPR gain
+		//   const A_SPRGain_1yr = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_1yr = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_1yr = await stabilityPool.getDepositorSPRGain(C)
 
-		//   const A_SPRTGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRTGain(C)
+		//   const A_SPRGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(A)
+		//   const B_SPRGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(B)
+		//   const C_SPRGain_1yrERC20 = await stabilityPoolERC20.getDepositorSPRGain(C)
 
 		//   // Check gains are correct, error tolerance = 1e-6 of a toke
-		//   assert.isAtMost(getDifference(A_SPRTGain_1yr, A_expectedSPRTGain_1yr), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_1yr, B_expectedSPRTGain_1yr), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_1yr, C_expectedSPRTGain_1yr), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_1yr, A_expectedSPRGain_1yr), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_1yr, B_expectedSPRGain_1yr), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_1yr, C_expectedSPRGain_1yr), 1e12)
 
-		//   assert.isAtMost(getDifference(A_SPRTGain_1yrERC20, A_expectedSPRTGain_1yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_1yrERC20, B_expectedSPRTGain_1yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_1yrERC20, C_expectedSPRTGain_1yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_1yrERC20, A_expectedSPRGain_1yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_1yrERC20, B_expectedSPRGain_1yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_1yrERC20, C_expectedSPRGain_1yrERC20), 1e12)
 
 		//   // Another year passes
 		//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-		//   // D deposits, triggering SPRT gains for A,B,C. Withdraws immediately after
+		//   // D deposits, triggering SPR gains for A,B,C. Withdraws immediately after
 		//   await stabilityPool.provideToSP(dec(1, 18), { from: D })
 		//   await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
@@ -517,48 +517,48 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(1, 18), { from: D })
 
 		//   // Expected gains for each depositor after 2 years (75% total issued).
-		//   const A_expectedSPRTGain_2yr = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const A_expectedSPRGain_2yr = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
 		//     .div(toBN('6'))  // A gets 1/6 of the issuance
 
-		//   const B_expectedSPRTGain_2yr = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const B_expectedSPRGain_2yr = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
 		//     .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
 
-		//   const C_expectedSPRTGain_2yr = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const C_expectedSPRGain_2yr = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
 		//     .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
 
 		//   // Expected gains for each depositor after 2 years (75% total issued).
-		//   const A_expectedSPRTGain_2yrERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const A_expectedSPRGain_2yrERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
 		//     .div(toBN('6'))  // A gets 1/6 of the issuance
 
-		//   const B_expectedSPRTGain_2yrERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const B_expectedSPRGain_2yrERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
 		//     .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
 
-		//   const C_expectedSPRTGain_2yrERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const C_expectedSPRGain_2yrERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
 		//     .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
 
-		//   // Check SPRT gain
-		//   const A_SPRTGain_2yr = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_2yr = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_2yr = await stabilityPool.getDepositorSPRTGain(C)
+		//   // Check SPR gain
+		//   const A_SPRGain_2yr = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_2yr = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_2yr = await stabilityPool.getDepositorSPRGain(C)
 
-		//   const A_SPRTGain_2yrERC20 = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_2yrERC20 = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_2yrERC20 = await stabilityPool.getDepositorSPRTGain(C)
+		//   const A_SPRGain_2yrERC20 = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_2yrERC20 = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_2yrERC20 = await stabilityPool.getDepositorSPRGain(C)
 
 		//   // Check gains are correct, error tolerance = 1e-6 of a token
-		//   assert.isAtMost(getDifference(A_SPRTGain_2yr, A_expectedSPRTGain_2yr), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_2yr, B_expectedSPRTGain_2yr), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_2yr, C_expectedSPRTGain_2yr), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_2yr, A_expectedSPRGain_2yr), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_2yr, B_expectedSPRGain_2yr), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_2yr, C_expectedSPRGain_2yr), 1e12)
 
-		//   assert.isAtMost(getDifference(A_SPRTGain_2yrERC20, A_expectedSPRTGain_2yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_2yrERC20, B_expectedSPRTGain_2yrERC20), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_2yrERC20, C_expectedSPRTGain_2yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_2yrERC20, A_expectedSPRGain_2yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_2yrERC20, B_expectedSPRGain_2yrERC20), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_2yrERC20, C_expectedSPRGain_2yrERC20), 1e12)
 
 		//   // Each depositor fully withdraws
 		//   await stabilityPool.withdrawFromSP(dec(10000, 18), { from: A })
@@ -569,18 +569,18 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(10000, 18), { from: B })
 		//   await stabilityPoolERC20.withdrawFromSP(dec(10000, 18), { from: C })
 
-		//   // Check SPRT balances increase by correct amount
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(A)), A_expectedSPRTGain_2yr.add(A_expectedSPRTGain_2yrERC20)), 1e12)
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(B)), B_expectedSPRTGain_2yr.add(B_expectedSPRTGain_2yrERC20)), 1e12)
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(C)), C_expectedSPRTGain_2yr.add(C_expectedSPRTGain_2yrERC20)), 1e12)
+		//   // Check SPR balances increase by correct amount
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(A)), A_expectedSPRGain_2yr.add(A_expectedSPRGain_2yrERC20)), 1e12)
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(B)), B_expectedSPRGain_2yr.add(B_expectedSPRGain_2yrERC20)), 1e12)
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(C)), C_expectedSPRGain_2yr.add(C_expectedSPRGain_2yrERC20)), 1e12)
 		// })
 
 		// // A, B, C deposit. Varied stake. 1 Liquidation. D joins.
-		// it("withdrawFromSP(): Depositors with varying initial deposit withdraw correct SPRT gain. No liquidations. No front end.", async () => {
-		//   const initialIssuance = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
+		// it("withdrawFromSP(): Depositors with varying initial deposit withdraw correct SPR gain. No liquidations. No front end.", async () => {
+		//   const initialIssuance = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
 		//   assert.equal(initialIssuance, 0)
 
-		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
+		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
 		//   assert.equal(initialIssuanceERC20, 0)
 
 		//   // Whale opens Vessel with 10k ETH
@@ -604,11 +604,11 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 
 		//   await borrowerOperations.openVessel(erc20.address, dec(300, 'ether'), th._100pct, await getOpenVesselVUSDAmount(dec(30000, 18)), defaulter_1, defaulter_1, { from: defaulter_1 })
 
-		//   // Check all SPRT balances are initially 0
-		//   assert.equal(await sprtToken.balanceOf(A), 0)
-		//   assert.equal(await sprtToken.balanceOf(B), 0)
-		//   assert.equal(await sprtToken.balanceOf(C), 0)
-		//   assert.equal(await sprtToken.balanceOf(D), 0)
+		//   // Check all SPR balances are initially 0
+		//   assert.equal(await sprToken.balanceOf(A), 0)
+		//   assert.equal(await sprToken.balanceOf(B), 0)
+		//   assert.equal(await sprToken.balanceOf(C), 0)
+		//   assert.equal(await sprToken.balanceOf(D), 0)
 
 		//   // A, B, C deposit
 		//   await stabilityPool.provideToSP(dec(10000, 18), { from: A })
@@ -640,47 +640,47 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   assert.isAtMost(getDifference(await stabilityPoolERC20.getTotalDebtTokenDeposits(), dec(30000, 18)), 1000)
 
 		//   // Expected gains for each depositor after 1 year (50% total issued)
-		//   const A_expectedSPRTGain_Y1 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const A_expectedSPRGain_Y1 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('2')) // 50% of total issued in Y1
 		//     .div(toBN('6'))  // A got 1/6 of the issuance
 
-		//   const B_expectedSPRTGain_Y1 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const B_expectedSPRGain_Y1 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('2')) // 50% of total issued in Y1
 		//     .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
 
-		//   const C_expectedSPRTGain_Y1 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const C_expectedSPRGain_Y1 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('2')) // 50% of total issued in Y1
 		//     .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
 
-		//   const A_expectedSPRTGain_Y1ERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const A_expectedSPRGain_Y1ERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('2')) // 50% of total issued in Y1
 		//     .div(toBN('6'))  // A got 1/6 of the issuance
 
-		//   const B_expectedSPRTGain_Y1ERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const B_expectedSPRGain_Y1ERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('2')) // 50% of total issued in Y1
 		//     .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
 
-		//   const C_expectedSPRTGain_Y1ERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const C_expectedSPRGain_Y1ERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('2')) // 50% of total issued in Y1
 		//     .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
 
-		//   // Check SPRT gain
-		//   const A_SPRTGain_Y1 = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_Y1 = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_Y1 = await stabilityPool.getDepositorSPRTGain(C)
+		//   // Check SPR gain
+		//   const A_SPRGain_Y1 = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_Y1 = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_Y1 = await stabilityPool.getDepositorSPRGain(C)
 
-		//   const A_SPRTGain_Y1ERC20 = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_Y1ERC20 = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_Y1ERC20 = await stabilityPool.getDepositorSPRTGain(C)
+		//   const A_SPRGain_Y1ERC20 = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_Y1ERC20 = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_Y1ERC20 = await stabilityPool.getDepositorSPRGain(C)
 
 		//   // Check gains are correct, error tolerance = 1e-6 of a toke
-		//   assert.isAtMost(getDifference(A_SPRTGain_Y1, A_expectedSPRTGain_Y1), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_Y1, B_expectedSPRTGain_Y1), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_Y1, C_expectedSPRTGain_Y1), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_Y1, A_expectedSPRGain_Y1), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_Y1, B_expectedSPRGain_Y1), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_Y1, C_expectedSPRGain_Y1), 1e12)
 
-		//   assert.isAtMost(getDifference(A_SPRTGain_Y1ERC20, A_expectedSPRTGain_Y1ERC20), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_Y1ERC20, B_expectedSPRTGain_Y1ERC20), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_Y1ERC20, C_expectedSPRTGain_Y1ERC20), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_Y1ERC20, A_expectedSPRGain_Y1ERC20), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_Y1ERC20, B_expectedSPRGain_Y1ERC20), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_Y1ERC20, C_expectedSPRGain_Y1ERC20), 1e12)
 
 		//   // D deposits 40k
 		//   await stabilityPool.provideToSP(dec(40000, 18), { from: D })
@@ -689,7 +689,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   // Year 2 passes
 		//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
 
-		//   // E deposits and withdraws, creating SPRT issuance
+		//   // E deposits and withdraws, creating SPR issuance
 		//   await stabilityPool.provideToSP(dec(1, 18), { from: E })
 		//   await stabilityPool.withdrawFromSP(dec(1, 18), { from: E })
 
@@ -697,70 +697,70 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(1, 18), { from: E })
 
 		//   // Expected gains for each depositor during Y2:
-		//   const A_expectedSPRTGain_Y2 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const A_expectedSPRGain_Y2 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .div(toBN('14'))  // A got 50/700 = 1/14 of the issuance
 
-		//   const B_expectedSPRTGain_Y2 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const B_expectedSPRGain_Y2 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .div(toBN('7'))  // B got 100/700 = 1/7 of the issuance
 
-		//   const C_expectedSPRTGain_Y2 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const C_expectedSPRGain_Y2 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .mul(toBN('3')).div(toBN('14'))  // C gets 150/700 = 3/14 of the issuance
 
-		//   const D_expectedSPRTGain_Y2 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPool.address))
+		//   const D_expectedSPRGain_Y2 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPool.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .mul(toBN('4')).div(toBN('7'))  // D gets 400/700 = 4/7 of the issuance
 
 		//   // Expected gains for each depositor during Y2:
-		//   const A_expectedSPRTGain_Y2ERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const A_expectedSPRGain_Y2ERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .div(toBN('14'))  // A got 50/700 = 1/14 of the issuance
 
-		//   const B_expectedSPRTGain_Y2ERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const B_expectedSPRGain_Y2ERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .div(toBN('7'))  // B got 100/700 = 1/7 of the issuance
 
-		//   const C_expectedSPRTGain_Y2ERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const C_expectedSPRGain_Y2ERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .mul(toBN('3')).div(toBN('14'))  // C gets 150/700 = 3/14 of the issuance
 
-		//   const D_expectedSPRTGain_Y2ERC20 = (await communityIssuanceTester.SPRTSupplyCaps(stabilityPoolERC20.address))
+		//   const D_expectedSPRGain_Y2ERC20 = (await communityIssuanceTester.SPRSupplyCaps(stabilityPoolERC20.address))
 		//     .div(toBN('4')) // 25% of total issued in Y2
 		//     .mul(toBN('4')).div(toBN('7'))  // D gets 400/700 = 4/7 of the issuance
 
-		//   // Check SPRT gain
-		//   const A_SPRTGain_AfterY2 = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_AfterY2 = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_AfterY2 = await stabilityPool.getDepositorSPRTGain(C)
-		//   const D_SPRTGain_AfterY2 = await stabilityPool.getDepositorSPRTGain(D)
+		//   // Check SPR gain
+		//   const A_SPRGain_AfterY2 = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_AfterY2 = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_AfterY2 = await stabilityPool.getDepositorSPRGain(C)
+		//   const D_SPRGain_AfterY2 = await stabilityPool.getDepositorSPRGain(D)
 
-		//   const A_SPRTGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRTGain(A)
-		//   const B_SPRTGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRTGain(B)
-		//   const C_SPRTGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRTGain(C)
-		//   const D_SPRTGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRTGain(D)
+		//   const A_SPRGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRGain(A)
+		//   const B_SPRGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRGain(B)
+		//   const C_SPRGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRGain(C)
+		//   const D_SPRGain_AfterY2ERC20 = await stabilityPool.getDepositorSPRGain(D)
 
-		//   const A_expectedTotalGain = A_expectedSPRTGain_Y1.add(A_expectedSPRTGain_Y2)
-		//   const B_expectedTotalGain = B_expectedSPRTGain_Y1.add(B_expectedSPRTGain_Y2)
-		//   const C_expectedTotalGain = C_expectedSPRTGain_Y1.add(C_expectedSPRTGain_Y2)
-		//   const D_expectedTotalGain = D_expectedSPRTGain_Y2
+		//   const A_expectedTotalGain = A_expectedSPRGain_Y1.add(A_expectedSPRGain_Y2)
+		//   const B_expectedTotalGain = B_expectedSPRGain_Y1.add(B_expectedSPRGain_Y2)
+		//   const C_expectedTotalGain = C_expectedSPRGain_Y1.add(C_expectedSPRGain_Y2)
+		//   const D_expectedTotalGain = D_expectedSPRGain_Y2
 
-		//   const A_expectedTotalGainERC20 = A_expectedSPRTGain_Y1ERC20.add(A_expectedSPRTGain_Y2ERC20)
-		//   const B_expectedTotalGainERC20 = B_expectedSPRTGain_Y1ERC20.add(B_expectedSPRTGain_Y2ERC20)
-		//   const C_expectedTotalGainERC20 = C_expectedSPRTGain_Y1ERC20.add(C_expectedSPRTGain_Y2ERC20)
-		//   const D_expectedTotalGainERC20 = D_expectedSPRTGain_Y2ERC20
+		//   const A_expectedTotalGainERC20 = A_expectedSPRGain_Y1ERC20.add(A_expectedSPRGain_Y2ERC20)
+		//   const B_expectedTotalGainERC20 = B_expectedSPRGain_Y1ERC20.add(B_expectedSPRGain_Y2ERC20)
+		//   const C_expectedTotalGainERC20 = C_expectedSPRGain_Y1ERC20.add(C_expectedSPRGain_Y2ERC20)
+		//   const D_expectedTotalGainERC20 = D_expectedSPRGain_Y2ERC20
 
 		//   // Check gains are correct, error tolerance = 1e-6 of a token
-		//   assert.isAtMost(getDifference(A_SPRTGain_AfterY2, A_expectedTotalGain), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_AfterY2, B_expectedTotalGain), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_AfterY2, C_expectedTotalGain), 1e12)
-		//   assert.isAtMost(getDifference(D_SPRTGain_AfterY2, D_expectedTotalGain), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_AfterY2, A_expectedTotalGain), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_AfterY2, B_expectedTotalGain), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_AfterY2, C_expectedTotalGain), 1e12)
+		//   assert.isAtMost(getDifference(D_SPRGain_AfterY2, D_expectedTotalGain), 1e12)
 
-		//   assert.isAtMost(getDifference(A_SPRTGain_AfterY2ERC20, A_expectedTotalGainERC20), 1e12)
-		//   assert.isAtMost(getDifference(B_SPRTGain_AfterY2ERC20, B_expectedTotalGainERC20), 1e12)
-		//   assert.isAtMost(getDifference(C_SPRTGain_AfterY2ERC20, C_expectedTotalGainERC20), 1e12)
-		//   assert.isAtMost(getDifference(D_SPRTGain_AfterY2ERC20, D_expectedTotalGainERC20), 1e12)
+		//   assert.isAtMost(getDifference(A_SPRGain_AfterY2ERC20, A_expectedTotalGainERC20), 1e12)
+		//   assert.isAtMost(getDifference(B_SPRGain_AfterY2ERC20, B_expectedTotalGainERC20), 1e12)
+		//   assert.isAtMost(getDifference(C_SPRGain_AfterY2ERC20, C_expectedTotalGainERC20), 1e12)
+		//   assert.isAtMost(getDifference(D_SPRGain_AfterY2ERC20, D_expectedTotalGainERC20), 1e12)
 
 		//   // Each depositor fully withdraws
 		//   await stabilityPool.withdrawFromSP(dec(10000, 18), { from: A })
@@ -773,11 +773,11 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await stabilityPoolERC20.withdrawFromSP(dec(30000, 18), { from: C })
 		//   await stabilityPoolERC20.withdrawFromSP(dec(40000, 18), { from: D })
 
-		//   // Check SPRT balances increase by correct amount
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(A)), A_expectedTotalGain.add(A_expectedTotalGainERC20)), 1e12)
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(B)), B_expectedTotalGain.add(B_expectedTotalGainERC20)), 1e12)
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(C)), C_expectedTotalGain.add(C_expectedTotalGainERC20)), 1e12)
-		//   assert.isAtMost(getDifference((await sprtToken.balanceOf(D)), D_expectedTotalGain.add(D_expectedTotalGainERC20)), 1e12)
+		//   // Check SPR balances increase by correct amount
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(A)), A_expectedTotalGain.add(A_expectedTotalGainERC20)), 1e12)
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(B)), B_expectedTotalGain.add(B_expectedTotalGainERC20)), 1e12)
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(C)), C_expectedTotalGain.add(C_expectedTotalGainERC20)), 1e12)
+		//   assert.isAtMost(getDifference((await sprToken.balanceOf(D)), D_expectedTotalGain.add(D_expectedTotalGainERC20)), 1e12)
 		// })
 
 		// //--- Serial pool-emptying liquidations ---
@@ -791,12 +791,12 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		// G,H deposits 100C
 		// L4 cancels 200C
 
-		// Expect all depositors withdraw  1/2 of 1 month's SPRT issuance */
-		// it('withdrawFromSP(): Depositor withdraws correct SPRT gain after serial pool-emptying liquidations. No front-ends.', async () => {
-		//   const initialIssuance = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
+		// Expect all depositors withdraw  1/2 of 1 month's SPR issuance */
+		// it('withdrawFromSP(): Depositor withdraws correct SPR gain after serial pool-emptying liquidations. No front-ends.', async () => {
+		//   const initialIssuance = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
 		//   assert.equal(initialIssuance, 0)
 
-		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
+		//   const initialIssuanceERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
 		//   assert.equal(initialIssuanceERC20, 0)
 
 		//   // Whale opens Vessel with 10k ETH
@@ -818,9 +818,9 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   // price drops by 50%: defaulter ICR falls to 100%
 		//   await priceFeed.setPrice(dec(100, 18));
 
-		//   // Check all would-be depositors have 0 SPRT balance
+		//   // Check all would-be depositors have 0 SPR balance
 		//   for (depositor of allDepositors) {
-		//     assert.equal(await sprtToken.balanceOf(depositor), '0')
+		//     assert.equal(await sprToken.balanceOf(depositor), '0')
 		//   }
 
 		//   // A, B each deposit 10k VUSD
@@ -897,35 +897,35 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   }
 
 		//   /* Each depositor constitutes 50% of the pool from the time they deposit, up until the liquidation.
-		//   Therefore, divide monthly issuance by 2 to get the expected per-depositor SPRT gain.*/
+		//   Therefore, divide monthly issuance by 2 to get the expected per-depositor SPR gain.*/
 		//   //x2 since we are doing two collateral in one test
-		//   const expectedSPRTGain_M1 = issuance_M1.div(th.toBN('2')).mul(toBN(2))
-		//   const expectedSPRTGain_M2 = issuance_M2.div(th.toBN('2')).mul(toBN(2))
-		//   const expectedSPRTGain_M3 = issuance_M3.div(th.toBN('2')).mul(toBN(2))
-		//   const expectedSPRTGain_M4 = issuance_M4.div(th.toBN('2')).mul(toBN(2))
+		//   const expectedSPRGain_M1 = issuance_M1.div(th.toBN('2')).mul(toBN(2))
+		//   const expectedSPRGain_M2 = issuance_M2.div(th.toBN('2')).mul(toBN(2))
+		//   const expectedSPRGain_M3 = issuance_M3.div(th.toBN('2')).mul(toBN(2))
+		//   const expectedSPRGain_M4 = issuance_M4.div(th.toBN('2')).mul(toBN(2))
 
 		//   // Check A, B only earn issuance from month 1. Error tolerance = 1e-3 tokens
 		//   for (depositor of [A, B]) {
-		//     const SPRTBalance = await sprtToken.balanceOf(depositor)
-		//     assert.isAtMost(getDifference(SPRTBalance, expectedSPRTGain_M1), 1e15)
+		//     const SPRBalance = await sprToken.balanceOf(depositor)
+		//     assert.isAtMost(getDifference(SPRBalance, expectedSPRGain_M1), 1e15)
 		//   }
 
 		//   // Check C, D only earn issuance from month 2.  Error tolerance = 1e-3 tokens
 		//   for (depositor of [C, D]) {
-		//     const SPRTBalance = await sprtToken.balanceOf(depositor)
-		//     assert.isAtMost(getDifference(SPRTBalance, expectedSPRTGain_M2), 1e15)
+		//     const SPRBalance = await sprToken.balanceOf(depositor)
+		//     assert.isAtMost(getDifference(SPRBalance, expectedSPRGain_M2), 1e15)
 		//   }
 
 		//   // Check E, F only earn issuance from month 3.  Error tolerance = 1e-3 tokens
 		//   for (depositor of [E, F]) {
-		//     const SPRTBalance = await sprtToken.balanceOf(depositor)
-		//     assert.isAtMost(getDifference(SPRTBalance, expectedSPRTGain_M3), 1e15)
+		//     const SPRBalance = await sprToken.balanceOf(depositor)
+		//     assert.isAtMost(getDifference(SPRBalance, expectedSPRGain_M3), 1e15)
 		//   }
 
 		//   // Check G, H only earn issuance from month 4.  Error tolerance = 1e-3 tokens
 		//   for (depositor of [G, H]) {
-		//     const SPRTBalance = await sprtToken.balanceOf(depositor)
-		//     assert.isAtMost(getDifference(SPRTBalance, expectedSPRTGain_M4), 1e15)
+		//     const SPRBalance = await sprToken.balanceOf(depositor)
+		//     assert.isAtMost(getDifference(SPRBalance, expectedSPRGain_M4), 1e15)
 		//   }
 
 		//   const finalEpoch = (await stabilityPool.currentEpoch()).toString()
@@ -935,8 +935,8 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   assert.equal(finalEpochERC20, 4)
 		// })
 
-		// it('SPRT issuance for a given period is not obtainable if the SP was empty during the period', async () => {
-		//   const CIBalanceBefore = await sprtToken.balanceOf(communityIssuanceTester.address)
+		// it('SPR issuance for a given period is not obtainable if the SP was empty during the period', async () => {
+		//   const CIBalanceBefore = await sprToken.balanceOf(communityIssuanceTester.address)
 
 		//   await borrowerOperations.openVessel(ZERO_ADDRESS, 0, th._100pct, dec(16000, 18), A, A, { from: A, value: dec(200, 'ether') })
 		//   await borrowerOperations.openVessel(ZERO_ADDRESS, 0, th._100pct, dec(10000, 18), B, B, { from: B, value: dec(100, 'ether') })
@@ -946,20 +946,20 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   await borrowerOperations.openVessel(erc20.address, dec(100, 'ether'), th._100pct, dec(10000, 18), B, B, { from: B })
 		//   await borrowerOperations.openVessel(erc20.address, dec(200, 'ether'), th._100pct, dec(16000, 18), C, C, { from: C })
 
-		//   const totalSPRTissuance_0 = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
+		//   const totalSPRissuance_0 = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
 		//   const G_0 = await stabilityPool.epochToScaleToG(0, 0)  // epochs and scales will not change in this test: no liquidations
-		//   assert.equal(totalSPRTissuance_0, '0')
+		//   assert.equal(totalSPRissuance_0, '0')
 		//   assert.equal(G_0, '0')
 
-		//   const totalSPRTissuance_0ERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
+		//   const totalSPRissuance_0ERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
 		//   const G_0ERC20 = await stabilityPoolERC20.epochToScaleToG(0, 0)  // epochs and scales will not change in this test: no liquidations
-		//   assert.equal(totalSPRTissuance_0ERC20, '0')
+		//   assert.equal(totalSPRissuance_0ERC20, '0')
 		//   assert.equal(G_0ERC20, '0')
 
 		//   // 1 month passes (M1)
 		//   await th.fastForwardTime(await getDuration(timeValues.SECONDS_IN_ONE_MONTH), web3.currentProvider)
 
-		//   // SPRT issuance event triggered: A deposits
+		//   // SPR issuance event triggered: A deposits
 		//   await stabilityPool.provideToSP(dec(10000, 18), { from: A })
 		//   await stabilityPoolERC20.provideToSP(dec(10000, 18), { from: A })
 
@@ -970,17 +970,17 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   const G_1ERC20 = await stabilityPoolERC20.epochToScaleToG(0, 0)
 		//   assert.isTrue(G_1ERC20.eq(G_0ERC20))
 
-		//   // Check total SPRT issued is updated
-		//   const totalSPRTissuance_1 = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
-		//   assert.isTrue(totalSPRTissuance_1.gt(totalSPRTissuance_0))
+		//   // Check total SPR issued is updated
+		//   const totalSPRissuance_1 = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
+		//   assert.isTrue(totalSPRissuance_1.gt(totalSPRissuance_0))
 
-		//   const totalSPRTissuance_1ERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
-		//   assert.isTrue(totalSPRTissuance_1ERC20.gt(totalSPRTissuance_0ERC20))
+		//   const totalSPRissuance_1ERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
+		//   assert.isTrue(totalSPRissuance_1ERC20.gt(totalSPRissuance_0ERC20))
 
 		//   // 1 month passes (M2)
 		//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
 
-		//   //SPRT issuance event triggered: A withdraws.
+		//   //SPR issuance event triggered: A withdraws.
 		//   await stabilityPool.withdrawFromSP(dec(10000, 18), { from: A })
 		//   await stabilityPoolERC20.withdrawFromSP(dec(10000, 18), { from: A })
 
@@ -991,17 +991,17 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   const G_2ERC20 = await stabilityPoolERC20.epochToScaleToG(0, 0)
 		//   assert.isTrue(G_2ERC20.gt(G_1ERC20))
 
-		//   // Check total SPRT issued is updated
-		//   const totalSPRTissuance_2 = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
-		//   assert.isTrue(totalSPRTissuance_2.gt(totalSPRTissuance_1))
+		//   // Check total SPR issued is updated
+		//   const totalSPRissuance_2 = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
+		//   assert.isTrue(totalSPRissuance_2.gt(totalSPRissuance_1))
 
-		//   const totalSPRTissuance_2ERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
-		//   assert.isTrue(totalSPRTissuance_2ERC20.gt(totalSPRTissuance_1ERC20))
+		//   const totalSPRissuance_2ERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
+		//   assert.isTrue(totalSPRissuance_2ERC20.gt(totalSPRissuance_1ERC20))
 
 		//   // 1 month passes (M3)
 		//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
 
-		//   // SPRT issuance event triggered: C deposits
+		//   // SPR issuance event triggered: C deposits
 		//   await stabilityPool.provideToSP(dec(10000, 18), { from: C })
 		//   await stabilityPoolERC20.provideToSP(dec(10000, 18), { from: C })
 
@@ -1012,12 +1012,12 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   const G_3ERC20 = await stabilityPoolERC20.epochToScaleToG(0, 0)
 		//   assert.isTrue(G_3ERC20.eq(G_2ERC20))
 
-		//   // Check total SPRT issued is updated
-		//   const totalSPRTissuance_3 = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
-		//   assert.isTrue(totalSPRTissuance_3.gt(totalSPRTissuance_2))
+		//   // Check total SPR issued is updated
+		//   const totalSPRissuance_3 = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
+		//   assert.isTrue(totalSPRissuance_3.gt(totalSPRissuance_2))
 
-		//   const totalSPRTissuance_3ERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
-		//   assert.isTrue(totalSPRTissuance_3ERC20.gt(totalSPRTissuance_2ERC20))
+		//   const totalSPRissuance_3ERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
+		//   assert.isTrue(totalSPRissuance_3ERC20.gt(totalSPRissuance_2ERC20))
 
 		//   // 1 month passes (M4)
 		//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
@@ -1033,32 +1033,32 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 		//   const G_4ERC20 = await stabilityPoolERC20.epochToScaleToG(0, 0)
 		//   assert.isTrue(G_4ERC20.gt(G_3ERC20))
 
-		//   // Check total SPRT issued is increased
-		//   const totalSPRTissuance_4 = await communityIssuanceTester.totalSPRTIssued(stabilityPool.address)
-		//   assert.isTrue(totalSPRTissuance_4.gt(totalSPRTissuance_3))
+		//   // Check total SPR issued is increased
+		//   const totalSPRissuance_4 = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
+		//   assert.isTrue(totalSPRissuance_4.gt(totalSPRissuance_3))
 
-		//   const totalSPRTissuance_4ERC20 = await communityIssuanceTester.totalSPRTIssued(stabilityPoolERC20.address)
-		//   assert.isTrue(totalSPRTissuance_4ERC20.gt(totalSPRTissuance_3ERC20))
+		//   const totalSPRissuance_4ERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
+		//   assert.isTrue(totalSPRissuance_4ERC20.gt(totalSPRissuance_3ERC20))
 
-		//   // Get SPRT Gains
-		//   const A_SPRTGain = await sprtToken.balanceOf(A)
-		//   const C_SPRTGain = await sprtToken.balanceOf(C)
+		//   // Get SPR Gains
+		//   const A_SPRGain = await sprToken.balanceOf(A)
+		//   const C_SPRGain = await sprToken.balanceOf(C)
 
 		//   // Check A earns gains from M2 only
-		//   assert.isAtMost(getDifference(A_SPRTGain, issuance_M2.mul(toBN(2))), 1e15)
+		//   assert.isAtMost(getDifference(A_SPRGain, issuance_M2.mul(toBN(2))), 1e15)
 
 		//   // Check C earns gains from M4 only
-		//   assert.isAtMost(getDifference(C_SPRTGain, issuance_M4.mul(toBN(2))), 1e15)
+		//   assert.isAtMost(getDifference(C_SPRGain, issuance_M4.mul(toBN(2))), 1e15)
 
-		//   // Check totalSPRTIssued = M1 + M2 + M3 + M4.  1e-3 error tolerance.
+		//   // Check totalSPRIssued = M1 + M2 + M3 + M4.  1e-3 error tolerance.
 		//   const expectedIssuance4Months = issuance_M1.add(issuance_M2).add(issuance_M3).add(issuance_M4)
-		//   assert.isAtMost(getDifference(expectedIssuance4Months, totalSPRTissuance_4), 1e15)
+		//   assert.isAtMost(getDifference(expectedIssuance4Months, totalSPRissuance_4), 1e15)
 
 		//   // Check CI has only transferred out tokens for M2 + M4.  1e-3 error tolerance.
-		//   const expectedSPRTSentOutFromCI = issuance_M2.add(issuance_M4)
-		//   const CIBalanceAfter = await sprtToken.balanceOf(communityIssuanceTester.address)
+		//   const expectedSPRSentOutFromCI = issuance_M2.add(issuance_M4)
+		//   const CIBalanceAfter = await sprToken.balanceOf(communityIssuanceTester.address)
 		//   const CIBalanceDifference = CIBalanceBefore.sub(CIBalanceAfter)
-		//   assert.isAtMost(getDifference(CIBalanceDifference, expectedSPRTSentOutFromCI.mul(toBN(2))), 1e15)
+		//   assert.isAtMost(getDifference(CIBalanceDifference, expectedSPRSentOutFromCI.mul(toBN(2))), 1e15)
 		// })
 
 		// --- Scale factor changes ---
@@ -1079,8 +1079,8 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
     F makes deposit 100
     1 month passes. L6 empties the Pool. L6:  10000 VUSD, 100 ETH
 
-    expect A, B, C, D each withdraw ~1 month's worth of SPRT */
-		it("withdrawFromSP(): Several deposits of 100 VUSD span one scale factor change. Depositors withdraw correct SPRT gains", async () => {
+    expect A, B, C, D each withdraw ~1 month's worth of SPR */
+		it("withdrawFromSP(): Several deposits of 100 VUSD span one scale factor change. Depositors withdraw correct SPR gains", async () => {
 			// Whale opens Vessel with 100 ETH
 			await borrowerOperations.openVessel(
 				ZERO_ADDRESS,
@@ -1173,9 +1173,9 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 				{ from: defaulter_6, value: dec(100, "ether") }
 			)
 
-			// Confirm all depositors have 0 SPRT
+			// Confirm all depositors have 0 SPR
 			for (const depositor of [A, B, C, D, E, F]) {
-				assert.equal(await sprtToken.balanceOf(depositor), "0")
+				assert.equal(await sprToken.balanceOf(depositor), "0")
 			}
 			// price drops by 50%
 			await priceFeed.setPrice(dec(100, 18))
@@ -1280,33 +1280,33 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 			await priceFeed.setPrice(dec(200, 18))
 
 			/* All depositors withdraw fully from SP.  Withdraw in reverse order, so that the largest remaining
-      deposit (F) withdraws first, and does not get extra SPRT gains from the periods between withdrawals */
+      deposit (F) withdraws first, and does not get extra SPR gains from the periods between withdrawals */
 			for (depositor of [F, E, D, C, B, A]) {
 				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: depositor })
 			}
 
-			const SPRTGain_A = await sprtToken.balanceOf(A)
-			const SPRTGain_B = await sprtToken.balanceOf(B)
-			const SPRTGain_C = await sprtToken.balanceOf(C)
-			const SPRTGain_D = await sprtToken.balanceOf(D)
-			const SPRTGain_E = await sprtToken.balanceOf(E)
-			const SPRTGain_F = await sprtToken.balanceOf(F)
+			const SPRGain_A = await sprToken.balanceOf(A)
+			const SPRGain_B = await sprToken.balanceOf(B)
+			const SPRGain_C = await sprToken.balanceOf(C)
+			const SPRGain_D = await sprToken.balanceOf(D)
+			const SPRGain_E = await sprToken.balanceOf(E)
+			const SPRGain_F = await sprToken.balanceOf(F)
 
 			//The timespam in a blockchain is a little bit different, which is why we are allowing 20 tokens of difference for the tests
 			//This won't be an issue on the mainnet
 			const expectedGain = issuance_M1 // using M1 assurance since technically this is splitted between 6 personnes, so 6M / 6 = 1M
 
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_A), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_B), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_C), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_D), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_A), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_B), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_C), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_D), 20e18)
 
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_E), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_F), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_E), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_F), 20e18)
 		})
 
 		//COPY PASTE FROM THE LAST TO TEST ONE THING, IM IN A RUSH< PLEASE DONT JUDGE
-		it("withdrawFromSP(): Several deposits of 100 VUSD span one scale factor change. Depositors withdraw correct SPRT gains and set distributrion at zero", async () => {
+		it("withdrawFromSP(): Several deposits of 100 VUSD span one scale factor change. Depositors withdraw correct SPR gains and set distributrion at zero", async () => {
 			// Whale opens Vessel with 100 ETH
 			await borrowerOperations.openVessel(
 				ZERO_ADDRESS,
@@ -1399,9 +1399,9 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 				{ from: defaulter_6, value: dec(100, "ether") }
 			)
 
-			// Confirm all depositors have 0 SPRT
+			// Confirm all depositors have 0 SPR
 			for (const depositor of [A, B, C, D, E, F]) {
-				assert.equal(await sprtToken.balanceOf(depositor), "0")
+				assert.equal(await sprToken.balanceOf(depositor), "0")
 			}
 			// price drops by 50%
 			await priceFeed.setPrice(dec(100, 18))
@@ -1506,36 +1506,36 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 			await priceFeed.setPrice(dec(200, 18))
 
 			/* All depositors withdraw fully from SP.  Withdraw in reverse order, so that the largest remaining
-      deposit (F) withdraws first, and does not get extra SPRT gains from the periods between withdrawals */
+      deposit (F) withdraws first, and does not get extra SPR gains from the periods between withdrawals */
 			for (depositor of [F, E, D]) {
 				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: depositor })
 			}
 
 			//SET Distribution to zero,
-			await communityIssuanceTester.setWeeklySprtDistribution(stabilityPool.address, 0)
+			await communityIssuanceTester.setWeeklySprDistribution(stabilityPool.address, 0)
 
 			for (depositor of [C, B, A]) {
 				await stabilityPool.withdrawFromSP(dec(10000, 18), { from: depositor })
 			}
 
-			const SPRTGain_A = await sprtToken.balanceOf(A)
-			const SPRTGain_B = await sprtToken.balanceOf(B)
-			const SPRTGain_C = await sprtToken.balanceOf(C)
-			const SPRTGain_D = await sprtToken.balanceOf(D)
-			const SPRTGain_E = await sprtToken.balanceOf(E)
-			const SPRTGain_F = await sprtToken.balanceOf(F)
+			const SPRGain_A = await sprToken.balanceOf(A)
+			const SPRGain_B = await sprToken.balanceOf(B)
+			const SPRGain_C = await sprToken.balanceOf(C)
+			const SPRGain_D = await sprToken.balanceOf(D)
+			const SPRGain_E = await sprToken.balanceOf(E)
+			const SPRGain_F = await sprToken.balanceOf(F)
 
 			//The timespam in a blockchain is a little bit different, which is why we are allowing 20 tokens of difference for the tests
 			//This won't be an issue on the mainnet
 			const expectedGain = issuance_M1 // using M1 assurance since technically this is splitted between 6 personnes, so 6M / 6 = 1M
 
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_A), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_B), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_C), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_D), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_A), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_B), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_C), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_D), 20e18)
 
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_E), 20e18)
-			assert.isAtMost(getDifference(expectedGain, SPRTGain_F), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_E), 20e18)
+			assert.isAtMost(getDifference(expectedGain, SPRGain_F), 20e18)
 		})
 
 		it("withdrawFromSP(): Play with settings", async () => {
@@ -1631,9 +1631,9 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 				{ from: defaulter_6, value: dec(100, "ether") }
 			)
 
-			// Confirm all depositors have 0 SPRT
+			// Confirm all depositors have 0 SPR
 			for (const depositor of [A, B, C, D, E, F]) {
-				assert.equal(await sprtToken.balanceOf(depositor), "0")
+				assert.equal(await sprToken.balanceOf(depositor), "0")
 			}
 			// price drops by 50%
 			await priceFeed.setPrice(dec(100, 18))
@@ -1673,7 +1673,7 @@ contract("StabilityPool - SPRT Rewards", async accounts => {
 
 			// C provides to SP
 			await stabilityPool.provideToSP(dec(99999, 17), { from: C })
-			await communityIssuanceTester.setWeeklySprtDistribution(stabilityPool.address, 0)
+			await communityIssuanceTester.setWeeklySprDistribution(stabilityPool.address, 0)
 
 			// 1 month passes
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)

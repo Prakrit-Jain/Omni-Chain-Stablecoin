@@ -1525,8 +1525,8 @@ class TestHelper {
 		return Number(days) * (60 * 60 * 24)
 	}
 
-	static async getTimeFromSystemDeployment(sprtToken, web3, timePassedSinceDeployment) {
-		const deploymentTime = await sprtToken.getDeploymentStartTime()
+	static async getTimeFromSystemDeployment(sprToken, web3, timePassedSinceDeployment) {
+		const deploymentTime = await sprToken.getDeploymentStartTime()
 		return this.toBN(deploymentTime).add(this.toBN(timePassedSinceDeployment))
 	}
 

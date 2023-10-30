@@ -40,8 +40,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	sprtStaking = contracts.sprt.sprtStaking
-	communityIssuance = contracts.sprt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 }
 
 contract("FeeCollector", async accounts => {

@@ -30,8 +30,8 @@ def setAddresses(contracts):
         contracts.priceFeedTestnet.address,
         contracts.vusdToken.address,
         contracts.sortedTroves.address,
-        contracts.SPRTToken.address,
-        contracts.SPRTStaking.address,
+        contracts.SPRToken.address,
+        contracts.SPRStaking.address,
         {"from": accounts[0]},
     )
 
@@ -45,7 +45,7 @@ def setAddresses(contracts):
         contracts.priceFeedTestnet.address,
         contracts.sortedTroves.address,
         contracts.vusdToken.address,
-        contracts.SPRTStaking.address,
+        contracts.SPRStaking.address,
         {"from": accounts[0]},
     )
 
@@ -87,9 +87,9 @@ def setAddresses(contracts):
         {"from": accounts[0]},
     )
 
-    # SPRT
-    contracts.SPRTStaking.setAddresses(
-        contracts.SPRTToken.address,
+    # SPR
+    contracts.SPRStaking.setAddresses(
+        contracts.SPRToken.address,
         contracts.vusdToken.address,
         contracts.vesselManager.address,
         contracts.borrowerOperations.address,
@@ -98,7 +98,7 @@ def setAddresses(contracts):
     )
 
     contracts.communityIssuance.setAddresses(
-        contracts.SPRTToken.address,
+        contracts.SPRToken.address,
         contracts.stabilityPool.address,
         {"from": accounts[0]},
     )
@@ -133,12 +133,12 @@ def contracts():
         contracts.borrowerOperations.address,
         {"from": accounts[0]},
     )
-    # SPRT
-    contracts.SPRTStaking = SPRTStaking.deploy({"from": accounts[0]})
+    # SPR
+    contracts.SPRStaking = SPRStaking.deploy({"from": accounts[0]})
     contracts.communityIssuance = CommunityIssuance.deploy({"from": accounts[0]})
-    contracts.SPRTToken = SPRTToken.deploy(
+    contracts.SPRToken = SPRToken.deploy(
         contracts.communityIssuance.address,
-        contracts.SPRTStaking.address,
+        contracts.SPRStaking.address,
         accounts[0],  # bountyAddress
         accounts[0],  # lpRewardsAddress
         accounts[0],  # multisigAddress
@@ -155,8 +155,8 @@ def print_expectations():
     # ether_price_one_year = price_ether_initial * (1 + drift_ether)**8760
     # print("Expected ether price at the end of the year: $", ether_price_one_year)
     print(
-        "Expected SPRT price at the end of first month: $",
-        price_SPRT_initial * (1 + drift_SPRT) ** 720,
+        "Expected SPR price at the end of first month: $",
+        price_SPR_initial * (1 + drift_SPR) ** 720,
     )
 
     print("\n Open vessels")
@@ -206,7 +206,7 @@ def _test_test(contracts):
 
 * exogenous ether price input
 * vessel liquidation
-* return of the previous period's stability pool determined (liquidation gain & airdropped SPRT gain)
+* return of the previous period's stability pool determined (liquidation gain & airdropped SPR gain)
 * vessel closure
 * vessel adjustment
 * open vessels
@@ -217,7 +217,7 @@ def _test_test(contracts):
 * VUSD liquidity pool demand determined
 * VUSD price determined
 * redemption & redemption fee
-* SPRT pool return determined
+* SPR pool return determined
 """
 
 
@@ -245,7 +245,7 @@ def test_run_simulation(add_accounts, contracts, print_expectations):
     inactive_accounts = [*range(1, len(accounts))]
 
     price_USDV = 1
-    price_SPRT_current = price_SPRT_initial
+    price_SPR_current = price_SPR_initial
 
     data = {
         "airdrop_gain": [0] * n_sim,
@@ -269,7 +269,7 @@ def test_run_simulation(add_accounts, contracts, print_expectations):
                 "iteration",
                 "ETH_price",
                 "price_USDV",
-                "price_SPRT",
+                "price_SPR",
                 "num_vessels",
                 "total_coll",
                 "total_debt",
@@ -302,7 +302,7 @@ def test_run_simulation(add_accounts, contracts, print_expectations):
                 inactive_accounts,
                 price_ether_current,
                 price_USDV,
-                price_SPRT_current,
+                price_SPR_current,
                 data,
                 index,
             )
@@ -365,7 +365,7 @@ def test_run_simulation(add_accounts, contracts, print_expectations):
             )
             total_USDV_redempted = total_USDV_redempted + redemption_pool
             print("VUSD price", price_USDV)
-            print("SPRT price", price_SPRT_current)
+            print("SPR price", price_SPR_current)
 
             issuance_fee = price_USDV * (
                 issuance_USDV_adjust + issuance_USDV_open + issuance_USDV_stabilizer
@@ -373,11 +373,11 @@ def test_run_simulation(add_accounts, contracts, print_expectations):
             data["issuance_fee"][index] = issuance_fee
             data["redemption_fee"][index] = redemption_fee
 
-            # SPRT Market
-            result_SPRT = SPRT_market(index, data)
-            price_SPRT_current = result_SPRT[0]
-            # annualized_earning = result_SPRT[1]
-            # MC_SPRT_current = result_SPRT[2]
+            # SPR Market
+            result_SPR = SPR_market(index, data)
+            price_SPR_current = result_SPR[0]
+            # annualized_earning = result_SPR[1]
+            # MC_SPR_current = result_SPR[2]
 
             [
                 ETH_price,
@@ -401,7 +401,7 @@ def test_run_simulation(add_accounts, contracts, print_expectations):
                     index,
                     ETH_price,
                     price_USDV,
-                    price_SPRT_current,
+                    price_SPR_current,
                     num_vessels,
                     total_coll,
                     total_debt,

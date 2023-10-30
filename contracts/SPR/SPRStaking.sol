@@ -11,21 +11,21 @@ import "../Dependencies/GravitaMath.sol";
 import "../Dependencies/SafetyTransfer.sol";
 
 import "../Interfaces/IDeposit.sol";
-import "../Interfaces/ISPRTStaking.sol";
+import "../Interfaces/ISPRStaking.sol";
 import "../Interfaces/ICommunityIssuance.sol";
 
-contract SPRTStaking is ISPRTStaking, PausableUpgradeable, OwnableUpgradeable, BaseMath, ReentrancyGuardUpgradeable {
+contract SPRStaking is ISPRStaking, PausableUpgradeable, OwnableUpgradeable, BaseMath, ReentrancyGuardUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	// --- Data ---
-	string public constant NAME = "SPRTStaking";
+	string public constant NAME = "SPRStaking";
 	address constant ETH_REF_ADDRESS = address(0);
 
 	mapping(address => uint256) public stakes;
-	uint256 public totalSPRTStaked;
+	uint256 public totalSPRStaked;
 
-	mapping(address => uint256) public F_ASSETS; // Running sum of asset fees per-SPRT-staked
-	uint256 public F_DEBT_TOKENS; // Running sum of debt token fees per-SPRT-staked
+	mapping(address => uint256) public F_ASSETS; // Running sum of asset fees per-SPR-staked
+	uint256 public F_DEBT_TOKENS; // Running sum of debt token fees per-SPR-staked
 
 	// User snapshots of F_ASSETS and F_DEBT_TOKENS, taken at the point at which their latest deposit was made
 	mapping(address => Snapshot) public snapshots;
@@ -78,8 +78,8 @@ contract SPRTStaking is ISPRTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	}
 
 	// If caller has a pre-existing stake, send any accumulated asset and debtToken gains to them.
-	function stake(uint256 _SPRTamount) external override nonReentrant whenNotPaused {
-		require(_SPRTamount > 0);
+	function stake(uint256 _SPRamount) external override nonReentrant whenNotPaused {
+		require(_SPRamount > 0);
 
 		uint256 currentStake = stakes[msg.sender];
 
@@ -106,22 +106,22 @@ contract SPRTStaking is ISPRTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			_updateUserSnapshots(asset, msg.sender);
 		}
 
-		uint256 newStake = currentStake + _SPRTamount;
+		uint256 newStake = currentStake + _SPRamount;
 
-		// Increase user’s stake and total SPRT staked
+		// Increase user’s stake and total SPR staked
 		stakes[msg.sender] = newStake;
-		totalSPRTStaked = totalSPRTStaked + _SPRTamount;
-		emit TotalSPRTStakedUpdated(totalSPRTStaked);
+		totalSPRStaked = totalSPRStaked + _SPRamount;
+		emit TotalSPRStakedUpdated(totalSPRStaked);
 
-		//Tranfers the holdings of SPRT from the user to this contract
-		ICommunityIssuance(communityIssuance).transferSPRT(msg.sender, address(this), _SPRTamount);
+		//Tranfers the holdings of SPR from the user to this contract
+		ICommunityIssuance(communityIssuance).transferSPR(msg.sender, address(this), _SPRamount);
 
 		emit StakeChanged(msg.sender, newStake);
 	}
 
-	// Unstake the SPRT and send the it back to the caller, along with their accumulated gains.
+	// Unstake the SPR and send the it back to the caller, along with their accumulated gains.
 	// If requested amount > stake, send their entire stake.
-	function unstake(uint256 _SPRTamount) external override nonReentrant {
+	function unstake(uint256 _SPRamount) external override nonReentrant {
 		uint256 currentStake = stakes[msg.sender];
 		_requireUserHasStake(currentStake);
 
@@ -146,17 +146,17 @@ contract SPRTStaking is ISPRTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			_sendAssetGainToUser(asset, assetGain);
 		}
 
-		if (_SPRTamount > 0) {
-			uint256 SPRTToWithdraw = GravitaMath._min(_SPRTamount, currentStake);
-			uint256 newStake = currentStake - SPRTToWithdraw;
+		if (_SPRamount > 0) {
+			uint256 SPRToWithdraw = GravitaMath._min(_SPRamount, currentStake);
+			uint256 newStake = currentStake - SPRToWithdraw;
 
-			// Decrease user's stake and total SPRT staked
+			// Decrease user's stake and total SPR staked
 			stakes[msg.sender] = newStake;
-			totalSPRTStaked = totalSPRTStaked - SPRTToWithdraw;
-			emit TotalSPRTStakedUpdated(totalSPRTStaked);
+			totalSPRStaked = totalSPRStaked - SPRToWithdraw;
+			emit TotalSPRStakedUpdated(totalSPRStaked);
 
-			// Transfers the unstaked SPRT holdings to user
-			ICommunityIssuance(communityIssuance).transferSPRT(address(this), msg.sender, SPRTToWithdraw);
+			// Transfers the unstaked SPR holdings to user
+			ICommunityIssuance(communityIssuance).transferSPR(address(this), msg.sender, SPRToWithdraw);
 			emit StakeChanged(msg.sender, newStake);
 		}
 	}
@@ -182,13 +182,13 @@ contract SPRTStaking is ISPRTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			ASSET_TYPE.push(_asset);
 		}
 
-		uint256 assetFeePerSPRTStaked;
+		uint256 assetFeePerSPRStaked;
 
-		if (totalSPRTStaked > 0) {
-			assetFeePerSPRTStaked = (_assetFee * DECIMAL_PRECISION) / totalSPRTStaked;
+		if (totalSPRStaked > 0) {
+			assetFeePerSPRStaked = (_assetFee * DECIMAL_PRECISION) / totalSPRStaked;
 		}
 
-		F_ASSETS[_asset] = F_ASSETS[_asset] + assetFeePerSPRTStaked;
+		F_ASSETS[_asset] = F_ASSETS[_asset] + assetFeePerSPRStaked;
 		emit Fee_AssetUpdated(_asset, F_ASSETS[_asset]);
 	}
 
@@ -198,12 +198,12 @@ contract SPRTStaking is ISPRTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			return;
 		}
 
-		uint256 feePerSPRTStaked;
-		if (totalSPRTStaked > 0) {
-			feePerSPRTStaked = (_debtTokenFee * DECIMAL_PRECISION) / totalSPRTStaked;
+		uint256 feePerSPRStaked;
+		if (totalSPRStaked > 0) {
+			feePerSPRStaked = (_debtTokenFee * DECIMAL_PRECISION) / totalSPRStaked;
 		}
 
-		F_DEBT_TOKENS = F_DEBT_TOKENS + feePerSPRTStaked;
+		F_DEBT_TOKENS = F_DEBT_TOKENS + feePerSPRStaked;
 		emit Fee_DebtTokenUpdated(F_DEBT_TOKENS);
 	}
 
@@ -255,16 +255,16 @@ contract SPRTStaking is ISPRTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	// --- 'require' functions ---
 
 	modifier callerIsVesselManager() {
-		require(msg.sender == vesselManagerAddress, "SPRTStaking: caller is not VesselManager");
+		require(msg.sender == vesselManagerAddress, "SPRStaking: caller is not VesselManager");
 		_;
 	}
 
 	modifier callerIsFeeCollector() {
-		require(msg.sender == feeCollectorAddress, "SPRTStaking: caller is not FeeCollector");
+		require(msg.sender == feeCollectorAddress, "SPRStaking: caller is not FeeCollector");
 		_;
 	}
 
 	function _requireUserHasStake(uint256 currentStake) internal pure {
-		require(currentStake > 0, "SPRTStaking: User must have a non-zero stake");
+		require(currentStake > 0, "SPRStaking: User must have a non-zero stake");
 	}
 }

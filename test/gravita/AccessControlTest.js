@@ -29,8 +29,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	sprtStaking = contracts.sprt.sprtStaking
-	communityIssuance = contracts.sprt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 }
 
 contract("Access Control: functions where the caller is restricted to Gravita contract(s)", async accounts => {
@@ -105,18 +105,18 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 	})
 
 	describe("CommunityIssuance", async accounts => {
-		it("sendSPRT(): reverts when caller is not the StabilityPool", async () => {
-			const tx1 = communityIssuance.sendSPRT(alice, dec(100, 18), { from: alice })
-			const tx2 = communityIssuance.sendSPRT(bob, dec(100, 18), { from: alice })
-			const tx3 = communityIssuance.sendSPRT(stabilityPool.address, dec(100, 18), {
+		it("sendSPR(): reverts when caller is not the StabilityPool", async () => {
+			const tx1 = communityIssuance.sendSPR(alice, dec(100, 18), { from: alice })
+			const tx2 = communityIssuance.sendSPR(bob, dec(100, 18), { from: alice })
+			const tx3 = communityIssuance.sendSPR(stabilityPool.address, dec(100, 18), {
 				from: alice,
 			})
 			assertRevert(tx1)
 			assertRevert(tx2)
 			assertRevert(tx3)
 		})
-		it("issueSPRT(): reverts when caller is not the StabilityPool", async () => {
-			const tx1 = communityIssuance.issueSPRT({ from: alice })
+		it("issueSPR(): reverts when caller is not the StabilityPool", async () => {
+			const tx1 = communityIssuance.issueSPR({ from: alice })
 			assertRevert(tx1)
 		})
 	})
@@ -197,10 +197,10 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 			}
 		})
 	})
-	describe("SPRTStaking", async accounts => {
+	describe("SPRStaking", async accounts => {
 		it("increaseFee_DebtToken(): reverts when caller is not VesselManager", async () => {
 			try {
-				const txAlice = await sprtStaking.increaseFee_DebtToken(dec(1, 18), { from: alice })
+				const txAlice = await sprStaking.increaseFee_DebtToken(dec(1, 18), { from: alice })
 			} catch (err) {
 				assert.include(err.message, "revert")
 			}

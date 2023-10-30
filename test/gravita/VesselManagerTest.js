@@ -41,8 +41,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	sprtStaking = contracts.sprt.sprtStaking
-	communityIssuance = contracts.sprt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 
 	// getDepositorGains() expects a sorted collateral array
@@ -101,7 +101,7 @@ contract("VesselManager", async accounts => {
 		before(async () => {
 			await deploy(treasury, accounts.slice(0, 20))
 
-			await communityIssuance.unprotectedAddSPRTHoldings(multisig, dec(1, 24))
+			await communityIssuance.unprotectedAddSPRHoldings(multisig, dec(1, 24))
 			// give some gas to the contracts that will be impersonated
 			setBalance(adminContract.address, 1e18)
 			setBalance(shortTimelock.address, 1e18)
@@ -1411,7 +1411,7 @@ contract("VesselManager", async accounts => {
 				assert.equal((await vesselManager.Vessels(carol, erc20.address))[th.VESSEL_STATUS_INDEX].toString(), "3")
 			})
 
-			it("liquidate(): when SP > 0, triggers SPRT reward event - increases the sum G", async () => {
+			it("liquidate(): when SP > 0, triggers SPR reward event - increases the sum G", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
@@ -1463,7 +1463,7 @@ contract("VesselManager", async accounts => {
 
 				const G_After_Asset = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the SPRT reward event triggered
+				// Expect G has increased from the SPR reward event triggered
 				assert.isTrue(G_After_Asset.gt(G_Before_Asset))
 			})
 
@@ -2558,7 +2558,7 @@ contract("VesselManager", async accounts => {
 				assert.isAtMost(th.getDifference(total_ETHinSP_Asset, th.applyLiquidationFee(liquidatedColl_Asset)), 1000)
 			})
 
-			it("liquidateVessels(): when SP > 0, triggers SPRT reward event - increases the sum G", async () => {
+			it("liquidateVessels(): when SP > 0, triggers SPR reward event - increases the sum G", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
@@ -2617,7 +2617,7 @@ contract("VesselManager", async accounts => {
 
 				const G_After_Asset = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the SPRT reward event triggered
+				// Expect G has increased from the SPR reward event triggered
 				assert.isTrue(G_After_Asset.gt(G_Before_Asset))
 			})
 
@@ -3323,7 +3323,7 @@ contract("VesselManager", async accounts => {
 				assert.isFalse(await th.checkRecoveryMode(contracts.core, erc20.address))
 			})
 
-			it("batchLiquidateVessels: when SP > 0, triggers SPRT reward event - increases the sum G", async () => {
+			it("batchLiquidateVessels: when SP > 0, triggers SPR reward event - increases the sum G", async () => {
 				await openVessel({
 					asset: erc20.address,
 					ICR: toBN(dec(100, 18)),
@@ -3379,7 +3379,7 @@ contract("VesselManager", async accounts => {
 
 				const G_After_Asset = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the SPRT reward event triggered
+				// Expect G has increased from the SPR reward event triggered
 				assert.isTrue(G_After_Asset.gt(G_Before_Asset))
 			})
 
@@ -5647,9 +5647,9 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("redeemCollateral(): a redemption made when base rate is non-zero increases the base rate, for negligible time passed", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5792,10 +5792,10 @@ contract("VesselManager", async accounts => {
 				assert.isTrue(lastFeeOpTime_3_Asset.gt(lastFeeOpTime_1_Asset))
 			})
 
-			it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to SPRT staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+			it("redeemCollateral(): a redemption made at zero base rate send a non-zero ETHFee to SPR staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5838,16 +5838,16 @@ contract("VesselManager", async accounts => {
 				const baseRate_1_Asset = await vesselManager.baseRate(erc20.address)
 				assert.isTrue(baseRate_1_Asset.gt(toBN("0")))
 
-				// Check SPRT Staking contract balance after is non-zero
+				// Check SPR Staking contract balance after is non-zero
 
 				const treasuryBalanceAfter = await erc20.balanceOf(treasury)
 				assert.isTrue(treasuryBalanceAfter.gt(treasuryBalanceBefore))
 			})
 
-			it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-SPRT-staked in SPRT Staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+			it("redeemCollateral(): a redemption made at zero base increases the ETH-fees-per-SPR-staked in SPR Staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5876,8 +5876,8 @@ contract("VesselManager", async accounts => {
 				// Check baseRate == 0
 				assert.equal(await vesselManager.baseRate(erc20.address), "0")
 
-				// Check SPRT Staking ETH-fees-per-SPRT-staked before is zero
-				assert.equal(await sprtStaking.F_ASSETS(erc20.address), "0")
+				// Check SPR Staking ETH-fees-per-SPR-staked before is zero
+				assert.equal(await sprStaking.F_ASSETS(erc20.address), "0")
 
 				const A_balanceBefore = await debtToken.balanceOf(A)
 
@@ -5892,14 +5892,14 @@ contract("VesselManager", async accounts => {
 				const baseRate_1_Asset = await vesselManager.baseRate(erc20.address)
 				assert.isTrue(baseRate_1_Asset.gt(toBN("0")))
 
-				// Check SPRT Staking ETH-fees-per-SPRT-staked after is non-zero
-				assert.isTrue((await sprtStaking.F_ASSETS(erc20.address)).gt("0"))
+				// Check SPR Staking ETH-fees-per-SPR-staked after is non-zero
+				assert.isTrue((await sprStaking.F_ASSETS(erc20.address)).gt("0"))
 			})
 
-			it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee to SPRT staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+			it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero ETHFee to SPR staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -5952,14 +5952,14 @@ contract("VesselManager", async accounts => {
 
 				const treasuryBalanceAfter = await erc20.balanceOf(treasury)
 
-				// check SPRT Staking balance has increased
+				// check SPR Staking balance has increased
 				assert.isTrue(treasuryBalanceAfter.gt(treasuryBalanceBefore))
 			})
 
-			it("redeemCollateral(): a redemption made at a non-zero base rate increases ETH-per-SPRT-staked in the staking contract", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+			it("redeemCollateral(): a redemption made at a non-zero base rate increases ETH-per-SPR-staked in the staking contract", async () => {
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -6012,7 +6012,7 @@ contract("VesselManager", async accounts => {
 
 				const treasuryBalanceAfter = await erc20.balanceOf(treasury)
 
-				// check SPRT Staking balance has increased
+				// check SPR Staking balance has increased
 				assert.isTrue(treasuryBalanceAfter.gt(treasuryBalanceBefore))
 			})
 
@@ -6089,9 +6089,9 @@ contract("VesselManager", async accounts => {
 			})
 
 			it("redeemCollateral(): a full redemption (leaving vessel with 0 debt), closes the vessel", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				const { netDebt: W_netDebt_Asset } = await openVessel({
 					asset: erc20.address,
@@ -6146,9 +6146,9 @@ contract("VesselManager", async accounts => {
 			})
 
 			const redeemCollateral3Full1Partial = async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				const { netDebt: W_netDebt_Asset } = await openVessel({
 					asset: erc20.address,

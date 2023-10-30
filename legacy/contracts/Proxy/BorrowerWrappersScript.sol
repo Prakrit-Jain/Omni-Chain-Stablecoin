@@ -7,12 +7,12 @@ import "../Interfaces/IBorrowerOperations.sol";
 import "../Interfaces/IVesselManager.sol";
 import "../Interfaces/IStabilityPool.sol";
 import "../Interfaces/IPriceFeed.sol";
-import "../Interfaces/ISPRTStaking.sol";
+import "../Interfaces/ISPRStaking.sol";
 import "./BorrowerOperationsScript.sol";
 import "./ETHTransferScript.sol";
-import "./SPRTStakingScript.sol";
+import "./SPRStakingScript.sol";
 
-contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, SPRTStakingScript {
+contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, SPRStakingScript {
 	struct Local_var {
 		address _asset;
 		uint256 _maxFee;
@@ -27,13 +27,13 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 	IStabilityPool immutable stabilityPool;
 	IPriceFeed immutable priceFeed;
 	IERC20 immutable debtToken;
-	IERC20 immutable sprtToken;
+	IERC20 immutable sprToken;
 
 	constructor(
 		address _borrowerOperationsAddress,
 		address _vesselManagerAddress,
-		address _SPRTStakingAddress
-	) BorrowerOperationsScript(IBorrowerOperations(_borrowerOperationsAddress)) SPRTStakingScript(_SPRTStakingAddress) {
+		address _SPRStakingAddress
+	) BorrowerOperationsScript(IBorrowerOperations(_borrowerOperationsAddress)) SPRStakingScript(_SPRStakingAddress) {
 		IVesselManager vesselManagerCached = IVesselManager(_vesselManagerAddress);
 		vesselManager = vesselManagerCached;
 
@@ -46,13 +46,13 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 		address debtTokenCached = address(vesselManagerCached.debtToken());
 		debtToken = IERC20(debtTokenCached);
 
-		address sprtTokenCached = address(ISPRTStaking(_SPRTStakingAddress).sprtToken());
-		sprtToken = IERC20(sprtTokenCached);
+		address sprTokenCached = address(ISPRStaking(_SPRStakingAddress).sprToken());
+		sprToken = IERC20(sprTokenCached);
 
-		// ISPRTStaking sprtStakingCached = vesselManagerCached.sprtStaking();
+		// ISPRStaking sprStakingCached = vesselManagerCached.sprStaking();
 		// require(
-		// 	_SPRTStakingAddress == address(sprtStakingCached),
-		// 	"BorrowerWrappersScript: Wrong SPRTStaking address"
+		// 	_SPRStakingAddress == address(sprStakingCached),
+		// 	"BorrowerWrappersScript: Wrong SPRStaking address"
 		// );
 	}
 
@@ -81,13 +81,13 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 	function claimSPRewardsAndRecycle(address _asset, uint256 _maxFee, address _upperHint, address _lowerHint) external {
 		Local_var memory vars = Local_var(_asset, _maxFee, _upperHint, _lowerHint, 0);
 		uint256 collBalanceBefore = address(this).balance;
-		uint256 SPRTBalanceBefore = sprtToken.balanceOf(address(this));
+		uint256 SPRBalanceBefore = sprToken.balanceOf(address(this));
 
 		// Claim rewards
 		IStabilityPool(stabilityPool).withdrawFromSP(0);
 
 		uint256 collBalanceAfter = address(this).balance;
-		uint256 SPRTBalanceAfter = sprtToken.balanceOf(address(this));
+		uint256 SPRBalanceAfter = sprToken.balanceOf(address(this));
 		uint256 claimedCollateral = collBalanceAfter - collBalanceBefore;
 
 		// Add claimed ETH to vessel, get more VUSD and stake it into the Stability Pool
@@ -109,10 +109,10 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 			}
 		}
 
-		// Stake claimed SPRT
-		uint256 claimedSPRT = SPRTBalanceAfter - SPRTBalanceBefore;
-		if (claimedSPRT > 0) {
-			ISPRTStaking(sprtStaking).stake(claimedSPRT);
+		// Stake claimed SPR
+		uint256 claimedSPR = SPRBalanceAfter - SPRBalanceBefore;
+		if (claimedSPR > 0) {
+			ISPRStaking(sprStaking).stake(claimedSPR);
 		}
 	}
 
@@ -126,10 +126,10 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
 		uint256 collBalanceBefore = address(this).balance;
 		uint256 VUSDBalanceBefore = IDebtToken(debtToken).balanceOf(address(this));
-		uint256 SPRTBalanceBefore = sprtToken.balanceOf(address(this));
+		uint256 SPRBalanceBefore = sprToken.balanceOf(address(this));
 
 		// Claim gains
-		ISPRTStaking(sprtStaking).unstake(0);
+		ISPRStaking(sprStaking).unstake(0);
 
 		uint256 gainedCollateral = address(this).balance - collBalanceBefore; // stack too deep issues :'(
 		uint256 gainedVUSD = IDebtToken(debtToken).balanceOf(address(this)) - VUSDBalanceBefore;
@@ -153,11 +153,11 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 		if (totalVUSD > 0) {
 			IStabilityPool(stabilityPool).provideToSP(totalVUSD);
 
-			// Providing to Stability Pool also triggers SPRT claim, so stake it if any
-			uint256 SPRTBalanceAfter = sprtToken.balanceOf(address(this));
-			uint256 claimedSPRT = SPRTBalanceAfter - SPRTBalanceBefore;
-			if (claimedSPRT > 0) {
-				ISPRTStaking(sprtStaking).stake(claimedSPRT);
+			// Providing to Stability Pool also triggers SPR claim, so stake it if any
+			uint256 SPRBalanceAfter = sprToken.balanceOf(address(this));
+			uint256 claimedSPR = SPRBalanceAfter - SPRBalanceBefore;
+			if (claimedSPR > 0) {
+				ISPRStaking(sprStaking).stake(claimedSPR);
 			}
 		}
 	}

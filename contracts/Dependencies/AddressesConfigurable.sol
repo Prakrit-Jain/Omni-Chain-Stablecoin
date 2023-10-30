@@ -14,7 +14,7 @@ abstract contract AddressesConfigurable is OwnableUpgradeable {
 	address public defaultPool;
 	address public feeCollector;
 	address public gasPoolAddress;
-	address public sprtStaking;
+	address public sprStaking;
 	address public priceFeed;
 	address public sortedVessels;
 	address public stabilityPool;
@@ -63,8 +63,8 @@ abstract contract AddressesConfigurable is OwnableUpgradeable {
 		communityIssuance = _communityIssuance;
 	}
 
-	function setSPRTStaking(address _sprtStaking) public onlyOwner {
-		sprtStaking = _sprtStaking;
+	function setSPRStaking(address _sprStaking) public onlyOwner {
+		sprStaking = _sprStaking;
 	}
 }
 

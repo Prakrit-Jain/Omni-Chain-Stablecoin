@@ -2,7 +2,7 @@
 // const testHelpers = require("../../utils/testHelpers.js")
 
 // const VesselManagerTester = artifacts.require("VesselManagerTester")
-// const SPRTTokenTester = artifacts.require("SPRTTokenTester")
+// const SPRTokenTester = artifacts.require("SPRTokenTester")
 
 // const th = testHelpers.TestHelper
 
@@ -22,7 +22,7 @@
 //   StabilityPoolProxy,
 //   SortedVesselsProxy,
 //   TokenProxy,
-//   SPRTStakingProxy
+//   SPRStakingProxy
 // } = require('../../utils/proxyHelpers.js')
 
 // contract('BorrowerWrappers', async accounts => {
@@ -47,9 +47,9 @@
 //   let collSurplusPool
 //   let borrowerOperations
 //   let borrowerWrappers
-//   let sprtTokenOriginal
-//   let sprtToken
-//   let sprtStaking
+//   let sprTokenOriginal
+//   let sprToken
+//   let sprStaking
 
 //   let contracts
 
@@ -64,16 +64,16 @@
 //     contracts = await deploymentHelper.deployLiquityCore()
 //     contracts.vesselManager = await VesselManagerTester.new()
 //     contracts = await deploymentHelper.deployVUSDToken(contracts)
-//     const SPRTContracts = await deploymentHelper.deploySPRTContractsHardhat(accounts[0])
+//     const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(accounts[0])
 
-//     await deploymentHelper.connectCoreContracts(contracts, SPRTContracts)
-//     await deploymentHelper.connectSPRTContractsToCore(SPRTContracts, contracts)
+//     await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+//     await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
 
 //     vesselManagerOriginal = contracts.vesselManager
-//     sprtTokenOriginal = SPRTContracts.sprtToken
+//     sprTokenOriginal = SPRContracts.sprToken
 
 //     const users = [alice, bob, carol, dennis, whale, A, B, C, D, E, defaulter_1, defaulter_2]
-//     await deploymentHelper.deployProxyScripts(contracts, SPRTContracts, owner, users)
+//     await deploymentHelper.deployProxyScripts(contracts, SPRContracts, owner, users)
 
 //     priceFeed = contracts.priceFeedTestnet
 //     vusdToken = contracts.vusdToken
@@ -85,8 +85,8 @@
 //     collSurplusPool = contracts.collSurplusPool
 //     borrowerOperations = contracts.borrowerOperations
 //     borrowerWrappers = contracts.borrowerWrappers
-//     sprtStaking = SPRTContracts.sprtStaking
-//     sprtToken = SPRTContracts.sprtToken
+//     sprStaking = SPRContracts.sprStaking
+//     sprToken = SPRContracts.sprToken
 
 //     VUSD_GAS_COMPENSATION = await borrowerOperations.VUSD_GAS_COMPENSATION()
 //   })
@@ -291,19 +291,19 @@
 //     const vesselCollBefore = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceBefore = await vusdToken.balanceOf(alice)
 //     const vesselDebtBefore = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceBefore = await sprtToken.balanceOf(alice)
+//     const SPRBalanceBefore = await sprToken.balanceOf(alice)
 //     const ICRBefore = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositBefore = (await stabilityPool.deposits(alice))[0]
-//     const stakeBefore = await sprtStaking.stakes(alice)
+//     const stakeBefore = await sprStaking.stakes(alice)
 
 //     const proportionalVUSD = expectedETHGain_A.mul(price).div(ICRBefore)
 //     const borrowingRate = await vesselManagerOriginal.getBorrowingRateWithDecay()
 //     const netDebtChange = proportionalVUSD.mul(mv._1e18BN).div(mv._1e18BN.add(borrowingRate))
 
-//     // to force SPRT issuance
+//     // to force SPR issuance
 //     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-//     const expectedSPRTGain_A = toBN('50373424199406504708132')
+//     const expectedSPRGain_A = toBN('50373424199406504708132')
 
 //     await priceFeed.setPrice(price.mul(toBN(2)));
 
@@ -315,15 +315,15 @@
 //     const vesselCollAfter = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceAfter = await vusdToken.balanceOf(alice)
 //     const vesselDebtAfter = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceAfter = await sprtToken.balanceOf(alice)
+//     const SPRBalanceAfter = await sprToken.balanceOf(alice)
 //     const ICRAfter = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositAfter = (await stabilityPool.deposits(alice))[0]
-//     const stakeAfter = await sprtStaking.stakes(alice)
+//     const stakeAfter = await sprStaking.stakes(alice)
 
 //     // check proxy balances remain the same
 //     assert.equal(ethBalanceAfter.toString(), ethBalanceBefore.toString())
 //     assert.equal(VUSDBalanceAfter.toString(), VUSDBalanceBefore.toString())
-//     assert.equal(SPRTBalanceAfter.toString(), SPRTBalanceBefore.toString())
+//     assert.equal(SPRBalanceAfter.toString(), SPRBalanceBefore.toString())
 //     // check vessel has increased debt by the ICR proportional amount to ETH gain
 //     th.assertIsApproximatelyEqual(vesselDebtAfter, vesselDebtBefore.add(proportionalVUSD))
 //     // check vessel has increased collateral by the ETH gain
@@ -332,11 +332,11 @@
 //     th.assertIsApproximatelyEqual(ICRAfter, ICRBefore)
 //     // check that Stability Pool deposit
 //     th.assertIsApproximatelyEqual(depositAfter, depositBefore.sub(expectedVUSDLoss_A).add(netDebtChange))
-//     // check SPRT balance remains the same
-//     th.assertIsApproximatelyEqual(SPRTBalanceAfter, SPRTBalanceBefore)
+//     // check SPR balance remains the same
+//     th.assertIsApproximatelyEqual(SPRBalanceAfter, SPRBalanceBefore)
 
-//     // SPRT staking
-//     th.assertIsApproximatelyEqual(stakeAfter, stakeBefore.add(expectedSPRTGain_A))
+//     // SPR staking
+//     th.assertIsApproximatelyEqual(stakeAfter, stakeBefore.add(expectedSPRGain_A))
 
 //     // Expect Alice has withdrawn all ETH gain
 //     const alice_pendingETHGain = await stabilityPool.getDepositorETHGain(alice)
@@ -352,13 +352,13 @@
 //     // alice opens vessel
 //     await openVessel({ extraVUSDAmount: toBN(dec(150, 18)), extraParams: { from: alice } })
 
-//     // mint some SPRT
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
+//     // mint some SPR
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
 
-//     // stake SPRT
-//     await sprtStaking.stake(dec(1850, 18), { from: whale })
-//     await sprtStaking.stake(dec(150, 18), { from: alice })
+//     // stake SPR
+//     await sprStaking.stake(dec(1850, 18), { from: whale })
+//     await sprStaking.stake(dec(150, 18), { from: alice })
 
 //     // Defaulter Vessel opened
 //     const { VUSDAmount, netDebt, totalDebt, collateral } = await openVessel({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
@@ -389,13 +389,13 @@
 //     //await openVessel({ extraVUSDAmount: toBN(dec(150, 18)), extraParams: { from: alice } })
 //     //await stabilityPool.provideToSP(dec(150, 18), ZERO_ADDRESS, { from: alice })
 
-//     // mint some SPRT
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
+//     // mint some SPR
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
 
-//     // stake SPRT
-//     await sprtStaking.stake(dec(1850, 18), { from: whale })
-//     await sprtStaking.stake(dec(150, 18), { from: alice })
+//     // stake SPR
+//     await sprStaking.stake(dec(1850, 18), { from: whale })
+//     await sprStaking.stake(dec(150, 18), { from: alice })
 
 //     // Defaulter Vessel opened
 //     const { VUSDAmount, netDebt, totalDebt, collateral } = await openVessel({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
@@ -415,10 +415,10 @@
 //     const vesselCollBefore = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceBefore = await vusdToken.balanceOf(alice)
 //     const vesselDebtBefore = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceBefore = await sprtToken.balanceOf(alice)
+//     const SPRBalanceBefore = await sprToken.balanceOf(alice)
 //     const ICRBefore = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositBefore = (await stabilityPool.deposits(alice))[0]
-//     const stakeBefore = await sprtStaking.stakes(alice)
+//     const stakeBefore = await sprStaking.stakes(alice)
 
 //     // Alice claims staking rewards and puts them back in the system through the proxy
 //     await assertRevert(
@@ -430,21 +430,21 @@
 //     const vesselCollAfter = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceAfter = await vusdToken.balanceOf(alice)
 //     const vesselDebtAfter = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceAfter = await sprtToken.balanceOf(alice)
+//     const SPRBalanceAfter = await sprToken.balanceOf(alice)
 //     const ICRAfter = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositAfter = (await stabilityPool.deposits(alice))[0]
-//     const stakeAfter = await sprtStaking.stakes(alice)
+//     const stakeAfter = await sprStaking.stakes(alice)
 
 //     // check everything remains the same
 //     assert.equal(ethBalanceAfter.toString(), ethBalanceBefore.toString())
 //     assert.equal(VUSDBalanceAfter.toString(), VUSDBalanceBefore.toString())
-//     assert.equal(SPRTBalanceAfter.toString(), SPRTBalanceBefore.toString())
+//     assert.equal(SPRBalanceAfter.toString(), SPRBalanceBefore.toString())
 //     th.assertIsApproximatelyEqual(vesselDebtAfter, vesselDebtBefore, 10000)
 //     th.assertIsApproximatelyEqual(vesselCollAfter, vesselCollBefore)
 //     th.assertIsApproximatelyEqual(ICRAfter, ICRBefore)
 //     th.assertIsApproximatelyEqual(depositAfter, depositBefore, 10000)
-//     th.assertIsApproximatelyEqual(SPRTBalanceBefore, SPRTBalanceAfter)
-//     // SPRT staking
+//     th.assertIsApproximatelyEqual(SPRBalanceBefore, SPRBalanceAfter)
+//     // SPR staking
 //     th.assertIsApproximatelyEqual(stakeAfter, stakeBefore)
 
 //     // Expect Alice has withdrawn all ETH gain
@@ -466,13 +466,13 @@
 //     await openVessel({ extraVUSDAmount: toBN(dec(150, 18)), extraParams: { from: alice } })
 //     await stabilityPool.provideToSP(dec(150, 18), ZERO_ADDRESS, { from: alice })
 
-//     // mint some SPRT
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
+//     // mint some SPR
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
 
-//     // stake SPRT
-//     await sprtStaking.stake(dec(1850, 18), { from: whale })
-//     await sprtStaking.stake(dec(150, 18), { from: alice })
+//     // stake SPR
+//     await sprStaking.stake(dec(1850, 18), { from: whale })
+//     await sprStaking.stake(dec(150, 18), { from: alice })
 
 //     // skip bootstrapping phase
 //     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
@@ -489,16 +489,16 @@
 //     const vesselCollBefore = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceBefore = await vusdToken.balanceOf(alice)
 //     const vesselDebtBefore = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceBefore = await sprtToken.balanceOf(alice)
+//     const SPRBalanceBefore = await sprToken.balanceOf(alice)
 //     const ICRBefore = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositBefore = (await stabilityPool.deposits(alice))[0]
-//     const stakeBefore = await sprtStaking.stakes(alice)
+//     const stakeBefore = await sprStaking.stakes(alice)
 
 //     const proportionalVUSD = expectedETHGain_A.mul(price).div(ICRBefore)
 //     const borrowingRate = await vesselManagerOriginal.getBorrowingRateWithDecay()
 //     const netDebtChange = proportionalVUSD.mul(toBN(dec(1, 18))).div(toBN(dec(1, 18)).add(borrowingRate))
 
-//     const expectedSPRTGain_A = toBN('839557069990108416000000')
+//     const expectedSPRGain_A = toBN('839557069990108416000000')
 
 //     const proxyAddress = borrowerWrappers.getProxyAddressFromUser(alice)
 //     // Alice claims staking rewards and puts them back in the system through the proxy
@@ -512,14 +512,14 @@
 //     const vesselCollAfter = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceAfter = await vusdToken.balanceOf(alice)
 //     const vesselDebtAfter = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceAfter = await sprtToken.balanceOf(alice)
+//     const SPRBalanceAfter = await sprToken.balanceOf(alice)
 //     const ICRAfter = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositAfter = (await stabilityPool.deposits(alice))[0]
-//     const stakeAfter = await sprtStaking.stakes(alice)
+//     const stakeAfter = await sprStaking.stakes(alice)
 
 //     // check proxy balances remain the same
 //     assert.equal(ethBalanceAfter.toString(), ethBalanceBefore.toString())
-//     assert.equal(SPRTBalanceAfter.toString(), SPRTBalanceBefore.toString())
+//     assert.equal(SPRBalanceAfter.toString(), SPRBalanceBefore.toString())
 //     // check proxy VUSD balance has increased by own adjust vessel reward
 //     th.assertIsApproximatelyEqual(VUSDBalanceAfter, VUSDBalanceBefore.add(expectedNewVUSDGain_A))
 //     // check vessel has increased debt by the ICR proportional amount to ETH gain
@@ -530,11 +530,11 @@
 //     th.assertIsApproximatelyEqual(ICRAfter, ICRBefore)
 //     // check that Stability Pool deposit
 //     th.assertIsApproximatelyEqual(depositAfter, depositBefore.add(netDebtChange), 10000)
-//     // check SPRT balance remains the same
-//     th.assertIsApproximatelyEqual(SPRTBalanceBefore, SPRTBalanceAfter)
+//     // check SPR balance remains the same
+//     th.assertIsApproximatelyEqual(SPRBalanceBefore, SPRBalanceAfter)
 
-//     // SPRT staking
-//     th.assertIsApproximatelyEqual(stakeAfter, stakeBefore.add(expectedSPRTGain_A))
+//     // SPR staking
+//     th.assertIsApproximatelyEqual(stakeAfter, stakeBefore.add(expectedSPRGain_A))
 
 //     // Expect Alice has withdrawn all ETH gain
 //     const alice_pendingETHGain = await stabilityPool.getDepositorETHGain(alice)
@@ -551,13 +551,13 @@
 //     await openVessel({ extraVUSDAmount: toBN(dec(150, 18)), extraParams: { from: alice } })
 //     await stabilityPool.provideToSP(dec(150, 18), ZERO_ADDRESS, { from: alice })
 
-//     // mint some SPRT
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
+//     // mint some SPR
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
 
-//     // stake SPRT
-//     await sprtStaking.stake(dec(1850, 18), { from: whale })
-//     await sprtStaking.stake(dec(150, 18), { from: alice })
+//     // stake SPR
+//     await sprStaking.stake(dec(1850, 18), { from: whale })
+//     await sprStaking.stake(dec(150, 18), { from: alice })
 
 //     // Defaulter Vessel opened
 //     const { VUSDAmount, netDebt, collateral } = await openVessel({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
@@ -570,10 +570,10 @@
 //     const vesselCollBefore = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceBefore = await vusdToken.balanceOf(alice)
 //     const vesselDebtBefore = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceBefore = await sprtToken.balanceOf(alice)
+//     const SPRBalanceBefore = await sprToken.balanceOf(alice)
 //     const ICRBefore = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositBefore = (await stabilityPool.deposits(alice))[0]
-//     const stakeBefore = await sprtStaking.stakes(alice)
+//     const stakeBefore = await sprStaking.stakes(alice)
 
 //     const borrowingRate = await vesselManagerOriginal.getBorrowingRateWithDecay()
 
@@ -584,14 +584,14 @@
 //     const vesselCollAfter = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceAfter = await vusdToken.balanceOf(alice)
 //     const vesselDebtAfter = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceAfter = await sprtToken.balanceOf(alice)
+//     const SPRBalanceAfter = await sprToken.balanceOf(alice)
 //     const ICRAfter = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositAfter = (await stabilityPool.deposits(alice))[0]
-//     const stakeAfter = await sprtStaking.stakes(alice)
+//     const stakeAfter = await sprStaking.stakes(alice)
 
 //     // check proxy balances remain the same
 //     assert.equal(ethBalanceAfter.toString(), ethBalanceBefore.toString())
-//     assert.equal(SPRTBalanceAfter.toString(), SPRTBalanceBefore.toString())
+//     assert.equal(SPRBalanceAfter.toString(), SPRBalanceBefore.toString())
 //     // check proxy VUSD balance has increased by own adjust vessel reward
 //     th.assertIsApproximatelyEqual(VUSDBalanceAfter, VUSDBalanceBefore)
 //     // check vessel has increased debt by the ICR proportional amount to ETH gain
@@ -602,8 +602,8 @@
 //     th.assertIsApproximatelyEqual(ICRAfter, ICRBefore)
 //     // check that Stability Pool deposit
 //     th.assertIsApproximatelyEqual(depositAfter, depositBefore.add(expectedVUSDGain_A), 10000)
-//     // check SPRT balance remains the same
-//     th.assertIsApproximatelyEqual(SPRTBalanceBefore, SPRTBalanceAfter)
+//     // check SPR balance remains the same
+//     th.assertIsApproximatelyEqual(SPRBalanceBefore, SPRBalanceAfter)
 
 //     // Expect Alice has withdrawn all ETH gain
 //     const alice_pendingETHGain = await stabilityPool.getDepositorETHGain(alice)
@@ -620,13 +620,13 @@
 //     await openVessel({ extraVUSDAmount: toBN(dec(150, 18)), extraParams: { from: alice } })
 //     await stabilityPool.provideToSP(dec(150, 18), ZERO_ADDRESS, { from: alice })
 
-//     // mint some SPRT
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
-//     await sprtTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
+//     // mint some SPR
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
+//     await sprTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
 
-//     // stake SPRT
-//     await sprtStaking.stake(dec(1850, 18), { from: whale })
-//     await sprtStaking.stake(dec(150, 18), { from: alice })
+//     // stake SPR
+//     await sprStaking.stake(dec(1850, 18), { from: whale })
+//     await sprStaking.stake(dec(150, 18), { from: alice })
 
 //     // Defaulter Vessel opened
 //     const { VUSDAmount, netDebt, collateral } = await openVessel({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
@@ -650,17 +650,17 @@
 //     const vesselCollBefore = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceBefore = await vusdToken.balanceOf(alice)
 //     const vesselDebtBefore = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceBefore = await sprtToken.balanceOf(alice)
+//     const SPRBalanceBefore = await sprToken.balanceOf(alice)
 //     const ICRBefore = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositBefore = (await stabilityPool.deposits(alice))[0]
-//     const stakeBefore = await sprtStaking.stakes(alice)
+//     const stakeBefore = await sprStaking.stakes(alice)
 
 //     const proportionalVUSD = expectedETHGain_A.mul(price).div(ICRBefore)
 //     const borrowingRate = await vesselManagerOriginal.getBorrowingRateWithDecay()
 //     const netDebtChange = proportionalVUSD.mul(toBN(dec(1, 18))).div(toBN(dec(1, 18)).add(borrowingRate))
 //     const expectedTotalVUSD = expectedVUSDGain_A.add(netDebtChange)
 
-//     const expectedSPRTGain_A = toBN('839557069990108416000000')
+//     const expectedSPRGain_A = toBN('839557069990108416000000')
 
 //     // Alice claims staking rewards and puts them back in the system through the proxy
 //     await borrowerWrappers.claimStakingGainsAndRecycle(th._100pct, alice, alice, { from: alice })
@@ -673,14 +673,14 @@
 //     const vesselCollAfter = await vesselManager.getVesselColl(ZERO_ADDRESS, alice)
 //     const VUSDBalanceAfter = await vusdToken.balanceOf(alice)
 //     const vesselDebtAfter = await vesselManager.getVesselDebt(ZERO_ADDRESS, alice)
-//     const SPRTBalanceAfter = await sprtToken.balanceOf(alice)
+//     const SPRBalanceAfter = await sprToken.balanceOf(alice)
 //     const ICRAfter = await vesselManager.getCurrentICR(ZERO_ADDRESS, alice, price)
 //     const depositAfter = (await stabilityPool.deposits(alice))[0]
-//     const stakeAfter = await sprtStaking.stakes(alice)
+//     const stakeAfter = await sprStaking.stakes(alice)
 
 //     // check proxy balances remain the same
 //     assert.equal(ethBalanceAfter.toString(), ethBalanceBefore.toString())
-//     assert.equal(SPRTBalanceAfter.toString(), SPRTBalanceBefore.toString())
+//     assert.equal(SPRBalanceAfter.toString(), SPRBalanceBefore.toString())
 //     // check proxy VUSD balance has increased by own adjust vessel reward
 //     th.assertIsApproximatelyEqual(VUSDBalanceAfter, VUSDBalanceBefore.add(expectedNewVUSDGain_A))
 //     // check vessel has increased debt by the ICR proportional amount to ETH gain
@@ -691,11 +691,11 @@
 //     th.assertIsApproximatelyEqual(ICRAfter, ICRBefore)
 //     // check that Stability Pool deposit
 //     th.assertIsApproximatelyEqual(depositAfter, depositBefore.add(expectedTotalVUSD), 10000)
-//     // check SPRT balance remains the same
-//     th.assertIsApproximatelyEqual(SPRTBalanceBefore, SPRTBalanceAfter)
+//     // check SPR balance remains the same
+//     th.assertIsApproximatelyEqual(SPRBalanceBefore, SPRBalanceAfter)
 
-//     // SPRT staking
-//     th.assertIsApproximatelyEqual(stakeAfter, stakeBefore.add(expectedSPRTGain_A))
+//     // SPR staking
+//     th.assertIsApproximatelyEqual(stakeAfter, stakeBefore.add(expectedSPRGain_A))
 
 //     // Expect Alice has withdrawn all ETH gain
 //     const alice_pendingETHGain = await stabilityPool.getDepositorETHGain(alice)

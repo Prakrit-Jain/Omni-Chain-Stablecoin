@@ -41,8 +41,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	sprtStaking = contracts.sprt.sprtStaking
-	communityIssuance = contracts.sprt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 }
 
 contract("BorrowerOperations", async accounts => {
@@ -65,13 +65,13 @@ contract("BorrowerOperations", async accounts => {
 		before(async () => {
 			await deploy(treasury, [])
 
-			await feeCollector.setRouteToSPRTStaking(true) // sends fees to SPRTStaking instead of treasury
+			await feeCollector.setRouteToSPRStaking(true) // sends fees to SPRStaking instead of treasury
 
 			KAI_GAS_COMPENSATION_ERC20 = await adminContract.getDebtTokenGasCompensation(erc20.address)
 			MIN_NET_DEBT_ERC20 = await adminContract.getMinNetDebt(erc20.address)
 			BORROWING_FEE_ERC20 = await adminContract.getBorrowingFee(erc20.address)
 
-			await communityIssuance.unprotectedAddSPRTHoldings(multisig, dec(5, 24))
+			await communityIssuance.unprotectedAddSPRHoldings(multisig, dec(5, 24))
 
 			for (const acc of accounts.slice(0, 20)) {
 				await erc20.mint(acc, await web3.eth.getBalance(acc))
@@ -1403,14 +1403,14 @@ contract("BorrowerOperations", async accounts => {
 			assert.isTrue(baseRate_2_Asset.lt(baseRate_1_Asset))
 		}) */
 
-		it("withdrawDebtTokens(): borrowing at non-zero base rate sends fee to SPRT staking contract", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+		it("withdrawDebtTokens(): borrowing at non-zero base rate sends fee to SPR staking contract", async () => {
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT KAI balance before == 0
-			const SPRTStaking_KAIBalance_Before = await debtToken.balanceOf(sprtStaking.address)
-			assert.equal(SPRTStaking_KAIBalance_Before, "0")
+			// Check SPR KAI balance before == 0
+			const SPRStaking_KAIBalance_Before = await debtToken.balanceOf(sprStaking.address)
+			assert.equal(SPRStaking_KAIBalance_Before, "0")
 
 			await openVessel({
 				asset: erc20.address,
@@ -1459,19 +1459,19 @@ contract("BorrowerOperations", async accounts => {
 				from: D,
 			})
 
-			// Check SPRT KAI balance after has increased
+			// Check SPR KAI balance after has increased
 			assert.equal(await borrowerOperations.feeCollector(), feeCollector.address)
-			assert.equal(await feeCollector.sprtStaking(), sprtStaking.address)
-			const SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After.gt(SPRTStaking_KAIBalance_Before))
+			assert.equal(await feeCollector.sprStaking(), sprStaking.address)
+			const SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After.gt(SPRStaking_KAIBalance_Before))
 		})
 
 		if (!withProxy) {
 			// TODO: use rawLogs instead of logs
 			it("withdrawDebtTokens(): borrowing at non-zero base records the (drawn debt + fee) on the Vessel struct", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -1534,13 +1534,13 @@ contract("BorrowerOperations", async accounts => {
 			})
 		}
 
-		it("withdrawDebtTokens(): borrowing at non-zero base rate increases the SPRT staking contract KAI fees-per-unit-staked", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+		it("withdrawDebtTokens(): borrowing at non-zero base rate increases the SPR staking contract KAI fees-per-unit-staked", async () => {
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT contract KAI fees-per-unit-staked is zero
-			const F_KAI_Before = await sprtStaking.F_DEBT_TOKENS()
+			// Check SPR contract KAI fees-per-unit-staked is zero
+			const F_KAI_Before = await sprStaking.F_DEBT_TOKENS()
 			assert.equal(F_KAI_Before, "0")
 
 			await openVessel({
@@ -1590,19 +1590,19 @@ contract("BorrowerOperations", async accounts => {
 				from: D,
 			})
 
-			// Check SPRT contract KAI fees-per-unit-staked has increased
-			const F_KAI_After = await sprtStaking.F_DEBT_TOKENS()
+			// Check SPR contract KAI fees-per-unit-staked has increased
+			const F_KAI_After = await sprStaking.F_DEBT_TOKENS()
 			assert.isTrue(F_KAI_After.gt(F_KAI_Before))
 		})
 
 		it("withdrawDebtTokens(): borrowing at non-zero base rate sends requested amount to the user", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT Staking contract balance before == 0
-			const SPRTStaking_KAIBalance_Before = await debtToken.balanceOf(sprtStaking.address)
-			assert.equal(SPRTStaking_KAIBalance_Before, "0")
+			// Check SPR Staking contract balance before == 0
+			const SPRStaking_KAIBalance_Before = await debtToken.balanceOf(sprStaking.address)
+			assert.equal(SPRStaking_KAIBalance_Before, "0")
 
 			await openVessel({
 				asset: erc20.address,
@@ -1653,9 +1653,9 @@ contract("BorrowerOperations", async accounts => {
 				from: D,
 			})
 
-			// Check SPRT staking KAI balance has increased
-			let SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After.gt(SPRTStaking_KAIBalance_Before))
+			// Check SPR staking KAI balance has increased
+			let SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After.gt(SPRStaking_KAIBalance_Before))
 
 			// Check D's KAI balance now equals their initial balance plus request KAI
 			let D_KAIBalanceAfter = await debtToken.balanceOf(D)
@@ -1667,8 +1667,8 @@ contract("BorrowerOperations", async accounts => {
 				from: D,
 			})
 
-			SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After.gt(SPRTStaking_KAIBalance_Before))
+			SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After.gt(SPRStaking_KAIBalance_Before))
 
 			D_KAIBalanceAfter = await debtToken.balanceOf(D)
 			assert.isTrue(D_KAIBalanceAfter.eq(D_KAIBalanceBefore.add(D_KAIRequest)))
@@ -1704,22 +1704,22 @@ contract("BorrowerOperations", async accounts => {
 				ICR: toBN(dec(2, 18)),
 				extraParams: { from: D },
 			})
-			// A artificially receives SPRT, then stakes it
-			await communityIssuance.unprotectedAddSPRTHoldings(A, dec(100, 18))
-			await sprtStaking.stake(dec(100, 18), { from: A })
+			// A artificially receives SPR, then stakes it
+			await communityIssuance.unprotectedAddSPRHoldings(A, dec(100, 18))
+			await sprStaking.stake(dec(100, 18), { from: A })
 
 			// 2 hours pass
 			th.fastForwardTime(7200, web3.currentProvider)
 
-			// Check SPRT KAI balance before == 0
-			const F_KAI_Before = await sprtStaking.F_DEBT_TOKENS()
+			// Check SPR KAI balance before == 0
+			const F_KAI_Before = await sprStaking.F_DEBT_TOKENS()
 			assert.equal(F_KAI_Before, "0")
 
 			// D withdraws KAI
 			await borrowerOperations.withdrawDebtTokens(erc20.address, dec(37, 18), D, D, { from: D })
 
-			// Check SPRT KAI balance after > 0
-			const F_KAI_After = await sprtStaking.F_DEBT_TOKENS()
+			// Check SPR KAI balance after > 0
+			const F_KAI_After = await sprStaking.F_DEBT_TOKENS()
 			assert.isTrue(F_KAI_After.gt("0"))
 		})
 
@@ -2742,14 +2742,14 @@ contract("BorrowerOperations", async accounts => {
 			assert.isTrue(baseRate_2.lt(baseRate_1))
 		}) */
 
-		it("adjustVessel(): borrowing at non-zero base rate sends KAI fee to SPRT staking contract", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+		it("adjustVessel(): borrowing at non-zero base rate sends KAI fee to SPR staking contract", async () => {
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT KAI balance before == 0
-			const SPRTStaking_KAIBalance_Before = await debtToken.balanceOf(sprtStaking.address)
-			assert.equal(SPRTStaking_KAIBalance_Before, "0")
+			// Check SPR KAI balance before == 0
+			const SPRStaking_KAIBalance_Before = await debtToken.balanceOf(sprStaking.address)
+			assert.equal(SPRStaking_KAIBalance_Before, "0")
 
 			await openVessel({
 				asset: erc20.address,
@@ -2796,17 +2796,17 @@ contract("BorrowerOperations", async accounts => {
 				extraParams: { from: D },
 			})
 
-			// Check SPRT KAI balance after has increased
-			const SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After.gt(SPRTStaking_KAIBalance_Before))
+			// Check SPR KAI balance after has increased
+			const SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After.gt(SPRStaking_KAIBalance_Before))
 		})
 
 		if (!withProxy) {
 			// TODO: use rawLogs instead of logs
 			it("adjustVessel(): borrowing at non-zero base records the (drawn debt + fee) on the Vessel struct", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -2878,13 +2878,13 @@ contract("BorrowerOperations", async accounts => {
 			})
 		}
 
-		it("adjustVessel(): borrowing at non-zero base rate increases the SPRT staking contract KAI fees-per-unit-staked", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+		it("adjustVessel(): borrowing at non-zero base rate increases the SPR staking contract KAI fees-per-unit-staked", async () => {
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT contract KAI fees-per-unit-staked is zero
-			const F_KAI_Before = await sprtStaking.F_DEBT_TOKENS()
+			// Check SPR contract KAI fees-per-unit-staked is zero
+			const F_KAI_Before = await sprStaking.F_DEBT_TOKENS()
 			assert.equal(F_KAI_Before, "0")
 
 			await openVessel({
@@ -2932,24 +2932,24 @@ contract("BorrowerOperations", async accounts => {
 			th.fastForwardTime(7200, web3.currentProvider)
 
 			// D adjusts vessel
-			const F_KAI_BeforeAdjust = await sprtStaking.F_DEBT_TOKENS()
+			const F_KAI_BeforeAdjust = await sprStaking.F_DEBT_TOKENS()
 
 			await borrowerOperations.adjustVessel(erc20.address, 0, 0, dec(37, 18), true, D, D, {
 				from: D,
 			})
 
-			const F_KAI_After_Asset = await sprtStaking.F_DEBT_TOKENS()
+			const F_KAI_After_Asset = await sprStaking.F_DEBT_TOKENS()
 			assert.isTrue(F_KAI_After_Asset.gt(F_KAI_BeforeAdjust))
 		})
 
 		it("adjustVessel(): borrowing at non-zero base rate sends requested amount to the user", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT Staking contract balance before == 0
-			const SPRTStaking_KAIBalance_Before = await debtToken.balanceOf(sprtStaking.address)
-			assert.equal(SPRTStaking_KAIBalance_Before, "0")
+			// Check SPR Staking contract balance before == 0
+			const SPRStaking_KAIBalance_Before = await debtToken.balanceOf(sprStaking.address)
+			assert.equal(SPRStaking_KAIBalance_Before, "0")
 
 			await openVessel({
 				asset: erc20.address,
@@ -3000,8 +3000,8 @@ contract("BorrowerOperations", async accounts => {
 			// D adjusts vessel
 			const KAIRequest_D = toBN(dec(40, 18))
 
-			// Check SPRT staking KAI balance has increased
-			const SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
+			// Check SPR staking KAI balance has increased
+			const SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
 
 			// Check D's KAI balance has increased by their requested KAI
 			const D_KAIBalanceAfter = await debtToken.balanceOf(D)
@@ -3010,9 +3010,9 @@ contract("BorrowerOperations", async accounts => {
 				from: D,
 			})
 
-			// Check SPRT staking KAI balance has increased
-			const SPRTStaking_KAIBalance_After_Asset = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After_Asset.gt(SPRTStaking_KAIBalance_After))
+			// Check SPR staking KAI balance has increased
+			const SPRStaking_KAIBalance_After_Asset = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After_Asset.gt(SPRStaking_KAIBalance_After))
 
 			// Check D's KAI balance has increased by their requested KAI
 			const D_KAIBalanceAfter_Asset = await debtToken.balanceOf(D)
@@ -3020,7 +3020,7 @@ contract("BorrowerOperations", async accounts => {
 		})
 
 		// NOTE: Logic changed
-		it("adjustVessel(): borrowing at zero borrowing fee doesn't KAI balance of SPRT staking contract", async () => {
+		it("adjustVessel(): borrowing at zero borrowing fee doesn't KAI balance of SPR staking contract", async () => {
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(10, 18)),
@@ -3062,20 +3062,20 @@ contract("BorrowerOperations", async accounts => {
 			th.fastForwardTime(7200, web3.currentProvider)
 
 			// Check staking KAI balance before > 0
-			const SPRTStaking_KAIBalance_Before = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_Before.gt(toBN("0")))
+			const SPRStaking_KAIBalance_Before = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_Before.gt(toBN("0")))
 
 			// D adjusts vessel
-			const SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
+			const SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
 
 			await borrowerOperations.adjustVessel(erc20.address, 0, 0, dec(37, 18), true, D, D, {
 				from: D,
 			})
-			const SPRTStaking_KAIBalance_After_Asset = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After_Asset.eq(SPRTStaking_KAIBalance_After))
+			const SPRStaking_KAIBalance_After_Asset = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After_Asset.eq(SPRStaking_KAIBalance_After))
 		})
 		// Changed logic
-		it("adjustVessel(): borrowing at zero borrowing fee doesn't change SPRT staking contract KAI fees-per-unit-staked", async () => {
+		it("adjustVessel(): borrowing at zero borrowing fee doesn't change SPR staking contract KAI fees-per-unit-staked", async () => {
 			await openVessel({
 				asset: erc20.address,
 				assetSent: toBN(dec(100, "ether")),
@@ -3117,21 +3117,21 @@ contract("BorrowerOperations", async accounts => {
 			// 2 hours pass
 			th.fastForwardTime(7200, web3.currentProvider)
 
-			// A artificially receives SPRT, then stakes it
-			await communityIssuance.unprotectedAddSPRTHoldings(A, dec(100, 18))
-			await sprtStaking.stake(dec(100, 18), { from: A })
+			// A artificially receives SPR, then stakes it
+			await communityIssuance.unprotectedAddSPRHoldings(A, dec(100, 18))
+			await sprStaking.stake(dec(100, 18), { from: A })
 
 			// Check staking KAI balance before == 0
-			const F_KAI_Before = await sprtStaking.F_DEBT_TOKENS()
+			const F_KAI_Before = await sprStaking.F_DEBT_TOKENS()
 			assert.isTrue(F_KAI_Before.eq(toBN("0")))
 
 			// D adjusts vessel
-			const F_KAI_After = await sprtStaking.F_DEBT_TOKENS()
+			const F_KAI_After = await sprStaking.F_DEBT_TOKENS()
 			await borrowerOperations.adjustVessel(erc20.address, 0, 0, dec(37, 18), true, D, D, {
 				from: D,
 			})
 
-			const F_KAI_After_Asset = await sprtStaking.F_DEBT_TOKENS()
+			const F_KAI_After_Asset = await sprStaking.F_DEBT_TOKENS()
 			assert.isTrue(F_KAI_After_Asset.eq(F_KAI_After))
 		})
 
@@ -3667,12 +3667,12 @@ contract("BorrowerOperations", async accounts => {
 
 			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
-			// B stakes SPRT
-			await communityIssuance.unprotectedAddSPRTHoldings(bob, dec(100, 18))
-			await sprtStaking.stake(dec(100, 18), { from: bob })
+			// B stakes SPR
+			await communityIssuance.unprotectedAddSPRHoldings(bob, dec(100, 18))
+			await sprStaking.stake(dec(100, 18), { from: bob })
 
-			const SPRTStakingKAIBalanceBefore = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStakingKAIBalanceBefore.gt(toBN("0")))
+			const SPRStakingKAIBalanceBefore = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStakingKAIBalanceBefore.gt(toBN("0")))
 
 			const txAlice_Asset = await borrowerOperations.adjustVessel(
 				erc20.address,
@@ -3694,8 +3694,8 @@ contract("BorrowerOperations", async accounts => {
 			assert.isTrue(await th.checkRecoveryMode(contracts.core, erc20.address))
 
 			// Check no fee was sent to staking contract
-			const SPRTStakingKAIBalanceAfter = await debtToken.balanceOf(sprtStaking.address)
-			assert.equal(SPRTStakingKAIBalanceAfter.toString(), SPRTStakingKAIBalanceBefore.toString())
+			const SPRStakingKAIBalanceAfter = await debtToken.balanceOf(sprStaking.address)
+			assert.equal(SPRStakingKAIBalanceAfter.toString(), SPRStakingKAIBalanceBefore.toString())
 		})
 
 		it("adjustVessel(): reverts when change would cause the TCR of the system to fall below the CCR", async () => {
@@ -5891,14 +5891,14 @@ contract("BorrowerOperations", async accounts => {
 			assert.isTrue(baseRate_2_Asset.lt(baseRate_1_Asset))
 		}) */
 
-		it("openVessel(): borrowing at non-zero base rate sends KAI fee to SPRT staking contract", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+		it("openVessel(): borrowing at non-zero base rate sends KAI fee to SPR staking contract", async () => {
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT KAI balance before == 0
-			const SPRTStaking_KAIBalance_Before = await debtToken.balanceOf(sprtStaking.address)
-			assert.equal(SPRTStaking_KAIBalance_Before, "0")
+			// Check SPR KAI balance before == 0
+			const SPRStaking_KAIBalance_Before = await debtToken.balanceOf(sprStaking.address)
+			assert.equal(SPRStaking_KAIBalance_Before, "0")
 
 			await openVessel({
 				asset: erc20.address,
@@ -5947,17 +5947,17 @@ contract("BorrowerOperations", async accounts => {
 				extraParams: { from: D },
 			})
 
-			// Check SPRT KAI balance after has increased
-			const SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After.gt(SPRTStaking_KAIBalance_Before))
+			// Check SPR KAI balance after has increased
+			const SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After.gt(SPRStaking_KAIBalance_Before))
 		})
 
 		if (!withProxy) {
 			// TODO: use rawLogs instead of logs
 			it("openVessel(): borrowing at non-zero base records the (drawn debt + fee  + liq. reserve) on the Vessel struct", async () => {
-				// time fast-forwards 1 year, and multisig stakes 1 SPRT
+				// time fast-forwards 1 year, and multisig stakes 1 SPR
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-				await sprtStaking.stake(dec(1, 18), { from: multisig })
+				await sprStaking.stake(dec(1, 18), { from: multisig })
 
 				await openVessel({
 					asset: erc20.address,
@@ -6025,13 +6025,13 @@ contract("BorrowerOperations", async accounts => {
 			})
 		}
 
-		it("openVessel(): borrowing at non-zero base rate increases the SPRT staking contract KAI fees-per-unit-staked", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+		it("openVessel(): borrowing at non-zero base rate increases the SPR staking contract KAI fees-per-unit-staked", async () => {
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT contract KAI fees-per-unit-staked is zero
-			const F_KAI_Before = await sprtStaking.F_DEBT_TOKENS()
+			// Check SPR contract KAI fees-per-unit-staked is zero
+			const F_KAI_Before = await sprStaking.F_DEBT_TOKENS()
 			assert.equal(F_KAI_Before, "0")
 
 			await openVessel({
@@ -6079,19 +6079,19 @@ contract("BorrowerOperations", async accounts => {
 				extraParams: { from: D },
 			})
 
-			// Check SPRT contract KAI fees-per-unit-staked has increased
-			const F_KAI_After = await sprtStaking.F_DEBT_TOKENS()
+			// Check SPR contract KAI fees-per-unit-staked has increased
+			const F_KAI_After = await sprStaking.F_DEBT_TOKENS()
 			assert.isTrue(F_KAI_After.gt(F_KAI_Before))
 		})
 
 		it("openVessel(): borrowing at non-zero base rate sends requested amount to the user", async () => {
-			// time fast-forwards 1 year, and multisig stakes 1 SPRT
+			// time fast-forwards 1 year, and multisig stakes 1 SPR
 			await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
-			await sprtStaking.stake(dec(1, 18), { from: multisig })
+			await sprStaking.stake(dec(1, 18), { from: multisig })
 
-			// Check SPRT Staking contract balance before == 0
-			const SPRTStaking_KAIBalance_Before = await debtToken.balanceOf(sprtStaking.address)
-			assert.equal(SPRTStaking_KAIBalance_Before, "0")
+			// Check SPR Staking contract balance before == 0
+			const SPRStaking_KAIBalance_Before = await debtToken.balanceOf(sprStaking.address)
+			assert.equal(SPRStaking_KAIBalance_Before, "0")
 
 			await openVessel({
 				asset: erc20.address,
@@ -6136,16 +6136,16 @@ contract("BorrowerOperations", async accounts => {
 			const KAIRequest_D = toBN(dec(40000, 18))
 			await borrowerOperations.openVessel(erc20.address, dec(500, "ether"), KAIRequest_D, D, D, { from: D })
 
-			// Check SPRT staking KAI balance has increased
-			const SPRTStaking_KAIBalance_After = await debtToken.balanceOf(sprtStaking.address)
-			assert.isTrue(SPRTStaking_KAIBalance_After.gt(SPRTStaking_KAIBalance_Before))
+			// Check SPR staking KAI balance has increased
+			const SPRStaking_KAIBalance_After = await debtToken.balanceOf(sprStaking.address)
+			assert.isTrue(SPRStaking_KAIBalance_After.gt(SPRStaking_KAIBalance_Before))
 
 			// Check D's KAI balance now equals their requested KAI
 			const KAIBalance_D = await debtToken.balanceOf(D)
 			assert.isTrue(KAIRequest_D.eq(KAIBalance_D))
 		})
 		// Logic changed
-		it("openVessel(): borrowing at zero fee doesn't change the SPRT staking contract KAI fees-per-unit-staked", async () => {
+		it("openVessel(): borrowing at zero fee doesn't change the SPR staking contract KAI fees-per-unit-staked", async () => {
 			await openVessel({
 				asset: erc20.address,
 				extraKAIAmount: toBN(dec(5000, 18)),
@@ -6174,13 +6174,13 @@ contract("BorrowerOperations", async accounts => {
 			// 2 hours pass
 			th.fastForwardTime(7200, web3.currentProvider)
 
-			// Check KAI reward per SPRT staked == 0
-			const F_KAI_Before = await sprtStaking.F_DEBT_TOKENS()
+			// Check KAI reward per SPR staked == 0
+			const F_KAI_Before = await sprStaking.F_DEBT_TOKENS()
 			assert.equal(F_KAI_Before, "0")
 
-			// A stakes SPRT
-			await communityIssuance.unprotectedAddSPRTHoldings(A, dec(100, 18))
-			await sprtStaking.stake(dec(100, 18), { from: A })
+			// A stakes SPR
+			await communityIssuance.unprotectedAddSPRHoldings(A, dec(100, 18))
+			await sprStaking.stake(dec(100, 18), { from: A })
 
 			// D opens vessel
 			await openVessel({
@@ -6190,8 +6190,8 @@ contract("BorrowerOperations", async accounts => {
 				extraParams: { from: D },
 			})
 
-			// Check KAI reward per SPRT staked > 0
-			const F_KAI_After = await sprtStaking.F_DEBT_TOKENS()
+			// Check KAI reward per SPR staked > 0
+			const F_KAI_After = await sprStaking.F_DEBT_TOKENS()
 			assert.isTrue(F_KAI_After.eq(toBN("0")))
 		})
 

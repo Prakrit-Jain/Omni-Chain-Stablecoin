@@ -8,13 +8,13 @@ async function main() {
 	const [borrower, A, B] = accounts
 
 	const coreContracts = await dh.deployLiquityCoreHardhat()
-	const SPRTContracts = await dh.deploySPRTContractsHardhat(accounts[0])
+	const SPRContracts = await dh.deploySPRContractsHardhat(accounts[0])
 
 	const { vesselManager, borrowerOperations, hintHelpers, sortedVessels, priceFeedTestnet } =
 		coreContracts
 
-	await dh.connectCoreContracts(coreContracts, SPRTContracts)
-	await dh.connectSPRTContractsToCore(SPRTContracts, coreContracts)
+	await dh.connectCoreContracts(coreContracts, SPRContracts)
+	await dh.connectSPRContractsToCore(SPRContracts, coreContracts)
 
 	// Examples of off-chain hint calculation for Open Vessel
 

@@ -2,19 +2,19 @@
 
 pragma solidity ^0.8.19;
 
-import "../SPRT/CommunityIssuance.sol";
+import "../SPR/CommunityIssuance.sol";
 
 contract CommunityIssuanceTester is CommunityIssuance {
 
-	function unprotectedAddSPRTHoldings(address _account, uint256 _supply) external {
-		sprtHoldings[_account] += _supply;
+	function unprotectedAddSPRHoldings(address _account, uint256 _supply) external {
+		sprHoldings[_account] += _supply;
 	}
 
 	function getLastUpdateTokenDistribution() external view returns (uint256) {
 		return _getLastUpdateTokenDistribution();
 	}
 
-	function unprotectedIssueSPRT() external returns (uint256) {
-		return issueSPRT();
+	function unprotectedIssueSPR() external returns (uint256) {
+		return issueSPR();
 	}
 }

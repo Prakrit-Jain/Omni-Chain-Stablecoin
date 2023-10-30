@@ -35,8 +35,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	sprtStaking = contracts.sprt.sprtStaking
-	communityIssuance = contracts.sprt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 
 	// getDepositorGains() expects a sorted collateral array
@@ -182,7 +182,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			assert.equal((await vesselManager.Vessels(carol, erc20.address))[th.VESSEL_STATUS_INDEX], "3")
 
 			const spEthAfter_Asset = await stabilityPool.getCollateral(erc20.address)
-			const spSPRTfter_Asset = await stabilityPool.getTotalDebtTokenDeposits()
+			const spSPRfter_Asset = await stabilityPool.getTotalDebtTokenDeposits()
 
 			// liquidate collaterals with the gas compensation fee subtracted
 
@@ -198,7 +198,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				.sub(spEthBefore_Asset)
 				.mul(price)
 				.div(mv._1e18BN)
-				.sub(spKAIBefore_Asset.sub(spSPRTfter_Asset))
+				.sub(spKAIBefore_Asset.sub(spSPRfter_Asset))
 
 			assert.equal(
 				spEthAfter_Asset.sub(spEthBefore_Asset).toString(),
@@ -206,7 +206,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				"Stability Pool ETH doesn’t match"
 			)
 			assert.equal(
-				spKAIBefore_Asset.sub(spSPRTfter_Asset).toString(),
+				spKAIBefore_Asset.sub(spSPRfter_Asset).toString(),
 				A_totalDebt_Asset.toString(),
 				"Stability Pool KAI doesn’t match"
 			)

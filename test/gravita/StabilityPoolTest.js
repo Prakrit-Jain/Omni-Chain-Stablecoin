@@ -32,8 +32,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	sprtStaking = contracts.sprt.sprtStaking
-	communityIssuance = contracts.sprt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 
 	// getDepositorGains() expects a sorted collateral array
@@ -618,7 +618,7 @@ contract("StabilityPool", async accounts => {
 				await th.assertRevert(txPromise_B)
 			})
 
-			it("provideToSP(): new deposit = when SP > 0, triggers SPRT reward event - increases the sum G", async () => {
+			it("provideToSP(): new deposit = when SP > 0, triggers SPR reward event - increases the sum G", async () => {
 				// A, B, C open vessels and make Stability Pool deposits
 				await _openVessel(erc20, 1_000, alice)
 				await _openVessel(erc20, 2_000, bob)
@@ -640,7 +640,7 @@ contract("StabilityPool", async accounts => {
 				currentScale = await stabilityPool.currentScale()
 				const G_After = await stabilityPool.epochToScaleToG(currentEpoch, currentScale)
 
-				// Expect G has increased from the SPRT reward event triggered
+				// Expect G has increased from the SPR reward event triggered
 				assert.isTrue(G_After.gt(G_Before))
 			})
 
@@ -680,16 +680,16 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(G_After.eq(G_Before))
 			})
 
-			it("provideToSP(): new deposit = depositor does not receive any SPRT rewards", async () => {
+			it("provideToSP(): new deposit = depositor does not receive any SPR rewards", async () => {
 				// A, B, open vessels
 				await _openVessel(erc20, 1_000, alice)
 				await _openVessel(erc20, 2_000, bob)
 
 				// Get balances before and confirm they are zero
-				const A_SPRTBalance_Before = await communityIssuance.sprtHoldings(alice)
-				const B_SPRTBalance_Before = await communityIssuance.sprtHoldings(bob)
-				assert.equal(A_SPRTBalance_Before, "0")
-				assert.equal(B_SPRTBalance_Before, "0")
+				const A_SPRBalance_Before = await communityIssuance.sprHoldings(alice)
+				const B_SPRBalance_Before = await communityIssuance.sprHoldings(bob)
+				assert.equal(A_SPRBalance_Before, "0")
+				assert.equal(B_SPRBalance_Before, "0")
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -697,15 +697,15 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.provideToSP(dec(1_000, 18), validCollateral, { from: alice })
 				await stabilityPool.provideToSP(dec(2_000, 18), validCollateral, { from: bob })
 
-				// Get SPRT balances after, and confirm they're still zero
-				const A_SPRTBalance_After = await communityIssuance.sprtHoldings(alice)
-				const B_SPRTBalance_After = await communityIssuance.sprtHoldings(bob)
+				// Get SPR balances after, and confirm they're still zero
+				const A_SPRBalance_After = await communityIssuance.sprHoldings(alice)
+				const B_SPRBalance_After = await communityIssuance.sprHoldings(bob)
 
-				assert.equal(A_SPRTBalance_After, "0")
-				assert.equal(B_SPRTBalance_After, "0")
+				assert.equal(A_SPRBalance_After, "0")
+				assert.equal(B_SPRBalance_After, "0")
 			})
 
-			it("provideToSP(): new deposit after past full withdrawal = depositor does not receive any SPRT rewards", async () => {
+			it("provideToSP(): new deposit after past full withdrawal = depositor does not receive any SPR rewards", async () => {
 				await openWhaleVessel(erc20, (icr = 10))
 
 				// A, B, C, open vessels
@@ -723,7 +723,7 @@ contract("StabilityPool", async accounts => {
 				// time passes
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// C deposits. A, and B earn SPRT
+				// C deposits. A, and B earn SPR
 				await stabilityPool.provideToSP(dec(5, 18), validCollateral, { from: carol })
 
 				// Price drops, defaulter is liquidated, A, B and C earn collateral
@@ -739,11 +739,11 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.withdrawFromSP(initialDeposit_A, validCollateral, { from: alice })
 				await stabilityPool.withdrawFromSP(initialDeposit_B, validCollateral, { from: bob })
 
-				// Get A, B, C SPRT balances before and confirm they're non-zero
-				const A_SPRTBalance_Before = await communityIssuance.sprtHoldings(alice)
-				const B_SPRTBalance_Before = await communityIssuance.sprtHoldings(bob)
-				assert.isTrue(A_SPRTBalance_Before.gt(toBN("0")))
-				assert.isTrue(B_SPRTBalance_Before.gt(toBN("0")))
+				// Get A, B, C SPR balances before and confirm they're non-zero
+				const A_SPRBalance_Before = await communityIssuance.sprHoldings(alice)
+				const B_SPRBalance_Before = await communityIssuance.sprHoldings(bob)
+				assert.isTrue(A_SPRBalance_Before.gt(toBN("0")))
+				assert.isTrue(B_SPRBalance_Before.gt(toBN("0")))
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -751,12 +751,12 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 				await stabilityPool.provideToSP(dec(200, 18), validCollateral, { from: bob })
 
-				// Get A, B, C SPRT balances after, and confirm they have not changed
-				const A_SPRTBalance_After = await communityIssuance.sprtHoldings(alice)
-				const B_SPRTBalance_After = await communityIssuance.sprtHoldings(bob)
+				// Get A, B, C SPR balances after, and confirm they have not changed
+				const A_SPRBalance_After = await communityIssuance.sprHoldings(alice)
+				const B_SPRBalance_After = await communityIssuance.sprHoldings(bob)
 
-				assert.isTrue(A_SPRTBalance_After.eq(A_SPRTBalance_Before))
-				assert.isTrue(B_SPRTBalance_After.eq(B_SPRTBalance_Before))
+				assert.isTrue(A_SPRBalance_After.eq(A_SPRBalance_Before))
+				assert.isTrue(B_SPRBalance_After.eq(B_SPRBalance_Before))
 			})
 
 			it("provideToSP(): new deposit = depositor does not receive gains", async () => {
@@ -814,7 +814,7 @@ contract("StabilityPool", async accounts => {
 				// time passes
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// B deposits. A,B,C,D earn SPRT
+				// B deposits. A,B,C,D earn SPR
 				await stabilityPool.provideToSP(dec(5, 18), validCollateral, { from: bob })
 
 				// Price drops, defaulter is liquidated, A, B, C, D earn collaterals
@@ -856,7 +856,7 @@ contract("StabilityPool", async accounts => {
 				assert.equal(D_Balance_AfterERC20.toString(), D_Balance_BeforeERC20.toString())
 			})
 
-			it("provideToSP(): topup = triggers SPRT reward event - increases the sum G", async () => {
+			it("provideToSP(): topup = triggers SPR reward event - increases the sum G", async () => {
 				// A, B, C open vessels
 				await _openVessel(erc20, 1_000, alice)
 				await _openVessel(erc20, 2_000, bob)
@@ -878,11 +878,11 @@ contract("StabilityPool", async accounts => {
 
 				const G_After = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the SPRT reward event triggered by B's topup
+				// Expect G has increased from the SPR reward event triggered by B's topup
 				assert.isTrue(G_After.gt(G_Before))
 			})
 
-			it("provideToSP(): topup = depositor receives SPRT rewards", async () => {
+			it("provideToSP(): topup = depositor receives SPR rewards", async () => {
 				// A, B, C open vessels
 				await _openVessel(erc20, 100, alice)
 				await _openVessel(erc20, 200, bob)
@@ -895,25 +895,25 @@ contract("StabilityPool", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Get A, B, C SPRT balance before
-				const A_SPRTBalance_Before = await communityIssuance.sprtHoldings(alice)
-				const B_SPRTBalance_Before = await communityIssuance.sprtHoldings(bob)
-				const C_SPRTBalance_Before = await communityIssuance.sprtHoldings(carol)
+				// Get A, B, C SPR balance before
+				const A_SPRBalance_Before = await communityIssuance.sprHoldings(alice)
+				const B_SPRBalance_Before = await communityIssuance.sprHoldings(bob)
+				const C_SPRBalance_Before = await communityIssuance.sprHoldings(carol)
 
 				// A, B, C top up
 				await stabilityPool.provideToSP(dec(10, 18), validCollateral, { from: alice })
 				await stabilityPool.provideToSP(dec(20, 18), validCollateral, { from: bob })
 				await stabilityPool.provideToSP(dec(30, 18), validCollateral, { from: carol })
 
-				// Get SPRT balance after
-				const A_SPRTBalance_After = await communityIssuance.sprtHoldings(alice)	
-				const B_SPRTBalance_After = await communityIssuance.sprtHoldings(bob)
-				const C_SPRTBalance_After = await communityIssuance.sprtHoldings(carol)
+				// Get SPR balance after
+				const A_SPRBalance_After = await communityIssuance.sprHoldings(alice)	
+				const B_SPRBalance_After = await communityIssuance.sprHoldings(bob)
+				const C_SPRBalance_After = await communityIssuance.sprHoldings(carol)
 
-				// Check SPRT Balance of A, B, C has increased
-				assert.isTrue(A_SPRTBalance_After.gt(A_SPRTBalance_Before))
-				assert.isTrue(B_SPRTBalance_After.gt(B_SPRTBalance_Before))
-				assert.isTrue(C_SPRTBalance_After.gt(C_SPRTBalance_Before))
+				// Check SPR Balance of A, B, C has increased
+				assert.isTrue(A_SPRBalance_After.gt(A_SPRBalance_Before))
+				assert.isTrue(B_SPRBalance_After.gt(B_SPRBalance_Before))
+				assert.isTrue(C_SPRBalance_After.gt(C_SPRBalance_Before))
 			})
 
 			it("provideToSP(): passing same asset twice will revert", async () => {
@@ -1686,14 +1686,14 @@ contract("StabilityPool", async accounts => {
 				assert.isTrue(await sortedVessels.contains(erc20.address, defaulter_2))
 
 				const A_BalBeforeERC20 = toBN(await erc20.balanceOf(alice))
-				const A_SPRTBalBefore = await communityIssuance.sprtHoldings(alice)
+				const A_SPRBalBefore = await communityIssuance.sprHoldings(alice)
 
 				// Check Alice has gains to withdraw
 				const idx = validCollateral.indexOf(erc20.address)
 				const A_pendingColGain = (await stabilityPool.getDepositorGains(alice, validCollateral))[1][idx]
-				const A_pendingSPRTGain = await stabilityPool.getDepositorSPRTGain(alice)
+				const A_pendingSPRGain = await stabilityPool.getDepositorSPRGain(alice)
 				assert.isTrue(A_pendingColGain.gt(toBN("0")))
-				assert.isTrue(A_pendingSPRTGain.gt(toBN("0")))
+				assert.isTrue(A_pendingSPRGain.gt(toBN("0")))
 
 				// Check withdrawal of 0 succeeds
 				const tx = await stabilityPool.withdrawFromSP(0, validCollateral, { from: alice })
@@ -1701,12 +1701,12 @@ contract("StabilityPool", async accounts => {
 
 				const A_BalAfterERC20 = toBN(await erc20.balanceOf(alice))
 
-				const A_SPRTBalAfter = await communityIssuance.sprtHoldings(alice)
-				const A_SPRTBalDiff = A_SPRTBalAfter.sub(A_SPRTBalBefore)
+				const A_SPRBalAfter = await communityIssuance.sprHoldings(alice)
+				const A_SPRBalDiff = A_SPRBalAfter.sub(A_SPRBalBefore)
 
-				// Check A's collateral and SPRT balances have increased correctly
+				// Check A's collateral and SPR balances have increased correctly
 				assert.isTrue(A_BalAfterERC20.sub(A_BalBeforeERC20).eq(A_pendingColGain))
-				assert.isTrue(A_SPRTBalDiff.sub(A_pendingSPRTGain).eq(toBN("0")))
+				assert.isTrue(A_SPRBalDiff.sub(A_pendingSPRGain).eq(toBN("0")))
 			})
 
 			it("withdrawFromSP(): withdrawing 0 KAI doesn't alter the caller's deposit or the total KAI in the Stability Pool", async () => {
@@ -2092,7 +2092,7 @@ contract("StabilityPool", async accounts => {
 				assert.isAtMost(th.getDifference(ColinSP_After, "0"), 100000)
 			})
 
-			it("withdrawFromSP(): triggers SPRT reward event - increases the sum G", async () => {
+			it("withdrawFromSP(): triggers SPR reward event - increases the sum G", async () => {
 				await openWhaleVessel(erc20, (icr = 10), (extraDebtTokenAmt = 1_000_000))
 
 				// A, B, C open vessels
@@ -2112,7 +2112,7 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.withdrawFromSP(dec(5_000, 18), validCollateral, { from: alice })
 				const G_1 = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the SPRT reward event triggered
+				// Expect G has increased from the SPR reward event triggered
 				assert.isTrue(G_1.gt(G_Before))
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -2121,11 +2121,11 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.withdrawFromSP(dec(5_000, 18), validCollateral, { from: bob })
 				const G_2 = await stabilityPool.epochToScaleToG(0, 0)
 
-				// Expect G has increased from the SPRT reward event triggered
+				// Expect G has increased from the SPR reward event triggered
 				assert.isTrue(G_2.gt(G_1))
 			})
 
-			it("withdrawFromSP(): partial withdrawal = depositor receives SPRT rewards", async () => {
+			it("withdrawFromSP(): partial withdrawal = depositor receives SPR rewards", async () => {
 				await openWhaleVessel(erc20)
 
 				// A, B, C, D open vessels
@@ -2142,11 +2142,11 @@ contract("StabilityPool", async accounts => {
 
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
-				// Get A, B, C SPRT balance before
-				const A_SPRTBalance_Before = await communityIssuance.sprtHoldings(alice)
-				const B_SPRTBalance_Before = await communityIssuance.sprtHoldings(bob)
-				const C_SPRTBalance_Before = await communityIssuance.sprtHoldings(carol)
-				const D_SPRTBalance_Before = await communityIssuance.sprtHoldings(dennis)
+				// Get A, B, C SPR balance before
+				const A_SPRBalance_Before = await communityIssuance.sprHoldings(alice)
+				const B_SPRBalance_Before = await communityIssuance.sprHoldings(bob)
+				const C_SPRBalance_Before = await communityIssuance.sprHoldings(carol)
+				const D_SPRBalance_Before = await communityIssuance.sprHoldings(dennis)
 
 				// A, B, C withdraw
 				await stabilityPool.withdrawFromSP(dec(1, 18), validCollateral, { from: alice })
@@ -2154,17 +2154,17 @@ contract("StabilityPool", async accounts => {
 				await stabilityPool.withdrawFromSP(dec(3, 18), validCollateral, { from: carol })
 				await stabilityPool.withdrawFromSP(dec(4, 18), validCollateral, { from: dennis })
 
-				// Get SPRT balance after
-				const A_SPRTBalance_After = await communityIssuance.sprtHoldings(alice)
-				const B_SPRTBalance_After = await communityIssuance.sprtHoldings(bob)
-				const C_SPRTBalance_After = await communityIssuance.sprtHoldings(carol)
-				const D_SPRTBalance_After = await communityIssuance.sprtHoldings(dennis)
+				// Get SPR balance after
+				const A_SPRBalance_After = await communityIssuance.sprHoldings(alice)
+				const B_SPRBalance_After = await communityIssuance.sprHoldings(bob)
+				const C_SPRBalance_After = await communityIssuance.sprHoldings(carol)
+				const D_SPRBalance_After = await communityIssuance.sprHoldings(dennis)
 
-				// Check SPRT Balance of A, B, C has increased
-				assert.isTrue(A_SPRTBalance_After.gt(A_SPRTBalance_Before))
-				assert.isTrue(B_SPRTBalance_After.gt(B_SPRTBalance_Before))
-				assert.isTrue(C_SPRTBalance_After.gt(C_SPRTBalance_Before))
-				assert.isTrue(D_SPRTBalance_After.gt(D_SPRTBalance_Before))
+				// Check SPR Balance of A, B, C has increased
+				assert.isTrue(A_SPRBalance_After.gt(A_SPRBalance_Before))
+				assert.isTrue(B_SPRBalance_After.gt(B_SPRBalance_Before))
+				assert.isTrue(C_SPRBalance_After.gt(C_SPRBalance_Before))
+				assert.isTrue(D_SPRBalance_After.gt(D_SPRBalance_Before))
 			})
 
 			it("withdrawFromSP(): full withdrawal = zero's depositor's snapshots", async () => {
@@ -2181,7 +2181,7 @@ contract("StabilityPool", async accounts => {
 				await _openVesselWithICR(erc20B, 20_000, (icr = 10), graham)
 				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: graham })
 
-				// Fast-forward time and make a second deposit, to trigger SPRT reward and make G > 0
+				// Fast-forward time and make a second deposit, to trigger SPR reward and make G > 0
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 				await stabilityPool.provideToSP(dec(10_000, 18), validCollateral, { from: graham })
 
@@ -2290,9 +2290,9 @@ contract("StabilityPool", async accounts => {
 
 				await _openVessel(erc20, 0, defaulter_1)
 
-				//  SETUP: Execute a series of operations to trigger SPRT and collateral rewards for depositor A
+				//  SETUP: Execute a series of operations to trigger SPR and collateral rewards for depositor A
 
-				// Fast-forward time and make a second deposit, to trigger SPRT reward and make G > 0
+				// Fast-forward time and make a second deposit, to trigger SPR reward and make G > 0
 				await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 				await stabilityPool.provideToSP(dec(100, 18), validCollateral, { from: alice })
 
