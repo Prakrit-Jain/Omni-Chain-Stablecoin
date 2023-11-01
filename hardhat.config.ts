@@ -27,6 +27,9 @@ task("deploy-core-arbitrum-goerli", "Deploys contracts to Arbitrum-Goerli Testne
 task("deploy-core-mainnet", "Deploys contracts to Mainnet").setAction(
 	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.Mainnet).run()
 )
+task("deploy-core-khalani", "Deploys contracts to khalani Testnet").setAction(
+	async (_, hre) => await new CoreDeployer(hre, DeploymentTarget.KhalaniTestnet).run()
+)
 
 module.exports = {
 	paths: {
@@ -67,25 +70,39 @@ module.exports = {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
 		},
-	// 	goerli: {
-	// 		url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
-	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-	// 	},
-	// 	arbitrum_goerli: {
-	// 		url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
-	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-	// 	},
-	// 	arbitrum: {
-	// 		url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
-	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-	// 	},
-	// 	mainnet: {
-	// 		url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
-	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-	// 	},
+		khalanitestnet: {
+			url: "https://testnet.khalani.network/",
+			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		}
+		// 	goerli: {
+		// 		url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
+		// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		// 	},
+		// 	arbitrum_goerli: {
+		// 		url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
+		// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		// 	},
+		// 	arbitrum: {
+		// 		url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
+		// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		// 	},
+		// 	mainnet: {
+		// 		url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+		// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+		// 	},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,
+		customChains: [
+			{
+			  network: "khalanitestnet",
+			  chainId: 10012,
+			  urls: {
+				apiURL: "https://block-explorer.testnet.khalani.network/",
+				browserURL: "https://block-explorer.testnet.khalani.network/"
+			  }
+			}
+		  ]
 	},
 	mocha: { timeout: 12_000_000 },
 	rpc: {

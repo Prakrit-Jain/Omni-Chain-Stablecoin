@@ -15,6 +15,7 @@ export enum DeploymentTarget {
 	OptimismGoerliTestnet = "optimism-goerli",
 	Mainnet = "mainnet",
 	Arbitrum = "arbitrum",
+	KhalaniTestnet = "khalanitestnet"
 }
 
 /**
@@ -96,7 +97,7 @@ export class CoreDeployer {
 		} else if (this.isLayer2Deployment()) {
 			priceFeed = await this.deployUpgradeable("PriceFeedL2")
 		} else {
-			priceFeed = await this.deployUpgradeable("PriceFeed")
+			priceFeed = await this.deployUpgradeable("PriceFeedTestnet")
 		}
 
 		let timelockDelay: number
@@ -343,38 +344,40 @@ export class CoreDeployer {
 	 * Calls PriceFeed.setOracle()
 	 */
 	async addPriceFeedOracle(coll: any) {
-		const oracleRecord = await this.coreContracts.priceFeed.oracles(coll.address)
-		if (oracleRecord.decimals == 0) {
-			const owner = await this.coreContracts.priceFeed.owner()
-			if (owner != this.deployerWallet.address) {
-				console.log(
-					`[${coll.name}] WARNING: Cannot call PriceFeed.setOracle(): deployer = ${this.deployerWallet.address}, owner = ${owner}`
-				)
-				return
-			}
-			console.log(`[${coll.name}] PriceFeed.setOracle()`)
-			const oracleProviderType = 0 // IPriceFeed.sol :: enum ProviderType.Chainlink
-			const isFallback = false
-			await this.sendAndWaitForTransaction(
-				this.coreContracts.priceFeed.setOracle(
-					coll.address,
-					coll.oracleAddress,
-					oracleProviderType,
-					coll.oracleTimeoutMinutes,
-					coll.oracleIsEthIndexed,
-					isFallback
-				)
-			)
-			console.log(`[${coll.name}] Oracle Price Feed has been set @ ${coll.oracleAddress}`)
-		} else {
-			if (oracleRecord.oracleAddress == coll.oracleAddress) {
-				console.log(`[${coll.name}] Oracle Price Feed had already been set @ ${coll.oracleAddress}`)
-			} else {
-				console.log(
-					`[${coll.name}] WARNING: another oracle had already been set, please update via Timelock.setOracle()`
-				)
-			}
-		}
+		
+		// const oracleRecord = await this.coreContracts.priceFeed.oracles(coll.address)
+		// if (oracleRecord.decimals == 0) {
+		// 	const owner = await this.coreContracts.priceFeed.owner()
+		// 	if (owner != this.deployerWallet.address) {
+		// 		console.log(
+		// 			`[${coll.name}] WARNING: Cannot call PriceFeed.setOracle(): deployer = ${this.deployerWallet.address}, owner = ${owner}`
+		// 		)
+		// 		return
+		// 	}
+		// 	console.log(`[${coll.name}] PriceFeed.setOracle()`)
+		// 	const oracleProviderType = 0 // IPriceFeed.sol :: enum ProviderType.Chainlink
+		// 	const isFallback = false
+
+		// 	await this.sendAndWaitForTransaction(
+		// 		this.coreContracts.priceFeed.setOracle(
+		// 			coll.address,
+		// 			coll.oracleAddress,
+		// 			oracleProviderType,
+		// 			coll.oracleTimeoutMinutes,
+		// 			coll.oracleIsEthIndexed,
+		// 			isFallback
+		// 		)
+		// 	)
+		// 	console.log(`[${coll.name}] Oracle Price Feed has been set @ ${coll.oracleAddress}`)
+		// } else {
+		// 	if (oracleRecord.oracleAddress == coll.oracleAddress) {
+		// 		console.log(`[${coll.name}] Oracle Price Feed had already been set @ ${coll.oracleAddress}`)
+		// 	} else {
+		// 		console.log(
+		// 			`[${coll.name}] WARNING: another oracle had already been set, please update via Timelock.setOracle()`
+		// 		)
+		// 	}
+		// }
 	}
 
 	/**
