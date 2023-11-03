@@ -261,17 +261,6 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 
 	// Called by Gravita contracts ------------------------------------------------------------------------------------
 
-	function addVesselOwnerToArray(
-		address _asset,
-		address _borrower
-	) external override onlyBorrowerOperations returns (uint256 index) {
-		address[] storage assetOwners = VesselOwners[_asset];
-		assetOwners.push(_borrower);
-		index = assetOwners.length - 1;
-		Vessels[_borrower][_asset].arrayIndex = uint128(index);
-		return index;
-	}
-
 	function executeFullRedemption(
 		address _asset,
 		address _borrower,
@@ -446,6 +435,29 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		emit SystemSnapshotsUpdated(_asset, totalStakesCached, _totalCollateralSnapshot);
 	}
 
+    function openVessel(
+        address _borrower,
+        address _asset,
+		uint256 _assetAmount,
+		uint256 _compositeDebt,
+        uint256 NICR,
+		address _upperHint,
+		address _lowerHint
+    ) external onlyBorrowerOperations returns(uint256 stake, uint256 arrayIndex){
+        Vessel storage vessel = Vessels[_borrower][_asset];
+
+        require(vessel.status != Status.active, "BorrowerOps: Trove is active");
+        vessel.status = Status.active;
+        vessel.coll = _assetAmount;
+        vessel.debt = _compositeDebt;
+        uint256 currentInterestIndex = _accrueActiveInterests(_asset);
+        vessel.activeInterestIndex = currentInterestIndex;
+        _updateVesselRewardSnapshots(_asset, _borrower);
+        stake = _updateStakeAndTotalStakes(_asset, _borrower);
+        ISortedVessels(sortedVessels).insert(_asset, _borrower, NICR, _upperHint, _lowerHint);
+        arrayIndex = _addVesselOwnerToArray(_asset, _borrower);
+    }
+
 	function closeVessel(
 		address _asset,
 		address _borrower
@@ -487,6 +499,17 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		// send asset from Active Pool to CollSurplus Pool
 		ICollSurplusPool(collSurplusPool).accountSurplus(_asset, _borrower, _assetAmount);
 		IActivePool(activePool).sendAsset(_asset, collSurplusPool, _assetAmount);
+	}
+
+	function _addVesselOwnerToArray(
+		address _asset,
+		address _borrower
+	) internal returns (uint256 index) {
+		address[] storage assetOwners = VesselOwners[_asset];
+		assetOwners.push(_borrower);
+		index = assetOwners.length - 1;
+		Vessels[_borrower][_asset].arrayIndex = uint128(index);
+		return index;
 	}
 
 	function _movePendingVesselRewardsToActivePool(

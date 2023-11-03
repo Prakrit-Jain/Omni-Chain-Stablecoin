@@ -105,15 +105,7 @@ contract BorrowerOperations is GravitaBase, ReentrancyGuardUpgradeable, UUPSUpgr
 		}
 
 		// Set the vessel struct's properties
-		IVesselManager(vesselManager).setVesselStatus(vars.asset, msg.sender, 1); // Vessel Status 1 = Active
-		IVesselManager(vesselManager).increaseVesselColl(vars.asset, msg.sender, _assetAmount);
-		IVesselManager(vesselManager).increaseVesselDebt(vars.asset, msg.sender, vars.compositeDebt);
-
-		IVesselManager(vesselManager).updateVesselRewardSnapshots(vars.asset, msg.sender);
-		vars.stake = IVesselManager(vesselManager).updateStakeAndTotalStakes(vars.asset, msg.sender);
-
-		ISortedVessels(sortedVessels).insert(vars.asset, msg.sender, vars.NICR, _upperHint, _lowerHint);
-		vars.arrayIndex = IVesselManager(vesselManager).addVesselOwnerToArray(vars.asset, msg.sender);
+		(vars.stake, vars.arrayIndex) = IVesselManager(vesselManager).openVessel(msg.sender, vars.asset, _assetAmount, vars.compositeDebt, vars.NICR, _upperHint, _lowerHint);
 		emit VesselCreated(vars.asset, msg.sender, vars.arrayIndex);
 
 		// Move the asset to the Active Pool, and mint the debtToken amount to the borrower
