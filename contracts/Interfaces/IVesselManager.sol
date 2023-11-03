@@ -64,6 +64,7 @@ interface IVesselManager is IGravitaBase {
 		uint256 stake;
 		Status status;
 		uint128 arrayIndex;
+		uint256 activeInterestIndex;
 	}
 
 	// Functions --------------------------------------------------------------------------------------------------------

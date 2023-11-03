@@ -14,6 +14,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	string public constant NAME = "VesselManager";
 
 	uint256 public constant SECONDS_IN_ONE_MINUTE = 60;
+	uint256 constant SECONDS_IN_YEAR = 365 days;
 	/*
 	 * Half-life of 12h. 12h = 720 min
 	 * (1/2) = d^720 => d = (1/2)^(1/720)
@@ -25,6 +26,10 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 	 * Corresponds to (1 / ALPHA) in the white paper.
 	 */
 	uint256 public constant BETA = 2;
+
+	// Maximum interest rate must be lower than the minimum LST staking yield
+    // so that over time the actual TCR becomes greater than the calculated TCR.
+	uint256 public constant MAX_INTEREST_RATE_IN_BPS = 400;
 
 	// Structs --------------------------------------------------------------------------------------------------------
 
@@ -106,7 +111,37 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		__ReentrancyGuard_init();
 	}
 
+	// Setters
+
+	function setInitialActiveInterestIndex(address _asset) external onlyOwner {
+		InterestState storage params = interestStateMappingPerAsset[_asset];
+		params.activeInterestIndex = INTEREST_PRECISION;
+		params.lastActiveIndexUpdate = block.timestamp;
+	}
+
+	function setInterestRateParams(address _asset, uint256 _interestRateInBPS) external onlyOwner{
+		require(_interestRateInBPS <= MAX_INTEREST_RATE_IN_BPS, "Interest > Maximum");
+
+        uint256 newInterestRate = (INTEREST_PRECISION * _interestRateInBPS) / (10000 * SECONDS_IN_YEAR);
+		InterestState storage params = interestStateMappingPerAsset[_asset];
+        if (newInterestRate != params.interestRate) {
+            _accrueActiveInterests(_asset);
+            // accrual function doesn't update timestamp if interest was 0
+            params.lastActiveIndexUpdate = block.timestamp;
+            params.interestRate = newInterestRate;
+        }
+	}
+
 	// External/public functions --------------------------------------------------------------------------------------
+
+	function collectInterests(address _asset) external {
+		InterestState storage params = interestStateMappingPerAsset[_asset];
+        uint256 interestPayableCached = params.interestPayable;
+        require(interestPayableCached > 0, "Nothing to collect");
+		IDebtToken(debtToken).mint(_asset, feeCollector, interestPayableCached); // ?
+		IFeeCollector(feeCollector).increaseDebt(msg.sender, _asset, interestPayableCached);
+        params.interestPayable = 0;
+    }
 
 	function isValidFirstRedemptionHint(
 		address _asset,
@@ -178,7 +213,13 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		Vessel storage vessel = Vessels[_borrower][_asset];
-		debt = vessel.debt + pendingDebtReward;
+		// Accrued vessel interest for correct liquidation values. This assumes the index to be updated.
+        uint256 vesselInterestIndex = vessel.activeInterestIndex;
+        if (vesselInterestIndex > 0) {
+            (uint256 currentIndex, ) = _calculateInterestIndex(_asset);
+            debt = (debt * currentIndex) / vesselInterestIndex;
+        }
+		debt = debt + vessel.debt + pendingDebtReward;
 		coll = vessel.coll + pendingCollReward;
 	}
 
@@ -475,14 +516,24 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 			return;
 		}
 
+		// Apply pending rewards to vessel's state
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		uint256 debt = vessel.debt;
+		if(vessel.status == Status.active) {
+			uint256 vesselInterestIndex = vessel.activeInterestIndex;
+			uint256 currentInterestIndex = _accrueActiveInterests(_asset);
+			// We accrued interests for this trove if not already updated
+            if (vesselInterestIndex < currentInterestIndex) {
+                debt = (debt * currentInterestIndex) / vesselInterestIndex;
+                vessel.activeInterestIndex = currentInterestIndex;
+            }
+		}
+
 		// Compute pending rewards
 		uint256 pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		uint256 pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
-
-		// Apply pending rewards to vessel's state
-		Vessel storage vessel = Vessels[_borrower][_asset];
 		vessel.coll = vessel.coll + pendingCollReward;
-		vessel.debt = vessel.debt + pendingDebtReward;
+		vessel.debt = debt + pendingDebtReward;
 
 		_updateVesselRewardSnapshots(_asset, _borrower);
 
@@ -556,6 +607,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		vessel.status = closedStatus;
 		vessel.coll = 0;
 		vessel.debt = 0;
+		vessel.activeInterestIndex = 0;
 
 		RewardSnapshot storage rewardSnapshot = rewardSnapshots[_borrower][_asset];
 		rewardSnapshot.asset = 0;

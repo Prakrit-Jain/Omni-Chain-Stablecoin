@@ -60,7 +60,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	}
 
 	function mint(address _asset, address _account, uint256 _amount) external override {
-		_requireCallerIsBorrowerOperations();
+		_requireCallerIsBOorVesselMorSP();
 		require(!emergencyStopMintingCollateral[_asset], "Mint is blocked on this collateral");
 
 		_mint(_account, _amount);

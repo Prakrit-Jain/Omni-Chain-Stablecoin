@@ -10,4 +10,11 @@ interface IGravitaBase {
 		address[] tokens;
 		uint256[] amounts;
 	}
+
+	struct InterestState {
+		uint256 interestRate;
+		uint256 activeInterestIndex;
+    	uint256 lastActiveIndexUpdate;
+		uint256 interestPayable;
+	}
 }
