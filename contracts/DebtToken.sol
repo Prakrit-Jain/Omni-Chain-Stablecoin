@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Dependencies/ERC20Permit.sol";
 import "./Interfaces/IDebtToken.sol";
 
+// Note: using this token temoprarily for testing purposes , on final deployment we will use the 
+// already deployed kai token
+
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	string public constant NAME = "KAI";
 

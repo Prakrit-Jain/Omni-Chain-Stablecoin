@@ -64,6 +64,8 @@ interface IVesselManager is IGravitaBase {
 		uint256 stake;
 		Status status;
 		uint128 arrayIndex;
+		// Vessel-specific activeInterestIndex: This index value represents a borrower's last 
+		// interaction with the protocol and helps calculate accrued interest since then.
 		uint256 activeInterestIndex;
 	}
 

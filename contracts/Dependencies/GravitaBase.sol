@@ -95,7 +95,6 @@ abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable, Add
 			InterestState storage params = interestStateMappingPerAsset[_asset];
 			uint256 activeDebt = IActivePool(activePool).getDebtTokenBalance(_asset);
             uint256 activeInterests = MathUpgradeable.mulDiv(activeDebt, interestFactor, INTEREST_PRECISION);
-            // totalActiveDebt = currentDebt + activeInterests; // ?
 			IActivePool(activePool).increaseDebt(_asset, activeInterests);
             params.interestPayable += activeInterests;
             params.activeInterestIndex = currentInterestIndex;
@@ -104,6 +103,11 @@ abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable, Add
         return currentInterestIndex;
     }
 
+	// activeInterestIndex(c,n) = activeInterestIndex(c,n-1) * ( 1 + r*t )
+	// activeInterestIndex(c,n) represents the Interest Rate Index for collateral 
+	// type c at time n	
+	// r represents the per-second interest rate 
+	// t represents the time period since the last index update
     function _calculateInterestIndex(address _asset) internal view returns (uint256 currentInterestIndex, uint256 interestFactor) {
 		InterestState memory params = interestStateMappingPerAsset[_asset];
         uint256 lastIndexUpdateCached = params.lastActiveIndexUpdate;

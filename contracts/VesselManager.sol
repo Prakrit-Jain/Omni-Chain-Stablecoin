@@ -138,7 +138,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		InterestState storage params = interestStateMappingPerAsset[_asset];
         uint256 interestPayableCached = params.interestPayable;
         require(interestPayableCached > 0, "Nothing to collect");
-		IDebtToken(debtToken).mint(_asset, feeCollector, interestPayableCached); // ?
+		IDebtToken(debtToken).mint(_asset, feeCollector, interestPayableCached);
 		IFeeCollector(feeCollector).increaseDebt(msg.sender, _asset, interestPayableCached);
         params.interestPayable = 0;
     }
@@ -539,7 +539,7 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 			return;
 		}
 
-		// Apply pending rewards to vessel's state
+		// Apply pending rewards to vessel's state including the accrued interest till yet
 		Vessel storage vessel = Vessels[_borrower][_asset];
 		uint256 debt = vessel.debt;
 		if(vessel.status == Status.active) {
