@@ -59,6 +59,17 @@ abstract contract GravitaBase is IGravitaBase, BaseMath, OwnableUpgradeable, Add
 		return activeDebt + closedDebt;
 	}
 
+	// calculates the total active debt for a given asset
+	function getTotalActiveDebt(address _asset) public view returns (uint256) {
+        uint256 currentActiveDebt = IActivePool(activePool).getDebtTokenBalance(_asset);
+        (, uint256 interestFactor) = _calculateInterestIndex(_asset);
+        if (interestFactor > 0) {
+            uint256 activeInterests = MathUpgradeable.mulDiv(currentActiveDebt, interestFactor, INTEREST_PRECISION);
+            currentActiveDebt += activeInterests;
+        }
+        return currentActiveDebt;
+    }
+
 	function _getTCR(address _asset, uint256 _price) internal view returns (uint256 TCR) {
 		uint256 entireSystemColl = getEntireSystemColl(_asset);
 		uint256 entireSystemDebt = getEntireSystemDebt(_asset);
