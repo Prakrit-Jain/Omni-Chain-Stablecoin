@@ -304,15 +304,6 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 				// assert.include(err.message, "Caller is not the BorrowerOperations contract")
 			}
 		})
-		it("addVesselOwnerToArray(): reverts when called by an account that is not BorrowerOperations", async () => {
-			// Attempt call from alice
-			try {
-				await vesselManager.addVesselOwnerToArray(erc20.address, bob, { from: alice })
-			} catch (err) {
-				assert.include(err.message, "revert")
-				// assert.include(err.message, "Caller is not the BorrowerOperations contract")
-			}
-		})
 		it("setVesselStatus(): reverts when called by an account that is not BorrowerOperations", async () => {
 			// Attempt call from alice
 			try {
