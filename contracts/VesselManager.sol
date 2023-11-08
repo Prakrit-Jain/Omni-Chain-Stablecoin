@@ -213,13 +213,14 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
 		pendingDebtReward = getPendingDebtTokenReward(_asset, _borrower);
 		pendingCollReward = getPendingAssetReward(_asset, _borrower);
 		Vessel storage vessel = Vessels[_borrower][_asset];
+		debt = vessel.debt;
 		// Accrued vessel interest for correct liquidation values. This assumes the index to be updated.
         uint256 vesselInterestIndex = vessel.activeInterestIndex;
         if (vesselInterestIndex > 0) {
             (uint256 currentIndex, ) = _calculateInterestIndex(_asset);
             debt = (debt * currentIndex) / vesselInterestIndex;
         }
-		debt = debt + vessel.debt + pendingDebtReward;
+		debt += pendingDebtReward;
 		coll = vessel.coll + pendingCollReward;
 	}
 
