@@ -5,6 +5,7 @@ import "@nomiclabs/hardhat-etherscan"
 import "@openzeppelin/hardhat-upgrades"
 import "@openzeppelin/hardhat-defender"
 import "solidity-coverage"
+import "@nomicfoundation/hardhat-network-helpers"
 
 import { task } from "hardhat/config"
 
@@ -59,6 +60,7 @@ module.exports = {
 	},
 	networks: {
 		hardhat: {
+			allowBlocksWithSameTimestamp: true,
 			allowUnlimitedContractSize: true,
 			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,

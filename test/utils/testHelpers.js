@@ -1584,6 +1584,22 @@ class TestHelper {
 			params.reduce((acc, p) => acc + this.formatParam(p), "")
 		)
 	}
+
+	// Function to active the borrow interest rate
+	static async activeInterestRate(contracts, asset, interestRateBPS) {
+		await contracts.vesselManager.setInitialActiveInterestIndex(asset)
+		await contracts.vesselManager.setInterestRateParams(asset, interestRateBPS)
+	}
+
+	// ---------------- Helper function -----------------//
+
+	static getInterestRate() {
+		const INTEREST_PRECISON = this.dec(1, 27)
+		const interestRateBPS = 1
+		const SECONDS_IN_ONE_YEAR = 31536000
+		const interestRate = (INTEREST_PRECISON * interestRateBPS) / (SECONDS_IN_ONE_YEAR * 10000)
+		return interestRate
+	}
 }
 
 TestHelper.ZERO_ADDRESS = "0x" + "0".repeat(40)
