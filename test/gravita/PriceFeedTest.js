@@ -373,7 +373,7 @@ contract("PriceFeed", async accounts => {
 			await assertRevert(priceFeed.fetchPrice(ZERO_ADDRESS))
 		})
 
-		it.only("SequencerUptimeFeed with 'up' answer but borrowingDelay < updatedAt < liquidationDelay should revert fetchPrice() when liquidating", async () => {
+		it("SequencerUptimeFeed with 'up' answer but borrowingDelay < updatedAt < liquidationDelay should revert fetchPrice() when liquidating", async () => {
 			const sequencerIsUp = 0
 			const borrowingDelay = Number(await priceFeed.SEQUENCER_BORROWING_DELAY_SECONDS())
 			const liquidationDelay = Number(await priceFeed.SEQUENCER_LIQUIDATION_DELAY_SECONDS())
