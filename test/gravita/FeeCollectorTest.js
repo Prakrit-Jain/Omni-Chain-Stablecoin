@@ -221,7 +221,7 @@ contract("FeeCollector", async accounts => {
 				await time.increaseTo(t1)
 				// first half of payback
 				const decayRate1 = feeBalance1.div(FEE_EXPIRATION_SECONDS)
-				const expectedCollectedFee1 = decayRate1.mul(toBN(timeIncrease + 1)) // there's a one-second timestamp increase after openOrAjustVessel()
+				const expectedCollectedFee1 = decayRate1.mul(toBN(timeIncrease))
 				const expectedRefund1 = feeBalance1.sub(expectedCollectedFee1).div(toBN(2)) // 50% payback, 50% refund expected
 				// validate refund/collect state
 				const paybackFraction1 = toBN(0.5 * 10 ** 18) // 50% of debt
