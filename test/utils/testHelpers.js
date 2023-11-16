@@ -1593,6 +1593,14 @@ class TestHelper {
 
 	// ---------------- Helper function -----------------//
 
+	static async getExpectedTCR(contracts, asset) {
+		const currentPrice = await contracts.priceFeedTestnet.getPrice(asset)
+		const coll = await contracts.activePool.getAssetBalance(asset)
+		const compoundedDebt = await contracts.vesselManager.getEntireSystemDebt(asset)
+		const expectedTCR = (coll * currentPrice) / compoundedDebt
+		return expectedTCR
+	}
+
 	static getInterestRate() {
 		const INTEREST_PRECISON = this.dec(1, 27)
 		const interestRateBPS = 1
