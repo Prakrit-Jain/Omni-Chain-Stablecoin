@@ -49,7 +49,7 @@ contract FeeCollector is IFeeCollector, UUPSUpgradeable, OwnableUpgradeable, Add
 		address _borrower,
 		address _asset,
 		uint256 _feeAmount
-	) external override onlyBorrowerOperations {
+	) external override onlyBorrowerOperationsOrVesselManager {
 		uint256 minFeeAmount = (MIN_FEE_FRACTION * _feeAmount) / 1 ether;
 		uint256 refundableFeeAmount = _feeAmount - minFeeAmount;
 		uint256 feeToCollect = _createOrUpdateFeeRecord(_borrower, _asset, refundableFeeAmount);

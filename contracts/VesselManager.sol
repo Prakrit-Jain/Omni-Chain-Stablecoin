@@ -139,7 +139,6 @@ contract VesselManager is IVesselManager, UUPSUpgradeable, ReentrancyGuardUpgrad
         uint256 interestPayableCached = params.interestPayable;
         require(interestPayableCached > 0, "Nothing to collect");
 		IDebtToken(debtToken).mint(_asset, feeCollector, interestPayableCached);
-		IFeeCollector(feeCollector).increaseDebt(msg.sender, _asset, interestPayableCached);
         params.interestPayable = 0;
     }
 
