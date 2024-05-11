@@ -35,7 +35,7 @@ const deploy = async (treasury, mintingAccounts) => {
 	communityIssuance = contracts.spr.communityIssuance
 }
 
-contract.only("VesselManager_ActiveInterest", async accounts => {
+contract("VesselManager_ActiveInterest", async accounts => {
 	const [owner, alice, bob, carol, dennis, erin, freddy, A, B, C, D, E, treasury] = accounts
 	const INTEREST_PRECISON = dec(1,27)
 
