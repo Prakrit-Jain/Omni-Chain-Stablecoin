@@ -398,7 +398,7 @@ class TokenProxy extends Proxy {
 	}
 }
 
-class GRVTStakingProxy extends Proxy {
+class SPRStakingProxy extends Proxy {
 	constructor(owner, proxies, tokenScriptAddress, token) {
 		super(owner, proxies, tokenScriptAddress, token)
 	}
@@ -424,6 +424,6 @@ module.exports = {
 	StabilityPoolProxy,
 	SortedVesselsProxy,
 	TokenProxy,
-	GRVTStakingProxy,
+	SPRStakingProxy,
 }
 

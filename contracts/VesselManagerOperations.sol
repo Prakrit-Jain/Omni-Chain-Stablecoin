@@ -229,7 +229,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		}
 
 		// Decay the baseRate due to time passed, and then increase it according to the size of this redemption.
-		// Use the saved total GRAI supply value, from before it was reduced by the redemption.
+		// Use the saved total KAI supply value, from before it was reduced by the redemption.
 		IVesselManager(vesselManager).updateBaseRateFromRedemption(
 			_asset,
 			totals.totalCollDrawn,
@@ -892,7 +892,7 @@ contract VesselManagerOperations is IVesselManagerOperations, UUPSUpgradeable, R
 		}
 	}
 
-	// Redeem as much collateral as possible from _borrower's vessel in exchange for GRAI up to _maxDebtTokenAmount
+	// Redeem as much collateral as possible from _borrower's vessel in exchange for KAI up to _maxDebtTokenAmount
 	function _redeemCollateralFromVessel(
 		address _asset,
 		address _borrower,

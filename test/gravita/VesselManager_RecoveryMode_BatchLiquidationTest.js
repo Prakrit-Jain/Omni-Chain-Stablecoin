@@ -35,9 +35,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
-	communityIssuance = contracts.grvt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 	validCollateral = await adminContract.getValidCollateral()
 
 	// getDepositorGains() expects a sorted collateral array
@@ -89,7 +88,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(340, 16)),
-				extraGRAIAmount: totalLiquidatedDebt_Asset,
+				extraKAIAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
 			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, validCollateral, { from: whale })
@@ -168,7 +167,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			} = await setup()
 
 			const spEthBefore_Asset = await stabilityPool.getCollateral(erc20.address)
-			const spGRAIBefore_Asset = await stabilityPool.getTotalDebtTokenDeposits()
+			const spKAIBefore_Asset = await stabilityPool.getTotalDebtTokenDeposits()
 
 			const txAsset = await vesselManagerOperations.batchLiquidateVessels(erc20.address, [alice, carol])
 
@@ -183,7 +182,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			assert.equal((await vesselManager.Vessels(carol, erc20.address))[th.VESSEL_STATUS_INDEX], "3")
 
 			const spEthAfter_Asset = await stabilityPool.getCollateral(erc20.address)
-			const spGRVTfter_Asset = await stabilityPool.getTotalDebtTokenDeposits()
+			const spSPRfter_Asset = await stabilityPool.getTotalDebtTokenDeposits()
 
 			// liquidate collaterals with the gas compensation fee subtracted
 
@@ -191,15 +190,15 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			const expectedCollateralLiquidatedC_Asset = th.applyLiquidationFee(C_coll_Asset)
 			// Stability Pool gains
 
-			const expectedGainInGRAI_Asset = expectedCollateralLiquidatedA_Asset
+			const expectedGainInKAI_Asset = expectedCollateralLiquidatedA_Asset
 				.mul(price)
 				.div(mv._1e18BN)
 				.sub(A_totalDebt_Asset)
-			const realGainInGRAI_Asset = spEthAfter_Asset
+			const realGainInKAI_Asset = spEthAfter_Asset
 				.sub(spEthBefore_Asset)
 				.mul(price)
 				.div(mv._1e18BN)
-				.sub(spGRAIBefore_Asset.sub(spGRVTfter_Asset))
+				.sub(spKAIBefore_Asset.sub(spSPRfter_Asset))
 
 			assert.equal(
 				spEthAfter_Asset.sub(spEthBefore_Asset).toString(),
@@ -207,13 +206,13 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 				"Stability Pool ETH doesn’t match"
 			)
 			assert.equal(
-				spGRAIBefore_Asset.sub(spGRVTfter_Asset).toString(),
+				spKAIBefore_Asset.sub(spSPRfter_Asset).toString(),
 				A_totalDebt_Asset.toString(),
-				"Stability Pool GRAI doesn’t match"
+				"Stability Pool KAI doesn’t match"
 			)
 			assert.equal(
-				realGainInGRAI_Asset.toString(),
-				expectedGainInGRAI_Asset.toString(),
+				realGainInKAI_Asset.toString(),
+				expectedGainInKAI_Asset.toString(),
 				"Stability Pool gains don’t match"
 			)
 		})
@@ -240,7 +239,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(310, 16)),
-				extraGRAIAmount: totalLiquidatedDebt_Asset,
+				extraKAIAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
 			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, validCollateral, { from: whale })
@@ -300,7 +299,7 @@ contract("VesselManager - in Recovery Mode - back to normal mode in 1 tx", async
 			await openVessel({
 				asset: erc20.address,
 				ICR: toBN(dec(300, 16)),
-				extraGRAIAmount: totalLiquidatedDebt_Asset,
+				extraKAIAmount: totalLiquidatedDebt_Asset,
 				extraParams: { from: whale },
 			})
 			await stabilityPool.provideToSP(totalLiquidatedDebt_Asset, validCollateral, { from: whale })

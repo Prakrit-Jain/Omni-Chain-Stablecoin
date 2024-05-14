@@ -260,7 +260,7 @@ contract(
 
 			beforeEach(async () => {
 				contracts = await deploymentHelper.deployGravityCore()
-				const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+				const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(accounts[0])
 
 				priceFeed = contracts.priceFeedTestnet
 				VUSDToken = contracts.vusdToken
@@ -268,8 +268,8 @@ contract(
 				borrowerOperations = contracts.borrowerOperations
 				sortedVessels = contracts.sortedVessels
 
-				await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-				await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+				await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+				await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
 				stabilityPool = contracts.stabilityPool
 			})
 

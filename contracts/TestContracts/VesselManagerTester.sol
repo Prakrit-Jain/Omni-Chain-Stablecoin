@@ -55,4 +55,19 @@ contract VesselManagerTester is VesselManager {
 		uint256 vesselOwnersArrayLength = VesselOwners[_asset].length;
 		_removeVesselOwner(_asset, _vesselOwner, vesselOwnersArrayLength);
 	}
+	
+	// calculates the borrower's vessel debt accrued over time and the pending rewards
+	function getDebtAndPendingReward(address _asset, address _borrower) external view returns(uint256 debtAccrued, uint256 pendingReward) {
+		pendingReward = getPendingDebtTokenReward(_asset, _borrower);
+		Vessel storage vessel = Vessels[_borrower][_asset];
+		uint256 debt = vessel.debt;
+		uint256 newDebt;
+		// Accrued vessel interest for correct liquidation values. This assumes the index to be updated.
+        uint256 vesselInterestIndex = vessel.activeInterestIndex;
+        if (vesselInterestIndex > 0) {
+            (uint256 currentIndex, ) = _calculateInterestIndex(_asset);
+            newDebt = (debt * currentIndex) / vesselInterestIndex;
+        }
+		debtAccrued = newDebt - debt;
+	}
 }

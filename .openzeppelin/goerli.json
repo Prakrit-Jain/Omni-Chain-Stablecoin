@@ -1325,13 +1325,13 @@
           },
           {
             "contract": "FeeCollector",
-            "label": "grvtStaking",
-            "type": "t_contract(IGRVTStaking)14848",
+            "label": "sprStaking",
+            "type": "t_contract(ISPRStaking)14848",
             "src": "contracts/FeeCollector.sol:35"
           },
           {
             "contract": "FeeCollector",
-            "label": "routeToGRVTStaking",
+            "label": "routeToSPRStaking",
             "type": "t_bool",
             "src": "contracts/FeeCollector.sol:36"
           },
@@ -1372,8 +1372,8 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IGRVTStaking)14848": {
-            "label": "contract IGRVTStaking"
+          "t_contract(ISPRStaking)14848": {
+            "label": "contract ISPRStaking"
           },
           "t_bool": {
             "label": "bool"
@@ -1838,7 +1838,7 @@
           },
           {
             "contract": "StabilityPool",
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "type": "t_uint256",
             "src": "contracts/StabilityPool.sol:235"
           },
@@ -2467,94 +2467,94 @@
             "src": "contracts/Dependencies/ReentrancyGuardUpgradeable.sol:58"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "isInitialized",
             "type": "t_bool",
-            "src": "contracts/GRVT/GRVTStaking.sol:21"
+            "src": "contracts/SPR/SPRStaking.sol:21"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "stakes",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "contracts/GRVT/GRVTStaking.sol:27"
+            "src": "contracts/SPR/SPRStaking.sol:27"
           },
           {
-            "contract": "GRVTStaking",
-            "label": "totalGRVTStaked",
+            "contract": "SPRStaking",
+            "label": "totalSPRStaked",
             "type": "t_uint256",
-            "src": "contracts/GRVT/GRVTStaking.sol:28"
+            "src": "contracts/SPR/SPRStaking.sol:28"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "F_ASSETS",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "contracts/GRVT/GRVTStaking.sol:30"
+            "src": "contracts/SPR/SPRStaking.sol:30"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "F_DEBT_TOKENS",
             "type": "t_uint256",
-            "src": "contracts/GRVT/GRVTStaking.sol:31"
+            "src": "contracts/SPR/SPRStaking.sol:31"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "snapshots",
             "type": "t_mapping(t_address,t_struct(Snapshot)12587_storage)",
-            "src": "contracts/GRVT/GRVTStaking.sol:34"
+            "src": "contracts/SPR/SPRStaking.sol:34"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "ASSET_TYPE",
             "type": "t_array(t_address)dyn_storage",
-            "src": "contracts/GRVT/GRVTStaking.sol:41"
+            "src": "contracts/SPR/SPRStaking.sol:41"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "isAssetTracked",
             "type": "t_mapping(t_address,t_bool)",
-            "src": "contracts/GRVT/GRVTStaking.sol:42"
+            "src": "contracts/SPR/SPRStaking.sol:42"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "sentToTreasuryTracker",
             "type": "t_mapping(t_address,t_uint256)",
-            "src": "contracts/GRVT/GRVTStaking.sol:43"
+            "src": "contracts/SPR/SPRStaking.sol:43"
           },
           {
-            "contract": "GRVTStaking",
-            "label": "grvtToken",
+            "contract": "SPRStaking",
+            "label": "sprToken",
             "type": "t_contract(IERC20Upgradeable)713",
-            "src": "contracts/GRVT/GRVTStaking.sol:45"
+            "src": "contracts/SPR/SPRStaking.sol:45"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "debtToken",
             "type": "t_contract(IERC20Upgradeable)713",
-            "src": "contracts/GRVT/GRVTStaking.sol:46"
+            "src": "contracts/SPR/SPRStaking.sol:46"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "activePoolAddress",
             "type": "t_address",
-            "src": "contracts/GRVT/GRVTStaking.sol:48"
+            "src": "contracts/SPR/SPRStaking.sol:48"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "feeCollectorAddress",
             "type": "t_address",
-            "src": "contracts/GRVT/GRVTStaking.sol:49"
+            "src": "contracts/SPR/SPRStaking.sol:49"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "vesselManagerAddress",
             "type": "t_address",
-            "src": "contracts/GRVT/GRVTStaking.sol:50"
+            "src": "contracts/SPR/SPRStaking.sol:50"
           },
           {
-            "contract": "GRVTStaking",
+            "contract": "SPRStaking",
             "label": "treasury",
             "type": "t_address",
-            "src": "contracts/GRVT/GRVTStaking.sol:51"
+            "src": "contracts/SPR/SPRStaking.sol:51"
           }
         ],
         "types": {
@@ -2571,10 +2571,10 @@
             "label": "uint256"
           },
           "t_mapping(t_address,t_struct(Snapshot)12587_storage)": {
-            "label": "mapping(address => struct GRVTStaking.Snapshot)"
+            "label": "mapping(address => struct SPRStaking.Snapshot)"
           },
           "t_struct(Snapshot)12587_storage": {
-            "label": "struct GRVTStaking.Snapshot",
+            "label": "struct SPRStaking.Snapshot",
             "members": [
               {
                 "label": "F_ASSETS_Snapshot",
@@ -2644,51 +2644,51 @@
           },
           {
             "contract": "CommunityIssuance",
-            "label": "grvtToken",
+            "label": "sprToken",
             "type": "t_contract(IERC20Upgradeable)713",
-            "src": "contracts/GRVT/CommunityIssuance.sol:23"
+            "src": "contracts/SPR/CommunityIssuance.sol:23"
           },
           {
             "contract": "CommunityIssuance",
             "label": "stabilityPool",
             "type": "t_contract(IStabilityPool)15369",
-            "src": "contracts/GRVT/CommunityIssuance.sol:24"
+            "src": "contracts/SPR/CommunityIssuance.sol:24"
           },
           {
             "contract": "CommunityIssuance",
-            "label": "totalGRVTIssued",
+            "label": "totalSPRIssued",
             "type": "t_uint256",
-            "src": "contracts/GRVT/CommunityIssuance.sol:26"
+            "src": "contracts/SPR/CommunityIssuance.sol:26"
           },
           {
             "contract": "CommunityIssuance",
             "label": "lastUpdateTime",
             "type": "t_uint256",
-            "src": "contracts/GRVT/CommunityIssuance.sol:27"
+            "src": "contracts/SPR/CommunityIssuance.sol:27"
           },
           {
             "contract": "CommunityIssuance",
-            "label": "GRVTSupplyCap",
+            "label": "SPRSupplyCap",
             "type": "t_uint256",
-            "src": "contracts/GRVT/CommunityIssuance.sol:28"
+            "src": "contracts/SPR/CommunityIssuance.sol:28"
           },
           {
             "contract": "CommunityIssuance",
-            "label": "grvtDistribution",
+            "label": "sprDistribution",
             "type": "t_uint256",
-            "src": "contracts/GRVT/CommunityIssuance.sol:29"
+            "src": "contracts/SPR/CommunityIssuance.sol:29"
           },
           {
             "contract": "CommunityIssuance",
             "label": "adminContract",
             "type": "t_address",
-            "src": "contracts/GRVT/CommunityIssuance.sol:31"
+            "src": "contracts/SPR/CommunityIssuance.sol:31"
           },
           {
             "contract": "CommunityIssuance",
             "label": "isInitialized",
             "type": "t_bool",
-            "src": "contracts/GRVT/CommunityIssuance.sol:33"
+            "src": "contracts/SPR/CommunityIssuance.sol:33"
           }
         ],
         "types": {
@@ -3252,13 +3252,13 @@
           },
           {
             "contract": "FeeCollector",
-            "label": "grvtStaking",
-            "type": "t_contract(IGRVTStaking)13494",
+            "label": "sprStaking",
+            "type": "t_contract(ISPRStaking)13494",
             "src": "contracts\\FeeCollector.sol:33"
           },
           {
             "contract": "FeeCollector",
-            "label": "routeToGRVTStaking",
+            "label": "routeToSPRStaking",
             "type": "t_bool",
             "src": "contracts\\FeeCollector.sol:34"
           }
@@ -3293,8 +3293,8 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IGRVTStaking)13494": {
-            "label": "contract IGRVTStaking"
+          "t_contract(ISPRStaking)13494": {
+            "label": "contract ISPRStaking"
           },
           "t_bool": {
             "label": "bool"
@@ -3724,7 +3724,7 @@
           },
           {
             "contract": "StabilityPool",
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "type": "t_uint256",
             "src": "contracts\\StabilityPool.sol:222"
           },
@@ -4509,15 +4509,15 @@
             "src": "contracts\\FeeCollector.sol:31"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "106",
-            "type": "t_contract(IGRVTStaking)14386",
+            "type": "t_contract(ISPRStaking)14386",
             "contract": "FeeCollector",
             "src": "contracts\\FeeCollector.sol:33"
           },
           {
-            "label": "routeToGRVTStaking",
+            "label": "routeToSPRStaking",
             "offset": 20,
             "slot": "106",
             "type": "t_bool",
@@ -4542,8 +4542,8 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IGRVTStaking)14386": {
-            "label": "contract IGRVTStaking",
+          "t_contract(ISPRStaking)14386": {
+            "label": "contract ISPRStaking",
             "numberOfBytes": "20"
           },
           "t_mapping(t_address,t_mapping(t_address,t_struct(FeeRecord)14184_storage))": {
@@ -4963,7 +4963,7 @@
             "src": "contracts\\StabilityPool.sol:209"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "215",
             "type": "t_uint256",
@@ -7028,7 +7028,7 @@
             "src": "contracts\\StabilityPool.sol:195"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "307",
             "type": "t_uint256",
@@ -10063,7 +10063,7 @@
             "src": "contracts\\StabilityPool.sol:195"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "307",
             "type": "t_uint256",
@@ -11952,7 +11952,7 @@
             "src": "contracts\\StabilityPool.sol:195"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "307",
             "type": "t_uint256",
@@ -12695,7 +12695,7 @@
             "src": "contracts\\StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "307",
             "type": "t_uint256",
@@ -12997,7 +12997,7 @@
             "src": "contracts\\StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "307",
             "type": "t_uint256",
@@ -13299,7 +13299,7 @@
             "src": "contracts\\StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "307",
             "type": "t_uint256",
@@ -13593,7 +13593,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -13849,7 +13849,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -14179,7 +14179,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
@@ -14447,7 +14447,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -14707,7 +14707,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -14963,7 +14963,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -15239,7 +15239,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -15616,7 +15616,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -15938,7 +15938,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -16082,7 +16082,7 @@
             "src": "contracts\\StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "277",
             "type": "t_uint256",
@@ -16372,7 +16372,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -16817,7 +16817,7 @@
             "src": "contracts\\Dependencies\\AddressesArbitrum.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -17077,7 +17077,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -17345,7 +17345,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -17687,7 +17687,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
@@ -17967,7 +17967,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -18239,7 +18239,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -18507,7 +18507,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -18795,7 +18795,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -19184,7 +19184,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -19518,7 +19518,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -19670,7 +19670,7 @@
             "src": "contracts\\StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "324",
             "type": "t_uint256",
@@ -19964,7 +19964,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -20429,7 +20429,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -20685,7 +20685,7 @@
             "src": "contracts\\TestContracts\\AddressesGoerli.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -21059,7 +21059,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -21307,7 +21307,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -21629,7 +21629,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
@@ -21889,7 +21889,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -22141,7 +22141,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -22389,7 +22389,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -22657,7 +22657,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -23026,7 +23026,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -23340,7 +23340,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -23476,7 +23476,7 @@
             "src": "contracts/StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "277",
             "type": "t_uint256",
@@ -23766,7 +23766,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -24211,7 +24211,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -24463,7 +24463,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -24711,7 +24711,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -25033,7 +25033,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
@@ -25293,7 +25293,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -25545,7 +25545,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -25793,7 +25793,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -26061,7 +26061,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -26375,7 +26375,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -26511,7 +26511,7 @@
             "src": "contracts/StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "277",
             "type": "t_uint256",
@@ -26801,7 +26801,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -27238,7 +27238,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -27474,7 +27474,7 @@
             "src": "contracts/TestContracts/AddressesHardhat.sol:14"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -27859,7 +27859,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -28127,7 +28127,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -28469,7 +28469,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
@@ -28749,7 +28749,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -29021,7 +29021,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -29289,7 +29289,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -29577,7 +29577,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -29911,7 +29911,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -30063,7 +30063,7 @@
             "src": "contracts/StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "324",
             "type": "t_uint256",
@@ -30357,7 +30357,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -30822,7 +30822,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -31078,7 +31078,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -31483,7 +31483,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -31635,7 +31635,7 @@
             "src": "contracts\\StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "324",
             "type": "t_uint256",

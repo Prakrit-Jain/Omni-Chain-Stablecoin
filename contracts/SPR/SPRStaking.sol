@@ -11,20 +11,21 @@ import "../Dependencies/GravitaMath.sol";
 import "../Dependencies/SafetyTransfer.sol";
 
 import "../Interfaces/IDeposit.sol";
-import "../Interfaces/IGRVTStaking.sol";
+import "../Interfaces/ISPRStaking.sol";
+import "../Interfaces/ICommunityIssuance.sol";
 
-contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, BaseMath, ReentrancyGuardUpgradeable {
+contract SPRStaking is ISPRStaking, PausableUpgradeable, OwnableUpgradeable, BaseMath, ReentrancyGuardUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	// --- Data ---
-	string public constant NAME = "GRVTStaking";
+	string public constant NAME = "SPRStaking";
 	address constant ETH_REF_ADDRESS = address(0);
 
 	mapping(address => uint256) public stakes;
-	uint256 public totalGRVTStaked;
+	uint256 public totalSPRStaked;
 
-	mapping(address => uint256) public F_ASSETS; // Running sum of asset fees per-GRVT-staked
-	uint256 public F_DEBT_TOKENS; // Running sum of debt token fees per-GRVT-staked
+	mapping(address => uint256) public F_ASSETS; // Running sum of asset fees per-SPR-staked
+	uint256 public F_DEBT_TOKENS; // Running sum of debt token fees per-SPR-staked
 
 	// User snapshots of F_ASSETS and F_DEBT_TOKENS, taken at the point at which their latest deposit was made
 	mapping(address => Snapshot) public snapshots;
@@ -38,12 +39,11 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	mapping(address => bool) isAssetTracked;
 	mapping(address => uint256) public sentToTreasuryTracker;
 
-	IERC20Upgradeable public override grvtToken;
-
 	address public debtTokenAddress;
 	address public feeCollectorAddress;
 	address public treasuryAddress;
 	address public vesselManagerAddress;
+	address public communityIssuance;
 
 	bool public isSetupInitialized;
 
@@ -60,17 +60,17 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	function setAddresses(
 		address _debtTokenAddress,
 		address _feeCollectorAddress,
-		address _grvtTokenAddress,
 		address _treasuryAddress,
-		address _vesselManagerAddress
+		address _vesselManagerAddress,
+		address _communityIssuanceAddress
 	) external onlyOwner {
 		require(!isSetupInitialized, "Setup is already initialized");
 
 		debtTokenAddress = _debtTokenAddress;
 		feeCollectorAddress = _feeCollectorAddress;
-		grvtToken = IERC20Upgradeable(_grvtTokenAddress);
 		treasuryAddress = _treasuryAddress;
 		vesselManagerAddress = _vesselManagerAddress;
+		communityIssuance = _communityIssuanceAddress;
 
 		isAssetTracked[ETH_REF_ADDRESS] = true;
 		ASSET_TYPE.push(ETH_REF_ADDRESS);
@@ -78,8 +78,8 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	}
 
 	// If caller has a pre-existing stake, send any accumulated asset and debtToken gains to them.
-	function stake(uint256 _GRVTamount) external override nonReentrant whenNotPaused {
-		require(_GRVTamount > 0);
+	function stake(uint256 _SPRamount) external override nonReentrant whenNotPaused {
+		require(_SPRamount > 0);
 
 		uint256 currentStake = stakes[msg.sender];
 
@@ -106,22 +106,22 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			_updateUserSnapshots(asset, msg.sender);
 		}
 
-		uint256 newStake = currentStake + _GRVTamount;
+		uint256 newStake = currentStake + _SPRamount;
 
-		// Increase user’s stake and total GRVT staked
+		// Increase user’s stake and total SPR staked
 		stakes[msg.sender] = newStake;
-		totalGRVTStaked = totalGRVTStaked + _GRVTamount;
-		emit TotalGRVTStakedUpdated(totalGRVTStaked);
+		totalSPRStaked = totalSPRStaked + _SPRamount;
+		emit TotalSPRStakedUpdated(totalSPRStaked);
 
-		// Transfer GRVT from caller to this contract
-		grvtToken.transferFrom(msg.sender, address(this), _GRVTamount);
+		//Tranfers the holdings of SPR from the user to this contract
+		ICommunityIssuance(communityIssuance).transferSPR(msg.sender, address(this), _SPRamount);
 
 		emit StakeChanged(msg.sender, newStake);
 	}
 
-	// Unstake the GRVT and send the it back to the caller, along with their accumulated gains.
+	// Unstake the SPR and send the it back to the caller, along with their accumulated gains.
 	// If requested amount > stake, send their entire stake.
-	function unstake(uint256 _GRVTamount) external override nonReentrant {
+	function unstake(uint256 _SPRamount) external override nonReentrant {
 		uint256 currentStake = stakes[msg.sender];
 		_requireUserHasStake(currentStake);
 
@@ -146,17 +146,17 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			_sendAssetGainToUser(asset, assetGain);
 		}
 
-		if (_GRVTamount > 0) {
-			uint256 GRVTToWithdraw = GravitaMath._min(_GRVTamount, currentStake);
-			uint256 newStake = currentStake - GRVTToWithdraw;
+		if (_SPRamount > 0) {
+			uint256 SPRToWithdraw = GravitaMath._min(_SPRamount, currentStake);
+			uint256 newStake = currentStake - SPRToWithdraw;
 
-			// Decrease user's stake and total GRVT staked
+			// Decrease user's stake and total SPR staked
 			stakes[msg.sender] = newStake;
-			totalGRVTStaked = totalGRVTStaked - GRVTToWithdraw;
-			emit TotalGRVTStakedUpdated(totalGRVTStaked);
+			totalSPRStaked = totalSPRStaked - SPRToWithdraw;
+			emit TotalSPRStakedUpdated(totalSPRStaked);
 
-			// Transfer unstaked GRVT to user
-			IERC20Upgradeable(address(grvtToken)).safeTransfer(msg.sender, GRVTToWithdraw);
+			// Transfers the unstaked SPR holdings to user
+			ICommunityIssuance(communityIssuance).transferSPR(address(this), msg.sender, SPRToWithdraw);
 			emit StakeChanged(msg.sender, newStake);
 		}
 	}
@@ -182,13 +182,13 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			ASSET_TYPE.push(_asset);
 		}
 
-		uint256 assetFeePerGRVTStaked;
+		uint256 assetFeePerSPRStaked;
 
-		if (totalGRVTStaked > 0) {
-			assetFeePerGRVTStaked = (_assetFee * DECIMAL_PRECISION) / totalGRVTStaked;
+		if (totalSPRStaked > 0) {
+			assetFeePerSPRStaked = (_assetFee * DECIMAL_PRECISION) / totalSPRStaked;
 		}
 
-		F_ASSETS[_asset] = F_ASSETS[_asset] + assetFeePerGRVTStaked;
+		F_ASSETS[_asset] = F_ASSETS[_asset] + assetFeePerSPRStaked;
 		emit Fee_AssetUpdated(_asset, F_ASSETS[_asset]);
 	}
 
@@ -198,12 +198,12 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 			return;
 		}
 
-		uint256 feePerGRVTStaked;
-		if (totalGRVTStaked > 0) {
-			feePerGRVTStaked = (_debtTokenFee * DECIMAL_PRECISION) / totalGRVTStaked;
+		uint256 feePerSPRStaked;
+		if (totalSPRStaked > 0) {
+			feePerSPRStaked = (_debtTokenFee * DECIMAL_PRECISION) / totalSPRStaked;
 		}
 
-		F_DEBT_TOKENS = F_DEBT_TOKENS + feePerGRVTStaked;
+		F_DEBT_TOKENS = F_DEBT_TOKENS + feePerSPRStaked;
 		emit Fee_DebtTokenUpdated(F_DEBT_TOKENS);
 	}
 
@@ -255,16 +255,16 @@ contract GRVTStaking is IGRVTStaking, PausableUpgradeable, OwnableUpgradeable, B
 	// --- 'require' functions ---
 
 	modifier callerIsVesselManager() {
-		require(msg.sender == vesselManagerAddress, "GRVTStaking: caller is not VesselManager");
+		require(msg.sender == vesselManagerAddress, "SPRStaking: caller is not VesselManager");
 		_;
 	}
 
 	modifier callerIsFeeCollector() {
-		require(msg.sender == feeCollectorAddress, "GRVTStaking: caller is not FeeCollector");
+		require(msg.sender == feeCollectorAddress, "SPRStaking: caller is not FeeCollector");
 		_;
 	}
 
 	function _requireUserHasStake(uint256 currentStake) internal pure {
-		require(currentStake > 0, "GRVTStaking: User must have a non-zero stake");
+		require(currentStake > 0, "SPRStaking: User must have a non-zero stake");
 	}
 }

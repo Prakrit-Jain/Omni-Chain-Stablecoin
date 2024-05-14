@@ -32,9 +32,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
-	communityIssuance = contracts.grvt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 }
 
 contract("CollSurplusPool", async accounts => {
@@ -78,7 +77,7 @@ contract("CollSurplusPool", async accounts => {
 		await openVessel({
 			asset: erc20.address,
 			assetSent: dec(3000, "ether"),
-			extraGRAIAmount: B_netDebt,
+			extraKAIAmount: B_netDebt,
 			extraParams: { from: A },
 		})
 
@@ -116,17 +115,17 @@ contract("CollSurplusPool", async accounts => {
 		await priceFeed.setPrice(price)
 		// open vessel from NonPayable proxy contract
 		const B_coll = toBN(dec(60, 18))
-		const B_GRAIAmount = toBN(dec(3000, 18))
-		const B_netDebt = await th.getAmountWithBorrowingFee(contracts, B_GRAIAmount)
+		const B_KAIAmount = toBN(dec(3000, 18))
+		const B_netDebt = await th.getAmountWithBorrowingFee(contracts, B_KAIAmount)
 		const openVesselData = th.getTransactionData(
 			"openVessel(address,uint256,uint256,uint256,address,address)",
-			[erc20.address, 0, "0xde0b6b3a7640000", web3.utils.toHex(B_GRAIAmount), B, B]
+			[erc20.address, 0, "0xde0b6b3a7640000", web3.utils.toHex(B_KAIAmount), B, B]
 		)
 		await nonPayable.forward(borrowerOperations.address, openVesselData, { value: B_coll })
 		await openVessel({
 			asset: erc20.address,
 			assetSent: dec(3000, "ether"),
-			extraGRAIAmount: B_netDebt,
+			extraKAIAmount: B_netDebt,
 			extraParams: { from: A },
 		})
 		// skip bootstrapping phase

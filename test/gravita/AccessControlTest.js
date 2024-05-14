@@ -29,9 +29,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
-	communityIssuance = contracts.grvt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 }
 
 contract("Access Control: functions where the caller is restricted to Gravita contract(s)", async accounts => {
@@ -42,7 +41,7 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 		for (account of accounts.slice(0, 10)) {
 			await openVessel({
 				asset: erc20.address,
-				extraGRAIAmount: toBN(dec(20000, 18)),
+				extraKAIAmount: toBN(dec(20000, 18)),
 				ICR: toBN(dec(2, 18)),
 				extraParams: { from: account },
 			})
@@ -106,18 +105,18 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 	})
 
 	describe("CommunityIssuance", async accounts => {
-		it("sendGRVT(): reverts when caller is not the StabilityPool", async () => {
-			const tx1 = communityIssuance.sendGRVT(alice, dec(100, 18), { from: alice })
-			const tx2 = communityIssuance.sendGRVT(bob, dec(100, 18), { from: alice })
-			const tx3 = communityIssuance.sendGRVT(stabilityPool.address, dec(100, 18), {
+		it("sendSPR(): reverts when caller is not the StabilityPool", async () => {
+			const tx1 = communityIssuance.sendSPR(alice, dec(100, 18), { from: alice })
+			const tx2 = communityIssuance.sendSPR(bob, dec(100, 18), { from: alice })
+			const tx3 = communityIssuance.sendSPR(stabilityPool.address, dec(100, 18), {
 				from: alice,
 			})
 			assertRevert(tx1)
 			assertRevert(tx2)
 			assertRevert(tx3)
 		})
-		it("issueGRVT(): reverts when caller is not the StabilityPool", async () => {
-			const tx1 = communityIssuance.issueGRVT({ from: alice })
+		it("issueSPR(): reverts when caller is not the StabilityPool", async () => {
+			const tx1 = communityIssuance.issueSPR({ from: alice })
 			assertRevert(tx1)
 		})
 	})
@@ -198,10 +197,10 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 			}
 		})
 	})
-	describe("GRVTStaking", async accounts => {
+	describe("SPRStaking", async accounts => {
 		it("increaseFee_DebtToken(): reverts when caller is not VesselManager", async () => {
 			try {
-				const txAlice = await grvtStaking.increaseFee_DebtToken(dec(1, 18), { from: alice })
+				const txAlice = await sprStaking.increaseFee_DebtToken(dec(1, 18), { from: alice })
 			} catch (err) {
 				assert.include(err.message, "revert")
 			}
@@ -300,15 +299,6 @@ contract("Access Control: functions where the caller is restricted to Gravita co
 			// Attempt call from alice
 			try {
 				await vesselManager.closeVessel(erc20.address, bob, { from: alice })
-			} catch (err) {
-				assert.include(err.message, "revert")
-				// assert.include(err.message, "Caller is not the BorrowerOperations contract")
-			}
-		})
-		it("addVesselOwnerToArray(): reverts when called by an account that is not BorrowerOperations", async () => {
-			// Attempt call from alice
-			try {
-				await vesselManager.addVesselOwnerToArray(erc20.address, bob, { from: alice })
 			} catch (err) {
 				assert.include(err.message, "revert")
 				// assert.include(err.message, "Caller is not the BorrowerOperations contract")

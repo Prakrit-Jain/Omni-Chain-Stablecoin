@@ -25,7 +25,7 @@ contract("StabilityPool: Sum-Product rounding errors", async accounts => {
 		contracts = await deploymentHelper.deployDebtTokenTester(contracts)
 		VesselManagerTester.setAsDeployed(contracts.vesselManager)
 		DebtTokenTester.setAsDeployed(contracts.debtToken)
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(accounts[0])
 
 		priceFeed = contracts.priceFeedTestnet
 		vesselManagerOperations = contracts.vesselManagerOperations
@@ -38,8 +38,8 @@ contract("StabilityPool: Sum-Product rounding errors", async accounts => {
 			if (index++ >= 350) break
 		}
 
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+		await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
 	})
 
 	it("Rounding errors: 100 deposits of $100 into SP, then 200 liquidations of $49", async () => {

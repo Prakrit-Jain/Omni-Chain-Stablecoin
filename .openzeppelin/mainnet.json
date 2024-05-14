@@ -1448,7 +1448,7 @@
             "src": "contracts/StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "300",
             "type": "t_uint256",
@@ -3421,7 +3421,7 @@
             "src": "contracts/StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "300",
             "type": "t_uint256",

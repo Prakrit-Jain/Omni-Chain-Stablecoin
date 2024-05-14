@@ -37,7 +37,7 @@ contract('Gas cost tests', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+    const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(accounts[0])
 
     priceFeed = contracts.priceFeedTestnet
     VUSDToken = contracts.vusdToken
@@ -49,12 +49,12 @@ contract('Gas cost tests', async accounts => {
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
 
-    GRVTStaking = GRVTContracts.GRVTStaking
-    GRVTToken = GRVTContracts.GRVTToken
-    communityIssuance = GRVTContracts.communityIssuance
+    SPRStaking = SPRContracts.SPRStaking
+    SPRToken = SPRContracts.SPRToken
+    communityIssuance = SPRContracts.communityIssuance
 
-    await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-    await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+    await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
   })
 
   // --- liquidateVessels RECOVERY MODE - pure redistribution ---

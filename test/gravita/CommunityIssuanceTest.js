@@ -1,7 +1,7 @@
 const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 
-const CommunityIssuance = artifacts.require("CommunityIssuance")
+const CommunityIssuance = artifacts.require("CommunityIssuanceTester")
 
 const th = testHelpers.TestHelper
 const { dec, toBN } = th
@@ -30,9 +30,8 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
-	communityIssuance = contracts.grvt.communityIssuance
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
 }
 
 contract("CommunityIssuance", async accounts => {
@@ -47,14 +46,13 @@ contract("CommunityIssuance", async accounts => {
 			communityIssuance = await CommunityIssuance.new()
 			await communityIssuance.initialize()
 			await communityIssuance.setAddresses(
-				grvtToken.address,
+				sprStaking.address,
 				stabilityPool.address,
 				adminContract.address
 			)
 			await communityIssuance.transferOwnership(treasury, { from: owner })
 			const supply = dec(32_000_000, 18)
-			await grvtToken.unprotectedMint(treasury, supply)
-			await contracts.grvt.grvtToken.approve(communityIssuance.address, ethers.constants.MaxUint256, { from: treasury })
+			await communityIssuance.unprotectedAddSPRHoldings(treasury, supply)
 
 			initialSnapshotId = await network.provider.send("evm_snapshot")
 		})
@@ -91,7 +89,7 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 			await communityIssuance.addFundToStabilityPool(dec(100, 18), { from: treasury })
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), dec(200, 18))
+			assert.equal((await communityIssuance.SPRSupplyCap()).toString(), dec(200, 18))
 		})
 
 		it("addFundToStabilityPool: Called by owner twice, double total supply, don't change deploy time", async () => {
@@ -109,7 +107,7 @@ contract("CommunityIssuance", async accounts => {
 
 			const deployTimePoolAfter = await communityIssuance.lastUpdateTime()
 
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), dec(200, 18))
+			assert.equal((await communityIssuance.SPRSupplyCap()).toString(), dec(200, 18))
 			assert.equal(deployTimePool.toString(), deployTimePoolAfter.toString())
 		})
 
@@ -123,7 +121,7 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), supply.mul(toBN(2)))
+			assert.equal((await communityIssuance.SPRSupplyCap()).toString(), supply.mul(toBN(2)))
 		})
 
 		it("removeFundFromStabilityPool: Called by user, valid inputs, then reverts", async () => {
@@ -158,19 +156,18 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 
-			const beforeBalance = await grvtToken.balanceOf(communityIssuance.address)
-			const beforeBalanceTreasury = await grvtToken.balanceOf(treasury)
-
+			const beforeBalance = await communityIssuance.sprHoldings(communityIssuance.address)
+			const beforeBalanceTreasury = await communityIssuance.sprHoldings(treasury)
 			await communityIssuance.removeFundFromStabilityPool(dec(50, 18), {
 				from: treasury,
 			})
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), dec(50, 18))
+			assert.equal((await communityIssuance.SPRSupplyCap()).toString(), dec(50, 18))
 			assert.equal(
-				(await grvtToken.balanceOf(communityIssuance.address)).toString(),
+				(await communityIssuance.sprHoldings(communityIssuance.address)).toString(),
 				beforeBalance.sub(toBN(dec(50, 18)))
 			)
 			assert.equal(
-				(await grvtToken.balanceOf(treasury)).toString(),
+				(await communityIssuance.sprHoldings(treasury)).toString(),
 				beforeBalanceTreasury.add(toBN(dec(50, 18))).toString()
 			)
 		})
@@ -184,8 +181,8 @@ contract("CommunityIssuance", async accounts => {
 				from: treasury,
 			})
 
-			assert.equal((await communityIssuance.GRVTSupplyCap()).toString(), 0)
-			assert.equal((await communityIssuance.totalGRVTIssued()).toString(), 0)
+			assert.equal((await communityIssuance.SPRSupplyCap()).toString(), 0)
+			assert.equal((await communityIssuance.totalSPRIssued()).toString(), 0)
 		})
 	})
 })

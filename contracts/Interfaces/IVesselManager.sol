@@ -64,6 +64,9 @@ interface IVesselManager is IGravitaBase {
 		uint256 stake;
 		Status status;
 		uint128 arrayIndex;
+		// Vessel-specific activeInterestIndex: This index value represents a borrower's last 
+		// interaction with the protocol and helps calculate accrued interest since then.
+		uint256 activeInterestIndex;
 	}
 
 	// Functions --------------------------------------------------------------------------------------------------------
@@ -100,8 +103,6 @@ interface IVesselManager is IGravitaBase {
 
 	function updateVesselRewardSnapshots(address _asset, address _borrower) external;
 
-	function addVesselOwnerToArray(address _asset, address _borrower) external returns (uint256 index);
-
 	function applyPendingRewards(address _asset, address _borrower) external;
 
 	function getPendingAssetReward(address _asset, address _borrower) external view returns (uint256);
@@ -120,6 +121,16 @@ interface IVesselManager is IGravitaBase {
 			uint256 pendingAssetReward
 		);
 
+	function openVessel(
+        address _borrower,
+        address _asset,
+		uint256 _assetAmount,
+		uint256 _compositeDebt,
+        uint256 NICR,
+		address _upperHint,
+		address _lowerHint
+    ) external returns(uint256 stake, uint256 arrayIndex);
+	
 	function closeVessel(address _asset, address _borrower) external;
 
 	function closeVesselLiquidation(address _asset, address _borrower) external;

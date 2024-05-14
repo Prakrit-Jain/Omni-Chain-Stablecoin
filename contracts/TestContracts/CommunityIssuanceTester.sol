@@ -2,19 +2,19 @@
 
 pragma solidity ^0.8.19;
 
-import "../GRVT/CommunityIssuance.sol";
+import "../SPR/CommunityIssuance.sol";
 
 contract CommunityIssuanceTester is CommunityIssuance {
 
-	function obtainGRVT(uint256 _amount) external {
-		grvtToken.transfer(msg.sender, _amount);
+	function unprotectedAddSPRHoldings(address _account, uint256 _supply) external {
+		sprHoldings[_account] += _supply;
 	}
 
 	function getLastUpdateTokenDistribution() external view returns (uint256) {
 		return _getLastUpdateTokenDistribution();
 	}
 
-	function unprotectedIssueGRVT() external returns (uint256) {
-		return issueGRVT();
+	function unprotectedIssueSPR() external returns (uint256) {
+		return issueSPR();
 	}
 }

@@ -6,7 +6,7 @@ import "../FeeCollector.sol";
 
 contract FeeCollectorTester is FeeCollector {
 
-	bool public __routeToGRVTStaking;
+	bool public __routeToSPRStaking;
 
 	function calcNewDuration(
 		uint256 remainingAmount,
@@ -16,11 +16,11 @@ contract FeeCollectorTester is FeeCollector {
 		return _calcNewDuration(remainingAmount, remainingTimeToLive, addedAmount);
 	}
 
-	function setRouteToGRVTStaking(bool ___routeToGRVTStaking) external onlyOwner {
-		__routeToGRVTStaking = ___routeToGRVTStaking;
+	function setRouteToSPRStaking(bool ___routeToSPRStaking) external onlyOwner {
+		__routeToSPRStaking = ___routeToSPRStaking;
 	}
 
-	function _routeToGRVTStaking() internal view override returns (bool) {
-		return __routeToGRVTStaking;
+	function _routeToSPRStaking() internal view override returns (bool) {
+		return __routeToSPRStaking;
 	}
 }

@@ -26,10 +26,9 @@ const deploy = async (treasury, mintingAccounts) => {
 	shortTimelock = contracts.core.shortTimelock
 	longTimelock = contracts.core.longTimelock
 
-	grvtStaking = contracts.grvt.grvtStaking
-	grvtToken = contracts.grvt.grvtToken
-	communityIssuance = contracts.grvt.communityIssuance
-	lockedGRVT = contracts.grvt.lockedGRVT
+	sprStaking = contracts.spr.sprStaking
+	communityIssuance = contracts.spr.communityIssuance
+	lockedSPR = contracts.spr.lockedSPR
 }
 
 contract("Pools Test", async accounts => {

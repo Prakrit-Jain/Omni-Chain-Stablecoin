@@ -9,12 +9,12 @@ const StabilityPool = artifacts.require("./StabilityPool.sol")
 const FunctionCaller = artifacts.require("./FunctionCaller.sol")
 const BorrowerOperations = artifacts.require("./BorrowerOperations.sol")
 
-const GRVTStaking = artifacts.require("./GRVT/GRVTStaking.sol")
-const GRVTToken = artifacts.require("./GRVT/GRVTToken.sol")
-const CommunityIssuance = artifacts.require("./GRVT/CommunityIssuance.sol")
+const SPRStaking = artifacts.require("./SPR/SPRStaking.sol")
+const SPRToken = artifacts.require("./SPR/SPRToken.sol")
+const CommunityIssuance = artifacts.require("./SPR/CommunityIssuance.sol")
 const HintHelpers = artifacts.require("./HintHelpers.sol")
 
-const CommunityIssuanceTester = artifacts.require("./GRVT/CommunityIssuanceTester.sol")
+const CommunityIssuanceTester = artifacts.require("./SPR/CommunityIssuanceTester.sol")
 const ActivePoolTester = artifacts.require("./ActivePoolTester.sol")
 const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const GravityMathTester = artifacts.require("./GravityMathTester.sol")
@@ -40,9 +40,9 @@ const coreContractABIs = [
   HintHelpers,
 ]
 
-const GRVTContractABIs = [
-  GRVTStaking,
-  GRVTToken,
+const SPRContractABIs = [
+  SPRStaking,
+  SPRToken,
   CommunityIssuance
 ]
 
@@ -107,18 +107,18 @@ const logContractBytecodeLengths = (contractABIs) => {
 // Run script: log deployment gas costs and bytecode lengths for all contracts
 async function main() {
   const coreContracts = await dh.deployLiquityCoreHardhat()
-  const GRVTContracts = await dh.deployGRVTContractsHardhat(accounts[0])
+  const SPRContracts = await dh.deploySPRContractsHardhat(accounts[0])
   const testerContracts = await dh.deployTesterContractsHardhat()
 
-  await dh.connectCoreContracts(coreContracts, GRVTContracts)
-  await dh.connectGRVTContractsToCore(GRVTContracts, coreContracts)
+  await dh.connectCoreContracts(coreContracts, SPRContracts)
+  await dh.connectSPRContractsToCore(SPRContracts, coreContracts)
 
 
   console.log(`\n`)
-  console.log(`GRVT CONTRACTS`)
-  await logContractDeploymentCosts(GRVTContracts)
+  console.log(`SPR CONTRACTS`)
+  await logContractDeploymentCosts(SPRContracts)
   console.log(`\n`)
-  logContractBytecodeLengths(GRVTContractABIs)
+  logContractBytecodeLengths(SPRContractABIs)
   console.log(`\n`)
 
   console.log(`CORE CONTRACTS`)

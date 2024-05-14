@@ -51,28 +51,28 @@ drift_ether3 = 0.0013
 period4 = period
 drift_ether4 = -0.0002
 
-"""# GRVT price
-In the first month, the price of GRVT follows
+"""# SPR price
+In the first month, the price of SPR follows
 
 > $P_t^q = P_{t-1}^q (1+\zeta_t^q)(1+\sigma_t^q)$. 
 
-Note that $\zeta_t^q \sim N(0,$ sd_GRVT) represents GRVT price shock and $\sigma_t^q$ the drift. Here, $\sigma_t^q =$ drift_GRVT, so that the expected GRVT price increases from price_GRVT_initial to the following at the end of the first month:
-> $E(P_{720}^q) = $price_GRVT_initial$ \cdot (1+$ drift_GRVT$)^{720}$
+Note that $\zeta_t^q \sim N(0,$ sd_SPR) represents SPR price shock and $\sigma_t^q$ the drift. Here, $\sigma_t^q =$ drift_SPR, so that the expected SPR price increases from price_SPR_initial to the following at the end of the first month:
+> $E(P_{720}^q) = $price_SPR_initial$ \cdot (1+$ drift_SPR$)^{720}$
 
-The GRVT price from the second month on is endogenously determined.
+The SPR price from the second month on is endogenously determined.
 """
 
-# GRVT price & airdrop
-price_GRVT_initial = 0.4
-price_GRVT = [price_GRVT_initial]
-sd_GRVT = 0.005
-drift_GRVT = 0.0035
-supply_GRVT = [0]
-GRVT_total_supply = 100000000
+# SPR price & airdrop
+price_SPR_initial = 0.4
+price_SPR = [price_SPR_initial]
+sd_SPR = 0.005
+drift_SPR = 0.0035
+supply_SPR = [0]
+SPR_total_supply = 100000000
 
-"""**GRVT Endogenous Price**
+"""**SPR Endogenous Price**
 
-The staked GRVT pool earning consists of the issuance fee revenue and redemption fee revenue
+The staked SPR pool earning consists of the issuance fee revenue and redemption fee revenue
 > $R_t^q = R_t^i + R_t^r.$
 
 From period 721 onwards, using the data in the last 720 periods (i.e. the last 30 days), we can calculate the annualized earning
@@ -96,14 +96,14 @@ The P/E ratio is defined as follows
 
 where $r^{PE} =$ PE_ratio ~and \zeta_t^{PE}\sim N(0, 0.1)~ $\zeta_t^{PE} = 0$.
 
-> $$r_t=\frac{GRVT Market Cap}{Annualized Earning}=\frac{MC_t}{E_t}$$
+> $$r_t=\frac{SPR Market Cap}{Annualized Earning}=\frac{MC_t}{E_t}$$
 
-> $MC_t=P_t^q \cdot$ GRVT_total_supply
+> $MC_t=P_t^q \cdot$ SPR_total_supply
 
-Therefore, the GRVT price dynamics is determined
-> $$P_t^q=discount \cdot \frac{r^{PE}}{GRVT\_total\_supply}E_t$$
+Therefore, the SPR price dynamics is determined
+> $$P_t^q=discount \cdot \frac{r^{PE}}{SPR\_total\_supply}E_t$$
 
-Interpretation: The denominator implies that with more GRVT tokens issued, GRVT price decreases. However, the depreciation effect can be counteracted by the growth of the earning.
+Interpretation: The denominator implies that with more SPR tokens issued, SPR price decreases. However, the depreciation effect can be counteracted by the growth of the earning.
 
 """
 
@@ -136,7 +136,7 @@ where $\zeta_t^s \sim N(0, sd\_stability)$ is the shock in the liquidity pool.
 
 During the first month the formula above is also multiplied by a drift factor, $drift\_stability$.
 
-$R_{t-1}^s$ is the return in the stability pool, which consists of liquidation gain and airdrop GRVT gain.
+$R_{t-1}^s$ is the return in the stability pool, which consists of liquidation gain and airdrop SPR gain.
 
 
 The natural rate of the stability pool follows
@@ -290,7 +290,7 @@ The debt $Q_t^d$ is paid by the stability pool in exchange for the collateral $Q
 
 where:
 - $R_t^l=P_t^eQ_t^e-P_{t-1}^lQ_t^d$ is the liquidation gain 
-- $R_t^a=P_{t}^q\hat{Q}_t^q$ is the airdrop gain, $\hat{Q}_t^q=1000$ denotes the amount of GRVT token airdropped to the stability pool providers
+- $R_t^a=P_{t}^q\hat{Q}_t^q$ is the airdrop gain, $\hat{Q}_t^q=1000$ denotes the amount of SPR token airdropped to the stability pool providers
 - $D_{t}^{s}$ is the total amount of VUSD deposited in the Stability Pool (see below)
 
 # Exogenous Factors
@@ -336,13 +336,13 @@ for i in range(1, period):
     shock_natural = random.normalvariate(0, sd_natural_rate)
     natural_rate.append(natural_rate[i - 1] * (1 + shock_natural))
 
-"""GRVT Price - First Month"""
+"""SPR Price - First Month"""
 
-# GRVT price
+# SPR price
 for i in range(1, month):
     random.seed(2 + 13 * i)
-    shock_GRVT = random.normalvariate(0, sd_GRVT)
-    price_GRVT.append(price_GRVT[i - 1] * (1 + shock_GRVT) * (1 + drift_GRVT))
+    shock_SPR = random.normalvariate(0, sd_SPR)
+    price_SPR.append(price_SPR[i - 1] * (1 + shock_SPR) * (1 + drift_SPR))
 
 """# Troves
 
@@ -411,7 +411,7 @@ def remove_accounts_from_events(
 # Re-arranging:
 # F = 0.5 ** (1/8760)
 # F = 0.99992087674
-def quantity_GRVT_airdrop(index):
+def quantity_SPR_airdrop(index):
     F = 0.99992087674
     if index <= 0:
         return 0
@@ -425,7 +425,7 @@ def liquidate_vessels(
     inactive_accounts,
     price_ether_current,
     price_USDV,
-    price_GRVT_current,
+    price_SPR_current,
     data,
     index,
 ):
@@ -473,7 +473,7 @@ def liquidate_vessels(
     liquidation_gain = (
         ether_liquidated * price_ether_current - debt_liquidated * price_USDV
     )
-    airdrop_gain = price_GRVT_current * quantity_GRVT_airdrop(index)
+    airdrop_gain = price_SPR_current * quantity_SPR_airdrop(index)
 
     data["liquidation_gain"][index] = liquidation_gain
     data["airdrop_gain"][index] = airdrop_gain
@@ -1223,14 +1223,14 @@ def price_stabilizer(
     ]
 
 
-"""# GRVT Market"""
+"""# SPR Market"""
 
 
-def GRVT_market(index, data):
-    # quantity_GRVT = (GRVT_total_supply/3)*(1-0.5**(index/period))
+def SPR_market(index, data):
+    # quantity_SPR = (SPR_total_supply/3)*(1-0.5**(index/period))
     np.random.seed(2 + 3 * index)
     if index <= month:
-        price_GRVT_current = price_GRVT[index - 1]
+        price_SPR_current = price_SPR[index - 1]
         annualized_earning = (index / month) ** 0.5 * np.random.normal(
             200000000, 500000
         )
@@ -1240,10 +1240,10 @@ def GRVT_market(index, data):
         annualized_earning = 365 * (revenue_issuance + revenue_redemption) / 30
         # discounting factor to factor in the risk in early days
         discount = index / period
-        price_GRVT_current = (
-            discount * PE_ratio * annualized_earning / GRVT_total_supply
+        price_SPR_current = (
+            discount * PE_ratio * annualized_earning / SPR_total_supply
         )
 
-    # MC_GRVT_current = price_GRVT_current * quantity_GRVT
+    # MC_SPR_current = price_SPR_current * quantity_SPR
 
-    return [price_GRVT_current, annualized_earning]
+    return [price_SPR_current, annualized_earning]

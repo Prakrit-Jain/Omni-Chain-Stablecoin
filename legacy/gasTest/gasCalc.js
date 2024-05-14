@@ -46,7 +46,7 @@ contract("Gas cost tests", async accounts => {
 
 	beforeEach(async () => {
 		contracts = await deploymentHelper.deployTesterContractsHardhat()
-		const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+		const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(accounts[0])
 
 		priceFeed = contracts.priceFeedTestnet
 		VUSDToken = contracts.vusdToken
@@ -59,12 +59,12 @@ contract("Gas cost tests", async accounts => {
 
 		functionCaller = contracts.functionCaller
 
-		GRVTStaking = GRVTContracts.GRVTStaking
-		GRVTToken = GRVTContracts.GRVTToken
-		communityIssuance = GRVTContracts.communityIssuance
+		SPRStaking = SPRContracts.SPRStaking
+		SPRToken = SPRContracts.SPRToken
+		communityIssuance = SPRContracts.communityIssuance
 
-		await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-		await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+		await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+		await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
 		stabilityPool = await StabilityPool.at(
 			await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS)
 		)
@@ -1396,14 +1396,14 @@ contract("Gas cost tests", async accounts => {
 		await th.withdrawVUSD_allAccounts(_10_Accounts, contracts, dec(130, 18))
 		await th.provideToSP_allAccounts(_10_Accounts, stabilityPool, dec(50, 18))
 
-		// >>FF time and one account tops up, triggers GRVT gains for all
+		// >>FF time and one account tops up, triggers SPR gains for all
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 		await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
 
-		// Check the other accounts have GRVT gain
+		// Check the other accounts have SPR gain
 		for (account of _10_Accounts.slice(1)) {
-			const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-			assert.isTrue(GRVTGain.gt(toBN("0")))
+			const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+			assert.isTrue(SPRGain.gt(toBN("0")))
 		}
 
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1426,14 +1426,14 @@ contract("Gas cost tests", async accounts => {
 	//   await th.withdrawVUSD_allAccounts(_10_Accounts, contracts, dec(130, 18))
 	//   await th.provideToSP_allAccounts(_10_Accounts, stabilityPool, dec(50, 18))
 
-	//   // >> FF time and one account tops up, triggers GRVT gains for all
+	//   // >> FF time and one account tops up, triggers SPR gains for all
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 	//   await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
 
-	//   // Check the other accounts have GRVT gain
+	//   // Check the other accounts have SPR gain
 	//   for (account of _10_Accounts.slice(1)) {
-	//     const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-	//     assert.isTrue(GRVTGain.gt(toBN('0')))
+	//     const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+	//     assert.isTrue(SPRGain.gt(toBN('0')))
 	//   }
 
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1453,14 +1453,14 @@ contract("Gas cost tests", async accounts => {
 		await th.withdrawVUSD_allAccounts(_10_Accounts, contracts, dec(130, 18))
 		await th.provideToSP_allAccounts(_10_Accounts, stabilityPool, dec(50, 18))
 
-		// >>FF time and one account tops up, triggers GRVT gains for all
+		// >>FF time and one account tops up, triggers SPR gains for all
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 		await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
 
-		// Check the other accounts have GRVT gain
+		// Check the other accounts have SPR gain
 		for (account of _10_Accounts.slice(1)) {
-			const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-			assert.isTrue(GRVTGain.gt(toBN("0")))
+			const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+			assert.isTrue(SPRGain.gt(toBN("0")))
 		}
 
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1492,7 +1492,7 @@ contract("Gas cost tests", async accounts => {
 	//   //1 acct open Vessel with 1 ether and withdraws 170 VUSD
 	//   await borrowerOperations.openVessel(_100pct, dec(130, 18), accounts[1], ZERO_ADDRESS, { from: accounts[1], value: dec(1, 'ether') })
 
-	//   // >>FF time and one account tops up, triggers GRVT gains for all
+	//   // >>FF time and one account tops up, triggers SPR gains for all
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 	//   // Price drops, account 1 liquidated
@@ -1500,10 +1500,10 @@ contract("Gas cost tests", async accounts => {
 	//   await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 	//   assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-	//   // Check accounts have GRVT gains from liquidations
+	//   // Check accounts have SPR gains from liquidations
 	//   for (account of accounts.slice(2, 12)) {
-	//     const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-	//     assert.isTrue(GRVTGain.gt(toBN('0')))
+	//     const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+	//     assert.isTrue(SPRGain.gt(toBN('0')))
 	//   }
 
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1526,7 +1526,7 @@ contract("Gas cost tests", async accounts => {
 	//   //1 acct open Vessel with 1 ether and withdraws 180 VUSD
 	//   await borrowerOperations.openVessel(_100pct, dec(130, 18), accounts[1], ZERO_ADDRESS, { from: accounts[1], value: dec(1, 'ether') })
 
-	//   // >>FF time and one account tops up, triggers GRVT gains for all
+	//   // >>FF time and one account tops up, triggers SPR gains for all
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 	//   // Price drops, account[1] is liquidated
@@ -1534,10 +1534,10 @@ contract("Gas cost tests", async accounts => {
 	//   await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 	//   assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-	//   // Check accounts have GRVT gains from liquidations
+	//   // Check accounts have SPR gains from liquidations
 	//   for (account of accounts.slice(2, 12)) {
-	//     const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-	//     assert.isTrue(GRVTGain.gt(toBN('0')))
+	//     const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+	//     assert.isTrue(SPRGain.gt(toBN('0')))
 	//   }
 
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1568,7 +1568,7 @@ contract("Gas cost tests", async accounts => {
 			value: dec(1, "ether"),
 		})
 
-		// >>FF time and one account tops up, triggers GRVT gains for all
+		// >>FF time and one account tops up, triggers SPR gains for all
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
 		// Price drops, account[1] is liquidated
@@ -1576,10 +1576,10 @@ contract("Gas cost tests", async accounts => {
 		await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 		assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-		// Check accounts have GRVT gains from liquidations
+		// Check accounts have SPR gains from liquidations
 		for (account of accounts.slice(2, 12)) {
-			const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-			assert.isTrue(GRVTGain.gt(toBN("0")))
+			const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+			assert.isTrue(SPRGain.gt(toBN("0")))
 		}
 
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1607,14 +1607,14 @@ contract("Gas cost tests", async accounts => {
 	//   await th.openVessel_allAccounts(_10_Accounts, contracts, dec(10, 'ether'), dec(190, 18))
 	//   await th.provideToSP_allAccounts(_10_Accounts, stabilityPool, dec(130, 18))
 
-	//   // >>FF time and one account tops up, triggers GRVT gains for all
+	//   // >>FF time and one account tops up, triggers SPR gains for all
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 	//   await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
 
-	//   // Check the other accounts have GRVT gain
+	//   // Check the other accounts have SPR gain
 	//   for (account of _10_Accounts.slice(1)) {
-	//     const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-	//     assert.isTrue(GRVTGain.gt(toBN('0')))
+	//     const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+	//     assert.isTrue(SPRGain.gt(toBN('0')))
 	//   }
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1632,14 +1632,14 @@ contract("Gas cost tests", async accounts => {
 		await th.openVessel_allAccounts(_10_Accounts, contracts, dec(10, "ether"), dec(190, 18))
 		await th.provideToSP_allAccounts(_10_Accounts, stabilityPool, dec(130, 18))
 
-		// >>FF time and one account tops up, triggers GRVT gains for all
+		// >>FF time and one account tops up, triggers SPR gains for all
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 		await stabilityPool.provideToSP(dec(1, 18), ZERO_ADDRESS, { from: _10_Accounts[0] })
 
-		// Check the other accounts have GRVT gain
+		// Check the other accounts have SPR gain
 		for (account of _10_Accounts.slice(1)) {
-			const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-			assert.isTrue(GRVTGain.gt(toBN("0")))
+			const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+			assert.isTrue(SPRGain.gt(toBN("0")))
 		}
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1694,10 +1694,10 @@ contract("Gas cost tests", async accounts => {
 	//   await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 	//   assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-	//   // Check accounts have GRVT gains from liquidations
+	//   // Check accounts have SPR gains from liquidations
 	//   for (account of accounts.slice(2, 12)) {
-	//     const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-	//     assert.isTrue(GRVTGain.gt(toBN('0')))
+	//     const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+	//     assert.isTrue(SPRGain.gt(toBN('0')))
 	//   }
 
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1738,10 +1738,10 @@ contract("Gas cost tests", async accounts => {
 		await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 		assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-		// Check accounts have GRVT gains from liquidations
+		// Check accounts have SPR gains from liquidations
 		for (account of accounts.slice(2, 12)) {
-			const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-			assert.isTrue(GRVTGain.gt(toBN("0")))
+			const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+			assert.isTrue(SPRGain.gt(toBN("0")))
 		}
 
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1786,10 +1786,10 @@ contract("Gas cost tests", async accounts => {
 		await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 		assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-		// Check accounts have GRVT gains from liquidations
+		// Check accounts have SPR gains from liquidations
 		for (account of accounts.slice(2, 12)) {
-			const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-			assert.isTrue(GRVTGain.gt(toBN("0")))
+			const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+			assert.isTrue(SPRGain.gt(toBN("0")))
 		}
 
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1827,10 +1827,10 @@ contract("Gas cost tests", async accounts => {
 	//   await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 	//   assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-	//    // Check accounts have GRVT gains from liquidations
+	//    // Check accounts have SPR gains from liquidations
 	//    for (account of accounts.slice(2, 12)) {
-	//     const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-	//     assert.isTrue(GRVTGain.gt(toBN('0')))
+	//     const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+	//     assert.isTrue(SPRGain.gt(toBN('0')))
 	//   }
 
 	//   await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
@@ -1876,10 +1876,10 @@ contract("Gas cost tests", async accounts => {
 		await vesselManager.liquidate(accounts[1], { from: accounts[0] })
 		assert.isFalse(await sortedVessels.contains(accounts[1]))
 
-		// Check accounts have GRVT gains from liquidations
+		// Check accounts have SPR gains from liquidations
 		for (account of accounts.slice(2, 22)) {
-			const GRVTGain = await stabilityPool.getDepositorGRVTGain(account)
-			assert.isTrue(GRVTGain.gt(toBN("0")))
+			const SPRGain = await stabilityPool.getDepositorSPRGain(account)
+			assert.isTrue(SPRGain.gt(toBN("0")))
 		}
 
 		await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)

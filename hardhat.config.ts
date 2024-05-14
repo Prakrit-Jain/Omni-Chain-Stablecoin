@@ -5,6 +5,7 @@ import "@nomiclabs/hardhat-etherscan"
 import "@openzeppelin/hardhat-upgrades"
 import "@openzeppelin/hardhat-defender"
 import "solidity-coverage"
+import "@nomicfoundation/hardhat-network-helpers"
 
 import { task } from "hardhat/config"
 
@@ -59,6 +60,7 @@ module.exports = {
 	},
 	networks: {
 		hardhat: {
+			allowBlocksWithSameTimestamp: true,
 			allowUnlimitedContractSize: true,
 			// accounts: [{ privateKey: process.env.DEPLOYER_PRIVATEKEY, balance: (10e18).toString() }, ...accountsList],
 			accounts: accountsList,
@@ -67,22 +69,22 @@ module.exports = {
 			url: "http://localhost:8545",
 			gas: 20_000_000,
 		},
-		goerli: {
-			url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
-		arbitrum_goerli: {
-			url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
-		arbitrum: {
-			url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
-		mainnet: {
-			url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
-			accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
-		},
+	// 	goerli: {
+	// 		url: `${process.env.GOERLI_NETWORK_ENDPOINT}`,
+	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+	// 	},
+	// 	arbitrum_goerli: {
+	// 		url: `${process.env.ARBITRUM_GOERLI_NETWORK_ENDPOINT}`,
+	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+	// 	},
+	// 	arbitrum: {
+	// 		url: `${process.env.ARBITRUM_NETWORK_ENDPOINT}`,
+	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+	// 	},
+	// 	mainnet: {
+	// 		url: `${process.env.ETHEREUM_NETWORK_ENDPOINT}`,
+	// 		accounts: [`${process.env.DEPLOYER_PRIVATEKEY}`],
+	// 	},
 	},
 	etherscan: {
 		apiKey: `${process.env.ETHERSCAN_API_KEY}`,

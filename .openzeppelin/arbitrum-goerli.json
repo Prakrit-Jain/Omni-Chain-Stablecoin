@@ -215,7 +215,7 @@
             "src": "contracts/Dependencies/AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -483,7 +483,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -825,7 +825,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "110",
             "type": "t_address",
@@ -1105,7 +1105,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -1377,7 +1377,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -1645,7 +1645,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -1933,7 +1933,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",
@@ -2267,7 +2267,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -2419,7 +2419,7 @@
             "src": "contracts\\StabilityPool.sol:199"
           },
           {
-            "label": "lastGRVTError",
+            "label": "lastSPRError",
             "offset": 0,
             "slot": "324",
             "type": "t_uint256",
@@ -2713,7 +2713,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -3178,7 +3178,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "260",
             "type": "t_address",
@@ -3434,7 +3434,7 @@
             "src": "contracts\\Dependencies\\AddressesConfigurable.sol:16"
           },
           {
-            "label": "grvtStaking",
+            "label": "sprStaking",
             "offset": 0,
             "slot": "210",
             "type": "t_address",

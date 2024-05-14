@@ -10,22 +10,22 @@ const dec = th.dec
 const toBN = th.toBN
 
 
-const logGRVTBalanceAndError = (GRVTBalance_A, expectedGRVTBalance_A) => {
+const logSPRBalanceAndError = (SPRBalance_A, expectedSPRBalance_A) => {
   console.log(
-    `Expected final balance: ${expectedGRVTBalance_A}, \n
-    Actual final balance: ${GRVTBalance_A}, \n
-    Abs. error: ${expectedGRVTBalance_A.sub(GRVTBalance_A)}`
+    `Expected final balance: ${expectedSPRBalance_A}, \n
+    Actual final balance: ${SPRBalance_A}, \n
+    Abs. error: ${expectedSPRBalance_A.sub(SPRBalance_A)}`
   )
 }
 
-const repeatedlyIssueGRVT = async (stabilityPool, timeBetweenIssuances, duration) => {
+const repeatedlyIssueSPR = async (stabilityPool, timeBetweenIssuances, duration) => {
   const startTimestamp = th.toBN(await th.getLatestBlockTimestamp(web3))
   let timePassed = 0
 
-  // while current time < 1 month from deployment, issue GRVT every minute
+  // while current time < 1 month from deployment, issue SPR every minute
   while (timePassed < duration) {
     await th.fastForwardTime(timeBetweenIssuances, web3.currentProvider)
-    await stabilityPool._unprotectedTriggerGRVTIssuance()
+    await stabilityPool._unprotectedTriggerSPRIssuance()
 
     const currentTimestamp = th.toBN(await th.getLatestBlockTimestamp(web3))
     timePassed = currentTimestamp.sub(startTimestamp)
@@ -33,12 +33,12 @@ const repeatedlyIssueGRVT = async (stabilityPool, timeBetweenIssuances, duration
 }
 
 
-contract('GRVT community issuance arithmetic tests', async accounts => {
+contract('SPR community issuance arithmetic tests', async accounts => {
   const ZERO_ADDRESS = th.ZERO_ADDRESS
   let contracts
   let borrowerOperations
   let communityIssuanceTester
-  let GRVTToken
+  let SPRToken
   let stabilityPool
   let stabilityPoolERC20
   let erc20
@@ -64,22 +64,22 @@ contract('GRVT community issuance arithmetic tests', async accounts => {
 
   beforeEach(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
-    const GRVTContracts = await deploymentHelper.deployGRVTContractsHardhat(accounts[0])
+    const SPRContracts = await deploymentHelper.deploySPRContractsHardhat(accounts[0])
     contracts = await deploymentHelper.deployVUSDToken(contracts)
 
     borrowerOperations = contracts.borrowerOperations
     erc20 = contracts.erc20
 
-    GRVTToken = GRVTContracts.grvtToken
-    communityIssuanceTester = GRVTContracts.communityIssuance
+    SPRToken = SPRContracts.sprToken
+    communityIssuanceTester = SPRContracts.communityIssuance
 
-    await deploymentHelper.connectCoreContracts(contracts, GRVTContracts)
-    await deploymentHelper.connectGRVTContractsToCore(GRVTContracts, contracts)
+    await deploymentHelper.connectCoreContracts(contracts, SPRContracts)
+    await deploymentHelper.connectSPRContractsToCore(SPRContracts, contracts)
     stabilityPool = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(ZERO_ADDRESS))
     stabilityPoolERC20 = await StabilityPool.at(await contracts.stabilityPoolManager.getAssetStabilityPool(erc20.address));
 
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPool.address, ETH_WEEKLY);
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPoolERC20.address, ERC_WEEKLY);
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPool.address, ETH_WEEKLY);
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPoolERC20.address, ERC_WEEKLY);
   })
 
 
@@ -105,79 +105,79 @@ contract('GRVT community issuance arithmetic tests', async accounts => {
   })
 
 
-  it("Give full supply after 4 weeks, forwards 4 weeks, totalIssueGrvt should be max supply", async () => {
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPool.address, dec(32_000_000 / 4, 18));
+  it("Give full supply after 4 weeks, forwards 4 weeks, totalIssueSpr should be max supply", async () => {
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPool.address, dec(32_000_000 / 4, 18));
 
     await th.fastForwardTime(toBN(timeValues.SECONDS_IN_ONE_WEEK).mul(toBN(4).add(toBN(120))), web3.currentProvider)
 
-    await communityIssuanceTester.unprotectedIssueGRVT(stabilityPool.address)
-    const totalIssued = await communityIssuanceTester.totalGRVTIssued(stabilityPool.address)
+    await communityIssuanceTester.unprotectedIssueSPR(stabilityPool.address)
+    const totalIssued = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
     assert.equal(totalIssued.toString(), dec(32_000_000, 18));
 
   })
 
 
-  it("Give full supply after 4 weeks, forwards 8 weeks, totalIssueGrvt should be max supply", async () => {
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPool.address, dec(32_000_000 / 4, 18));
+  it("Give full supply after 4 weeks, forwards 8 weeks, totalIssueSpr should be max supply", async () => {
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPool.address, dec(32_000_000 / 4, 18));
 
     await th.fastForwardTime(toBN(timeValues.SECONDS_IN_ONE_WEEK).mul(toBN(8)), web3.currentProvider)
 
-    await communityIssuanceTester.unprotectedIssueGRVT(stabilityPool.address)
-    const totalIssued = await communityIssuanceTester.totalGRVTIssued(stabilityPool.address)
+    await communityIssuanceTester.unprotectedIssueSPR(stabilityPool.address)
+    const totalIssued = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
     assert.equal(totalIssued.toString(), dec(32_000_000, 18));
   })
 
   // // --- Token issuance for yearly halving ---
 
-  it("Total GRVT tokens issued is correct after a week", async () => {
+  it("Total SPR tokens issued is correct after a week", async () => {
     const distribution = toBN(dec(8_000_000, 18));
     const expectedReward = distribution
 
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPool.address, distribution);
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPoolERC20.address, distribution);
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPool.address, distribution);
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPoolERC20.address, distribution);
 
-    const initialIssuance = await communityIssuanceTester.totalGRVTIssued(stabilityPool.address)
+    const initialIssuance = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
     assert.equal(initialIssuance, 0)
 
-    const initialIssuanceERC20 = await communityIssuanceTester.totalGRVTIssued(stabilityPoolERC20.address)
+    const initialIssuanceERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
     assert.equal(initialIssuanceERC20, 0)
 
     // Fast forward time
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK, web3.currentProvider)
 
-    // Issue GRVT
-    await communityIssuanceTester.unprotectedIssueGRVT(stabilityPool.address)
-    const totalGRVTIssued = await communityIssuanceTester.totalGRVTIssued(stabilityPool.address)
+    // Issue SPR
+    await communityIssuanceTester.unprotectedIssueSPR(stabilityPool.address)
+    const totalSPRIssued = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
 
-    await communityIssuanceTester.unprotectedIssueGRVT(stabilityPoolERC20.address)
-    const totalGRVTIssuedERC20 = await communityIssuanceTester.totalGRVTIssued(stabilityPoolERC20.address)
+    await communityIssuanceTester.unprotectedIssueSPR(stabilityPoolERC20.address)
+    const totalSPRIssuedERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
 
-    assert.isAtMost(th.getDifference(totalGRVTIssued, expectedReward), 1000000000000000)
-    assert.isAtMost(th.getDifference(totalGRVTIssuedERC20, expectedReward), 1000000000000000)
+    assert.isAtMost(th.getDifference(totalSPRIssued, expectedReward), 1000000000000000)
+    assert.isAtMost(th.getDifference(totalSPRIssuedERC20, expectedReward), 1000000000000000)
   })
 
-  it("Total GRVT tokens issued is correct after a month", async () => {
+  it("Total SPR tokens issued is correct after a month", async () => {
     const distribution = toBN(dec(8_000_000, 18))
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPool.address, distribution);
-    await communityIssuanceTester.setWeeklyGrvtDistribution(stabilityPoolERC20.address, dec(distribution.toString(), 18));
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPool.address, distribution);
+    await communityIssuanceTester.setWeeklySprDistribution(stabilityPoolERC20.address, dec(distribution.toString(), 18));
 
-    const initialIssuance = await communityIssuanceTester.totalGRVTIssued(stabilityPool.address)
+    const initialIssuance = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
     assert.equal(initialIssuance, 0)
 
-    const initialIssuanceERC20 = await communityIssuanceTester.totalGRVTIssued(stabilityPoolERC20.address)
+    const initialIssuanceERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
     assert.equal(initialIssuanceERC20, 0)
 
     // Fast forward time
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
 
-    // Issue GRVT
-    await communityIssuanceTester.unprotectedIssueGRVT(stabilityPool.address)
-    const totalGRVTIssued = await communityIssuanceTester.totalGRVTIssued(stabilityPool.address)
+    // Issue SPR
+    await communityIssuanceTester.unprotectedIssueSPR(stabilityPool.address)
+    const totalSPRIssued = await communityIssuanceTester.totalSPRIssued(stabilityPool.address)
 
-    await communityIssuanceTester.unprotectedIssueGRVT(stabilityPoolERC20.address)
-    const totalGRVTIssuedERC20 = await communityIssuanceTester.totalGRVTIssued(stabilityPoolERC20.address)
+    await communityIssuanceTester.unprotectedIssueSPR(stabilityPoolERC20.address)
+    const totalSPRIssuedERC20 = await communityIssuanceTester.totalSPRIssued(stabilityPoolERC20.address)
 
-    assert.isAtMost(th.getDifference(totalGRVTIssued, distribution.mul(toBN(4))), 1000000000000000)
-    assert.isAtMost(th.getDifference(totalGRVTIssuedERC20, distribution.mul(toBN(4))), 1000000000000000)
+    assert.isAtMost(th.getDifference(totalSPRIssued, distribution.mul(toBN(4))), 1000000000000000)
+    assert.isAtMost(th.getDifference(totalSPRIssuedERC20, distribution.mul(toBN(4))), 1000000000000000)
   })
 })

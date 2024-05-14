@@ -6,8 +6,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Dependencies/ERC20Permit.sol";
 import "./Interfaces/IDebtToken.sol";
 
+// Note: using this token temoprarily for testing purposes , on final deployment we will use the 
+// already deployed kai token
+
 contract DebtToken is IDebtToken, ERC20Permit, Ownable {
-	string public constant NAME = "GRAI";
+	string public constant NAME = "KAI";
 
 	// MAINNET-ONLY SECTION START -------------------------------------------------------------------------------------
 
@@ -36,7 +39,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 
 	// TESTNET-ONLY SECTION END ---------------------------------------------------------------------------------------
 
-	constructor() ERC20("Gravita Debt Token", "GRAI") {}
+	constructor() ERC20("Gravita Debt Token", "KAI") {}
 
 	mapping(address => bool) public emergencyStopMintingCollateral;
 
@@ -60,7 +63,7 @@ contract DebtToken is IDebtToken, ERC20Permit, Ownable {
 	}
 
 	function mint(address _asset, address _account, uint256 _amount) external override {
-		_requireCallerIsBorrowerOperations();
+		_requireCallerIsBOorVesselMorSP();
 		require(!emergencyStopMintingCollateral[_asset], "Mint is blocked on this collateral");
 
 		_mint(_account, _amount);

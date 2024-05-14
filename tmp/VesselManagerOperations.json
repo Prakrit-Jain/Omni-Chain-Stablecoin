@@ -644,7 +644,7 @@
     },
     {
       "inputs": [],
-      "name": "grvtStaking",
+      "name": "sprStaking",
       "outputs": [
         {
           "internalType": "address",

@@ -19,6 +19,6 @@ jobs:
         run: yarn install
 
       - name: Run Gravita tests
-        run: yarn test test/gravita/*.js
+        run: npx hardhat test --parallel
         #run: yarn test
 

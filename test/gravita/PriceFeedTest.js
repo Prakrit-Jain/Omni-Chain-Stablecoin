@@ -378,6 +378,7 @@ contract("PriceFeed", async accounts => {
 			const borrowingDelay = Number(await priceFeed.SEQUENCER_BORROWING_DELAY_SECONDS())
 			const liquidationDelay = Number(await priceFeed.SEQUENCER_LIQUIDATION_DELAY_SECONDS())
 			assert.isTrue(liquidationDelay > borrowingDelay)
+            await time.increase(2) // 2 calls above
 
 			// setup as borrowingDelay < updatedAt < liquidationDelay
 			const sequencerUpdatedAt = Number(await time.latest()) - borrowingDelay
@@ -386,6 +387,7 @@ contract("PriceFeed", async accounts => {
 			await uptimeFeed.setPrice(sequencerIsUp)
 			await uptimeFeed.setUpdatedAt(sequencerUpdatedAt)
 			await priceFeed.setSequencerUptimeFeedAddress(uptimeFeed.address)
+			await time.increase(5) // 5 calls above
 
 			// fetching as VesselManagerOperations should revert
 			await impersonateAccount(vesselManagerOperations.address)
